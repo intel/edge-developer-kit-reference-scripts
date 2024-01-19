@@ -1,0 +1,42 @@
+name: Enhancement
+description: "[Maintainer Only] Create new enhancement based on reviewed/approved feature"
+title: <Feature. Same as what was wrote in "I want to" input. ex. show web interface>
+labels: ["enhancement"]
+assignees:
+  - octocat
+body:
+  - type: input
+    id: persona
+    attributes:
+      label: Persona
+      description: Who will need this feature
+      placeholder: developer/ODM
+    validations:
+      required: true
+
+  - type: input
+    id: feature
+    attributes:
+      label: I want to
+      description: Feature must be short and concise
+      placeholder: ex. setup script to install GPU driver
+    validations:
+      required: true
+
+  - type: input
+    id: justification
+    attributes:
+      label: so that I can
+      description: Justification must be short and concise
+      placeholder: ex. enable GPU
+    validations:
+      required: true
+
+  - type: textarea
+    id: linked
+    attributes:
+      label: Linked Issues
+      description: Pasted any linked issues if available
+      placeholder: ex. https://github.com/<repo>/issues/0
+    validations:
+      required: false

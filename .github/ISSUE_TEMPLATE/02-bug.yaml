@@ -1,0 +1,54 @@
+name: Bug
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug", "new triage"]
+assignees:
+  - octocat
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Provide version or tag on where this bug is observed
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Bug Description
+      description: Describe your bug in details. Provide screenshot or log files if available.
+      placeholder: ex. executed command didn't show expected output. No option to see the progress.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Provide steps on how to reproduce this bug
+      placeholder: |
+        ex.
+        1. Execute command 'run'
+        2. Check output
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: Provide your description on the expected output
+      placeholder: ex. command should show the verbose output
+    validations:
+      required: true
+
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation
+      description: Provide your recommendations or workarounds if available
+      placeholder: ex. Add option to show verbose output 
+    validations:
+      required: true
