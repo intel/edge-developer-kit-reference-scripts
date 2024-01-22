@@ -1,3 +1,3 @@
-# 12th Gen Intel® Processor - Alder Lake-N
+# Intel® Processor (Products formerly Alder Lake-N)
 
-12th Gen Intel® Processor - Alder Lake-N
+Intel® Processor (Products formerly Alder Lake-N)
