@@ -3,17 +3,6 @@ description: "I am initiating a new user story"
 title: '[User Story]'
 labels: ["user story"]
 body:
-- type: input
-  attributes:
-    label: Parent Issue
-    description: Enter the link of the parent Github Issue
-    placeholder: https://github.com/intel-sandbox/mv-ai-kit/issues/
-- type: input
-  attributes:
-    label: Module
-    description: Which module will this task falls under
-  validations:
-      required: true
 - type: dropdown
   id: user
   attributes:
