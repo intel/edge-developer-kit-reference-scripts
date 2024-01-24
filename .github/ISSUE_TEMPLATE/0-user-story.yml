@@ -1,0 +1,44 @@
+name: "\U0001F680 New User Story"
+description: "I am initiating a new user story"
+title: '[User Story]'
+labels: ["user story"]
+body:
+- type: input
+  attributes:
+    label: Parent Issue
+    description: Enter the link of the parent Github Issue
+    placeholder: https://github.com/intel-sandbox/mv-ai-kit/issues/
+- type: input
+  attributes:
+    label: Module
+    description: Which module will this task falls under
+  validations:
+      required: true
+- type: dropdown
+  id: user
+  attributes:
+    label: As a
+    description: Who will be use this feature
+    options:
+      - "Contributor: the developer of the repo i.e. CASE CSE"
+      - "OxM: board vendor"
+      - "Developer: consumer that purchase a board and want to proceed with development"
+    multiple: true
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: I want to
+    description: Describe what does the persona wants to accomplish
+    placeholder: define my own code pair
+  validations:
+      required: true
+
+- type: textarea
+  attributes:
+    label: So that
+    description: Describe why the persona needs this feature
+    placeholder: the model can be fine tuned with my own instructions
+  validations:
+      required: true
