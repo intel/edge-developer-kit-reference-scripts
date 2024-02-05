@@ -16,30 +16,9 @@ body:
     description: Which module will this task falls under
   validations:
       required: true
-- type: dropdown
-  id: user
-  attributes:
-    label: As a
-    description: Who will be use this feature
-    options:
-      - "developer: the developer of the tool i.e. CASE CSE"
-      - "user: the user of the tool"
-      - "consumer: the end users that will consume the output of the tool"
-  validations:
-    required: true
-
 - type: textarea
   attributes:
-    label: I want to
-    description: Describe what does the persona wants to accomplish
-    placeholder: define my own code pair
-  validations:
-      required: true
-
-- type: textarea
-  attributes:
-    label: So that
-    description: Describe why the persona needs this feature
-    placeholder: the model can be fine tuned with my own instructions
+    label: Task
+    description: Describe what your code will accomplish
   validations:
       required: true
