@@ -46,6 +46,33 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+install_packages(){
+    local PACKAGES=("$@")
+    local INSTALL_REQUIRED=0
+    for PACKAGE in "${PACKAGES[@]}"; do
+        if ! dpkg -s "$PACKAGE" &> /dev/null; then
+            echo "$PACKAGE is not installed."
+            INSTALL_REQUIRED=1
+        fi
+    done
+    if [ $INSTALL_REQUIRED -eq 1 ]; then
+        sudo -E apt update
+        sudo -E apt install -y "${PACKAGES[@]}"
+    fi
+}
+
+verify_dependencies(){
+    echo -e "# Verifying dependencies"
+    DEPENDENCIES_PACKAGES=(
+        git
+        curl
+        wget
+        clinfo
+    )
+    install_packages "${DEPENDENCIES_PACKAGES[@]}"
+    echo "$S_VALID Dependencies installed";
+}
+
 verify_intel_gpu_package_repo(){
     if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
         echo "Adding Intel GPU repository"
@@ -53,30 +80,43 @@ verify_intel_gpu_package_repo(){
             sudo gpg --dearmor --yes --output /usr/share/keyrings/intel-graphics.gpg
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy/production/2328 unified" | \
             sudo tee /etc/apt/sources.list.d/intel-gpu-jammy.list
-        sudo apt update
+        sudo -E apt update
     fi
 }
 
 verify_igpu_driver(){
     # TODO: verify if same iGPU driver setup can use for dGPU
     echo -e "Verifying iGPU driver"
-    # verify tool
-    if ! clinfo >/dev/null 2>&1; then
-        sudo apt install -y clinfo
-    fi
     
     # verify compute and media runtimes
     if [ -z "$(clinfo | grep 'Driver Version' | awk '{print $NF}')" ]; then
         verify_intel_gpu_package_repo
-        if ! dpkg -s intel-opencl-icd &> /dev/null; then
-            echo "Installing compute and media runtimes"
-            sudo apt install -y \
-                intel-opencl-icd intel-level-zero-gpu level-zero \
-                intel-media-va-driver-non-free libmfx1 libmfxgen1 libvpl2 \
-                libegl-mesa0 libegl1-mesa libegl1-mesa-dev libgbm1 libgl1-mesa-dev libgl1-mesa-dri \
-                libglapi-mesa libgles2-mesa-dev libglx-mesa0 libigdgmm12 libxatracker2 mesa-va-drivers \
-                mesa-vdpau-drivers mesa-vulkan-drivers va-driver-all vainfo hwinfo clinfo
-        fi
+        IGPU_PACKAGES=(
+            intel-opencl-icd
+            intel-level-zero-gpu
+            level-zero
+            intel-media-va-driver-non-free
+            libmfx1
+            libmfxgen1
+            libvpl2
+            libegl-mesa0
+            libegl1-mesa
+            libegl1-mesa-dev
+            libgbm1
+            libgl1-mesa-dev
+            libgl1-mesa-dri
+            libglapi-mesa
+            libgles2-mesa-dev
+            libglx-mesa0
+            libigdgmm12
+            libxatracker2
+            mesa-va-drivers
+            mesa-vdpau-drivers
+            mesa-vulkan-drivers
+            vainfo
+            hwinfo
+        )
+        install_packages "${IGPU_PACKAGES[@]}"
         if ! id -nG "$USER" | grep -q -w '\<video\>'; then
             echo "Adding current user to 'video' group"
             sudo usermod -aG video $USER
@@ -97,16 +137,16 @@ verify_latest_hwe_kernel(){
     
     if [ -z "$LATEST_KERNEL_INSTALLED" ]; then
         echo "Installing latest HWE kernel"
-        sudo apt update
-        sudo apt install -y linux-generic-hwe-$OS_VERSION
+        HWE_KERNEL_PACKAGES=(linux-generic-hwe-$OS_VERSION)
+        install_packages "${HWE_KERNEL_PACKAGES[@]}"
         echo "System reboot is required. Re-run the script after reboot"
         exit 0
     fi
     if [ "$CURRENT_KERNEL_VERSION" != "$HWE_KERNEL_VERSION_LATEST" ]; then
         if [ "$HWE_KERNEL_VERSION_INSTALLED" != "$HWE_KERNEL_VERSION_LATEST" ]; then
             echo "Upgrading latest HWE kernel"
-            sudo apt update
-            sudo apt install -y linux-generic-hwe-$OS_VERSION
+            HWE_KERNEL_PACKAGES=(linux-generic-hwe-$OS_VERSION)
+            install_packages "${HWE_KERNEL_PACKAGES[@]}"
         else
             echo "Installed HWE kernel version: $HWE_KERNEL_VERSION_INSTALLED"
             echo "Running kernel version: $CURRENT_KERNEL_VERSION"
@@ -118,7 +158,7 @@ verify_latest_hwe_kernel(){
 
 # verify platform
 verify_platform() {
-    echo -e "# Verifying platform"
+    echo -e "\n# Verifying platform"
     CPU_MODEL=$(cat /proc/cpuinfo | grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
     echo "- CPU model: $CPU_MODEL"
 }
@@ -267,6 +307,7 @@ EOF
 }
 
 setup() {
+    verify_dependencies
     verify_platform
     verify_gpu
     verify_configuration
