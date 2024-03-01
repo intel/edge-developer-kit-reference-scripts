@@ -8,9 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="22.04"
-KERNEL_VERSION="6.5.0"
-KERNEL_VERSION_GREATER=1
-GPU_DRIVER_VERSION="n/a"
+KERNEL_PACKAGE_NAME="linux-image-generic-hwe-22.04"
 
 # symbol
 S_VALID="✓"
@@ -26,8 +24,11 @@ install_packages(){
     local PACKAGES=("$@")
     local INSTALL_REQUIRED=0
     for PACKAGE in "${PACKAGES[@]}"; do
-        if ! dpkg -s "$PACKAGE" &> /dev/null; then
-            echo "$PACKAGE is not installed."
+        INSTALLED_VERSION=$(dpkg-query -W -f='${Version}' "$PACKAGE" 2>/dev/null || true)
+        LATEST_VERSION=$(apt-cache policy "$PACKAGE" | grep Candidate | awk '{print $2}')
+        
+        if [ -z "$INSTALLED_VERSION" ] || [ "$INSTALLED_VERSION" != "$LATEST_VERSION" ]; then
+            echo "$PACKAGE is not installed or not the latest version."
             INSTALL_REQUIRED=1
         fi
     done
@@ -47,32 +48,45 @@ verify_dependencies(){
         gpg-agent
     )
     install_packages "${DEPENDENCIES_PACKAGES[@]}"
-    echo "$S_VALID Dependencies installed";
+    echo "$S_VALID Dependencies installed"
 }
 
+verify_kernel_package() {
+    echo -e "Verifying kernel package"
+    LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
+    CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
+    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "$LATEST_KERNEL_VERSION[^ ]*" | awk '{print $3}' | tr '-' '.')
 
-verify_latest_hwe_kernel(){
-    echo -e "Verifying latest HWE kernel"
-    LATEST_KERNEL_INSTALLED=$(apt list --installed 2>/dev/null | grep linux-image-generic-hwe | awk -F/ '{print $2}')
-    HWE_KERNEL_VERSION_INSTALLED=$(apt list --installed linux-image-generic-hwe-$OS_VERSION 2>/dev/null | awk '/linux-image-generic-hwe/ {print $2}' | cut -d'-' -f4 | awk -F'.' '{print $1"."$2"."$3}' | sort -V | tail -n 1)
-    HWE_KERNEL_VERSION_LATEST=$(apt list -a linux-image-generic-hwe-$OS_VERSION 2>/dev/null | grep -oE "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)" | sort -V | tail -n 1 | awk -F'.' '{print $1"."$2"."$3}')
+    # extract flavour name
+    KERNEL_FLAVOUR=""
+    if [[ $KERNEL_PACKAGE_NAME == *"generic"* ]]; then
+        KERNEL_FLAVOUR="generic"
+    elif [[ $KERNEL_PACKAGE_NAME == *"oem"* ]]; then
+        KERNEL_FLAVOUR="oem"
+    elif [[ $KERNEL_PACKAGE_NAME == *"intel-iotg"* ]]; then
+        KERNEL_FLAVOUR="intel-iotg"
+    fi
 
     if [ -z "$LATEST_KERNEL_INSTALLED" ]; then
-        echo "Installing latest HWE kernel"
-        HWE_KERNEL_PACKAGES=(linux-generic-hwe-$OS_VERSION)
-        install_packages "${HWE_KERNEL_PACKAGES[@]}"
-        echo "System reboot is required. Re-run the script after reboot"
-        exit 0
+        echo "Installing latest '${KERNEL_PACKAGE_NAME}' kernel"
+        KERNEL_PACKAGES=("${KERNEL_PACKAGE_NAME}")
+        install_packages "${KERNEL_PACKAGES[@]}"
     fi
-    if [ "$CURRENT_KERNEL_VERSION" != "$HWE_KERNEL_VERSION_LATEST" ]; then
-        if [ "$HWE_KERNEL_VERSION_INSTALLED" != "$HWE_KERNEL_VERSION_LATEST" ]; then
-            echo "Upgrading latest HWE kernel"
-            HWE_KERNEL_PACKAGES=(linux-generic-hwe-$OS_VERSION)
-            install_packages "${HWE_KERNEL_PACKAGES[@]}"
-        else
-            echo "Installed HWE kernel version: $HWE_KERNEL_VERSION_INSTALLED"
-            echo "Running kernel version: $CURRENT_KERNEL_VERSION"
+    if [[ ! "$LATEST_KERNEL_VERSION" == *"$CURRENT_KERNEL_VERSION_REVISION"* ]]; then
+        if dpkg -l | grep -q 'linux-image.*generic$' && [ "$KERNEL_FLAVOUR" != "generic" ]; then
+            echo "Removing generic kernel"
+            sudo apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
+            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
+        elif dpkg -l | grep -q 'linux-image.*iotg$' && [ "$KERNEL_FLAVOUR" != "intel-iotg" ]; then
+            echo "Removing Intel IoT kernel"
+            sudo apt remove -y --auto-remove linux-image-intel-iotg
+            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
+        elif dpkg -l | grep -q 'linux-image.*oem$' && [ "$KERNEL_FLAVOUR" != "oem" ]; then
+            echo "Removing OEM kernel"
+            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
         fi
+        echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
+        echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
         echo "System reboot is required. Re-run the script after reboot"
         exit 0
     fi
@@ -182,23 +196,21 @@ verify_os() {
     echo "$S_VALID OS version: $CURRENT_OS_ID $CURRENT_OS_VERSION"
 }
 
-# verify kernel
 verify_kernel() {
     echo -e "\n# Verifying kernel version"
     CURRENT_KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-    if [ $KERNEL_VERSION_GREATER -eq 1 ]; then
-        if [[ "$(printf '%s\n' "$KERNEL_VERSION" "$CURRENT_KERNEL_VERSION" | sort -V | head -n1)" != "$KERNEL_VERSION" ]]; then
-            verify_latest_hwe_kernel
-        fi
+    CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
+    CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
+    
+    if [[ ! -z "$KERNEL_PACKAGE_NAME" ]]; then
+        verify_kernel_package
     else
-        if [ "$KERNEL_VERSION" != "$CURRENT_KERNEL_VERSION" ]; then
-            verify_latest_hwe_kernel
-        fi
+        echo "Error: Custom build kernel not yet supported."
+        exit 1
     fi
-    echo "$S_VALID Kernel version: $CURRENT_KERNEL_VERSION"
+    echo "$S_VALID Kernel version: `uname -r`"
 }
 
-# verify drivers
 verify_drivers() {
     echo -e "\n# Verifying drivers"
     if [ $DGPU -ge 2 ]; then
@@ -219,7 +231,6 @@ setup() {
     verify_dependencies
     verify_platform
     verify_gpu
-
     verify_os
     verify_kernel
     verify_drivers

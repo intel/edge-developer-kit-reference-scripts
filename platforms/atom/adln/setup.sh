@@ -8,28 +8,14 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="22.04"
-KERNEL_VERSION="6.5.0"
-KERNEL_VERSION_GREATER=1
-GPU_DRIVER_VERSION="n/a"
-FEATURE_CAM_D3=0
-FEATURE_CAM_LEOPARD=0
-FEATURE_CAM_INNODISK=0
+# KERNEL_PACKAGE_NAME="linux-image-generic-hwe-22.04"
+# KERNEL_PACKAGE_NAME="linux-image-oem-22.04d"
+KERNEL_PACKAGE_NAME="linux-image-intel-iotg"
+# KERNEL_PACKAGE_NAME="linux-image-6.5.0-1009-oem"
 
 # symbol
 S_VALID="✓"
 S_INVALID="✗"
-
-# whiptail
-export NEWT_COLORS='
-root=,gray
-window=,lightgray
-listbox=,gray
-textbox=black,lightgray
-checkbox=,gray
-title=black,lightgray
-actcheckbox=,black
-button=,black
-'
 
 # verify current user
 if [ "$EUID" -eq 0 ]; then
@@ -50,8 +36,11 @@ install_packages(){
     local PACKAGES=("$@")
     local INSTALL_REQUIRED=0
     for PACKAGE in "${PACKAGES[@]}"; do
-        if ! dpkg -s "$PACKAGE" &> /dev/null; then
-            echo "$PACKAGE is not installed."
+        INSTALLED_VERSION=$(dpkg-query -W -f='${Version}' "$PACKAGE" 2>/dev/null || true)
+        LATEST_VERSION=$(apt-cache policy "$PACKAGE" | grep Candidate | awk '{print $2}')
+        
+        if [ -z "$INSTALLED_VERSION" ] || [ "$INSTALLED_VERSION" != "$LATEST_VERSION" ]; then
+            echo "$PACKAGE is not installed or not the latest version."
             INSTALL_REQUIRED=1
         fi
     done
@@ -70,7 +59,7 @@ verify_dependencies(){
         clinfo
     )
     install_packages "${DEPENDENCIES_PACKAGES[@]}"
-    echo "$S_VALID Dependencies installed";
+    echo "$S_VALID Dependencies installed"
 }
 
 verify_intel_gpu_package_repo(){
@@ -126,44 +115,55 @@ verify_igpu_driver(){
             sudo usermod -aG render $USER
         fi
     fi
-
 }
 
-verify_latest_hwe_kernel(){
-    echo -e "Verifying latest HWE kernel"
-    LATEST_KERNEL_INSTALLED=$(apt list --installed 2>/dev/null | grep linux-image-generic-hwe | awk -F/ '{print $2}')
-    HWE_KERNEL_VERSION_INSTALLED=$(apt list --installed linux-image-generic-hwe-$OS_VERSION 2>/dev/null | awk '/linux-image-generic-hwe/ {print $2}' | cut -d'-' -f4 | awk -F'.' '{print $1"."$2"."$3}' | sort -V | tail -n 1)
-    HWE_KERNEL_VERSION_LATEST=$(apt list -a linux-image-generic-hwe-$OS_VERSION 2>/dev/null | grep -oE "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)" | sort -V | tail -n 1 | awk -F'.' '{print $1"."$2"."$3}')
-    
+verify_kernel_package() {
+    echo -e "Verifying kernel package"
+    LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
+    CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
+    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "$LATEST_KERNEL_VERSION[^ ]*" | awk '{print $3}' | tr '-' '.')
+
+    # extract flavour name
+    KERNEL_FLAVOUR=""
+    if [[ $KERNEL_PACKAGE_NAME == *"generic"* ]]; then
+        KERNEL_FLAVOUR="generic"
+    elif [[ $KERNEL_PACKAGE_NAME == *"oem"* ]]; then
+        KERNEL_FLAVOUR="oem"
+    elif [[ $KERNEL_PACKAGE_NAME == *"intel-iotg"* ]]; then
+        KERNEL_FLAVOUR="intel-iotg"
+    fi
+
     if [ -z "$LATEST_KERNEL_INSTALLED" ]; then
-        echo "Installing latest HWE kernel"
-        HWE_KERNEL_PACKAGES=(linux-generic-hwe-$OS_VERSION)
-        install_packages "${HWE_KERNEL_PACKAGES[@]}"
-        echo "System reboot is required. Re-run the script after reboot"
-        exit 0
+        echo "Installing latest '${KERNEL_PACKAGE_NAME}' kernel"
+        KERNEL_PACKAGES=("${KERNEL_PACKAGE_NAME}")
+        install_packages "${KERNEL_PACKAGES[@]}"
     fi
-    if [ "$CURRENT_KERNEL_VERSION" != "$HWE_KERNEL_VERSION_LATEST" ]; then
-        if [ "$HWE_KERNEL_VERSION_INSTALLED" != "$HWE_KERNEL_VERSION_LATEST" ]; then
-            echo "Upgrading latest HWE kernel"
-            HWE_KERNEL_PACKAGES=(linux-generic-hwe-$OS_VERSION)
-            install_packages "${HWE_KERNEL_PACKAGES[@]}"
-        else
-            echo "Installed HWE kernel version: $HWE_KERNEL_VERSION_INSTALLED"
-            echo "Running kernel version: $CURRENT_KERNEL_VERSION"
+    if [[ ! "$LATEST_KERNEL_VERSION" == *"$CURRENT_KERNEL_VERSION_REVISION"* ]]; then
+        if dpkg -l | grep -q 'linux-image.*generic$' && [ "$KERNEL_FLAVOUR" != "generic" ]; then
+            echo "Removing generic kernel"
+            sudo apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
+            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
+        elif dpkg -l | grep -q 'linux-image.*iotg$' && [ "$KERNEL_FLAVOUR" != "intel-iotg" ]; then
+            echo "Removing Intel IoT kernel"
+            sudo apt remove -y --auto-remove linux-image-intel-iotg
+            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
+        elif dpkg -l | grep -q 'linux-image.*oem$' && [ "$KERNEL_FLAVOUR" != "oem" ]; then
+            echo "Removing OEM kernel"
+            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
         fi
+        echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
+        echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
         echo "System reboot is required. Re-run the script after reboot"
         exit 0
     fi
 }
 
-# verify platform
 verify_platform() {
     echo -e "\n# Verifying platform"
     CPU_MODEL=$(cat /proc/cpuinfo | grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
     echo "- CPU model: $CPU_MODEL"
 }
 
-# verify gpu
 verify_gpu() {
     echo -e "\n# Verifying GPU"
     DGPU="$(lspci | grep VGA | grep Intel | wc -l)"
@@ -192,7 +192,6 @@ verify_gpu() {
     echo -e "$GPU_STAT_LABEL"
 }
 
-# verify operating system
 verify_os() {
     echo -e "\n# Verifying operating system"
     if [ ! -e /etc/os-release ]; then
@@ -208,25 +207,22 @@ verify_os() {
     echo "$S_VALID OS version: $CURRENT_OS_ID $CURRENT_OS_VERSION"
 }
 
-# verify kernel
 verify_kernel() {
-    # TODO: option to install kernel via verify_custom_build_kernel
-    # TODO: option to install kernel via verify_latest_intel_repo_kernel
     echo -e "\n# Verifying kernel version"
     CURRENT_KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-    if [ $KERNEL_VERSION_GREATER -eq 1 ]; then
-        if [[ "$(printf '%s\n' "$KERNEL_VERSION" "$CURRENT_KERNEL_VERSION" | sort -V | head -n1)" != "$KERNEL_VERSION" ]]; then
-            verify_latest_hwe_kernel
-        fi
+    CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
+    CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
+    
+    if [[ ! -z "$KERNEL_PACKAGE_NAME" ]]; then
+        verify_kernel_package
     else
-        if [ "$KERNEL_VERSION" != "$CURRENT_KERNEL_VERSION" ]; then
-            verify_latest_hwe_kernel
-        fi
+        # TODO: option to install kernel via verify_custom_build_kernel
+        echo "Error: Custom build kernel not yet supported."
+        exit 1
     fi
-    echo "$S_VALID Kernel version: $CURRENT_KERNEL_VERSION"
+    echo "$S_VALID Kernel version: `uname -r`"
 }
 
-# verify drivers
 verify_drivers() {
     echo -e "\n# Verifying drivers"
     if [ $DGPU -ge 2 ]; then
@@ -244,79 +240,13 @@ verify_drivers() {
     echo "$S_VALID Intel GPU Drivers: $GPU_DRIVER_VERSION"
 }
 
-# verify features
-verify_features() {
-    echo -e "\n# Verifying features"
-    if [ $FEATURE_CAM_D3 -eq 1 ]; then
-        # TODO: verify_cam_d3 for supported platform
-        echo -e "Verifying D3 AR0234"
-    fi
-    if [ $FEATURE_CAM_LEOPARD -eq 1 ]; then
-        # TODO: verify_cam_leopard for supported platform
-        echo -e "Verifying Leopard IMX415-MIPI-081H"
-    fi
-    if [ $FEATURE_CAM_INNODISK -eq 1 ]; then
-        # TODO: verify_cam_innodisk for supported platform
-        echo -e "Verifying Innodisk A R0330"
-    fi
-}
-
-
-verify_configuration() {
-
-DESCRIPTION=$(cat <<EOF
-\nPlatform:
-- CPU model: $CPU_MODEL
-
-Graphic Processing Unit (GPU):
-$GPU_STAT_LABEL
-
-Select optional features:
-EOF
-)
-    OPTIONS=(
-        "FEATURE_CAM_D3" "D3 AR0234 " OFF
-        "FEATURE_CAM_LEOPARD" "Leopard IMX415-MIPI-081H " OFF
-        "FEATURE_CAM_INNODISK" "Innodisk A R0330 " OFF
-    )
-
-    SELECTED_OPTIONS=$(
-        whiptail --title "Platform Configurations" \
-        --separate-output \
-        --checklist \
-        "$DESCRIPTION" \
-        19 65 3 \
-        "${OPTIONS[@]}" \
-        3>&1 1>&2 2>&3)
-
-    if echo "$SELECTED_OPTIONS" | grep -q "FEATURE_CAM_D3"; then
-        FEATURE_CAM_D3=1
-    fi
-    if echo "$SELECTED_OPTIONS" | grep -q "FEATURE_CAM_LEOPARD"; then
-        FEATURE_CAM_LEOPARD=1
-    fi
-    if echo "$SELECTED_OPTIONS" | grep -q "FEATURE_CAM_INNODISK"; then
-        FEATURE_CAM_INNODISK=1
-    fi
-
-    # verify gpu requirement
-    if [ "$IGPU" -lt 1 ]; then
-        echo "Error: GPU is not exist"
-        exit 1
-    fi
-}
-
 setup() {
     verify_dependencies
     verify_platform
     verify_gpu
-    verify_configuration
-
     verify_os
     verify_kernel
     verify_drivers
-
-    verify_features
 
     echo -e "\n# Status"
     echo "$S_VALID Platform configured"
