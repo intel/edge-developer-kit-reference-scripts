@@ -7,14 +7,11 @@ Intel® Processor (Products formerly Alder Lake-N)
 #### Validated Hardware
 - [AAEON UP Squared Pro 7000 (UPN-ADLNI3-A10-1664)](https://www.aaeon.com/en/p/up-board-up-squared-pro-7000)
 
-#### Optional Hardware
-- [D3 AR0234 Camera](https://www.d3engineering.com/product/ar0234-medium-fov-samtec-mipi-unsealed/)
-
 ## Quick Start
 
 ### 1. Install operating system
 
-Install latest [Ubuntu 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop) if needed.
+Install latest [Ubuntu 22.04 LTS Desktop for Intel IoT platforms](https://cdimage.ubuntu.com/releases/jammy/release/inteliot/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop) if needed.
 
 ### 2. Download scripts
 
@@ -39,6 +36,11 @@ This step will configure the basic setup of the platform. Make sure all of the r
 ```bash
 ./setup.sh
 ```
+
+During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+
+> ✓ Platform configured
+
 
 ## Next Steps
 
