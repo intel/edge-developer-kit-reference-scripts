@@ -8,7 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="22.04"
-KERNEL_PACKAGE_NAME="linux-image-generic-hwe-22.04"
+KERNEL_PACKAGE_NAME="linux-image-intel-iotg"
 
 # symbol
 S_VALID="✓"

@@ -1,6 +1,4 @@
-# Intel® Core™ Processors (Products formerly Raptor Lake)
-
-Intel® Core™ Processors (Products formerly Raptor Lake)
+# Intel® Core™ Processors (Products formerly Raptor Lake-P)
 
 ## Requirement
 ### Validated Hardware
@@ -8,7 +6,7 @@ Intel® Core™ Processors (Products formerly Raptor Lake)
 
 ## Quick Start
 ### 1. Install operating system
-Install latest [Ubuntu 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
+Install latest [Ubuntu 22.04 LTS Desktop for Intel IoT platforms](https://ubuntu.com/download/iot/intel-iot). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
 ### 2. Download scripts
 This step will download all reference scripts from the repository.
@@ -27,6 +25,8 @@ This step will configure the basic setup of the platform. Make sure all of the r
 ```
 ./setup.sh
 ```
+During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+> ✓ Platform configured
 
 ## Next Steps
 Refer to available use cases and examples below
