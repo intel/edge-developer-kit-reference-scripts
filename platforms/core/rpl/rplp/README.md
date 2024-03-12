@@ -1,4 +1,4 @@
-# Intel® Core™ Processors (Products formerly Raptor Lake-P)
+# Intel® Core™ Processors (14th gen) (Products formerly Raptor Lake-P)
 
 ## Requirement
 ### Validated Hardware
