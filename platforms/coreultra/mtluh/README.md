@@ -34,11 +34,12 @@ This step will configure the basic setup of the platform. Make sure all of the r
 ```bash
 ./setup.sh
 ```
+During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+> ✓ Platform configured
 
 ## Next Steps
 
 Refer to available use cases and examples below
 
-1. [OpenVINO](https://docs.openvino.ai/)
-2. [NPU for OpenVINO](https://docs.openvino.ai/2023.3/openvino_docs_install_guides_installing_openvino_from_archive_linux.html)
-3. [Intel® Edge Software Hub](https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/edge-solutions/overview.html) 
+1. [NPU for OpenVINO](https://docs.openvino.ai/2023.3/openvino_docs_install_guides_installing_openvino_from_archive_linux.html)
+2. [Intel® Edge Software Hub](https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/edge-solutions/overview.html) 

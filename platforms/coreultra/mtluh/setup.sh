@@ -221,8 +221,10 @@ verify_npu_driver(){
     echo -e "Verifying NPU drivers"
 
     CURRENT_DIR=$(pwd)
-    VERIFY_NPU=$(sudo dmesg | grep vpu | grep successfully)
-    if [[ $VERIFY_NPU != *'successfully'* ]]; then
+    COMPILER_PKG=$(dpkg-query -l "intel-driver-compiler-npu" 2>/dev/null || true)
+    LEVEL_ZERO_PKG=$(dpkg-query -l "intel-level-zero-npu" 2>/dev/null || true)
+
+    if [[ -z $COMPILER_PKG || -z $LEVEL_ZERO_PKG ]]; then
         echo -e "NPU Driver is not installed. Proceed installing"
         sudo dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu level-zero
         sudo apt install --fix-broken
@@ -246,6 +248,9 @@ verify_npu_driver(){
         fi
         sudo chown user:user /dev/accel/accel0
         sudo chmod g+rw /dev/accel/accel0
+	sudo bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
+	sudo udevadm control --reload-rules
+	sudo udevadm trigger --subsystem-match=accel
     fi
 
 }
@@ -262,11 +267,8 @@ verify_drivers(){
     echo "$S_VALID Intel GPU Drivers: $GPU_DRIVER_VERSION"
 
     verify_npu_driver
-    if [[ $VERIFY_NPU != *'successfully'* ]]; then
-        echo "Error: Failed to install NPU driver"
-        exit 1
-    fi
-    NPU_DRIVER_VERSION="$(sudo dmesg | grep vpu | awk 'NR==3{ print; }' | awk -F " " '{print $5" " $6}')"
+    
+    NPU_DRIVER_VERSION="$(sudo dmesg | grep vpu | awk 'NR==3{ print; }' | awk -F " " '{print $5" "$6" "$7}')"
     echo "$S_VALID Intel NPU Drivers: $NPU_DRIVER_VERSION"
 }
 
