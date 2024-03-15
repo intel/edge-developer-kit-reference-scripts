@@ -17,7 +17,7 @@ git clone https://github.com/intel/edge-developer-kit-reference-scripts
 ### 3. Go to specific setup directory
 This step will redirect user to the current platform setup directory
 ```
-cd edge-developer-kit-reference-scripts/platforms/core/rpl
+cd edge-developer-kit-reference-scripts/platforms/core/rpl/rpls
 ```
 
 ### 4. Run setup script
