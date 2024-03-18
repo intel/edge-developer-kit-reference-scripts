@@ -246,7 +246,7 @@ verify_npu_driver(){
             rm -rf npu_temp
             cd $CURRENT_DIR
         fi
-        sudo chown user:user /dev/accel/accel0
+        sudo chown root:render /dev/accel/accel0
         sudo chmod g+rw /dev/accel/accel0
 	sudo bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
 	sudo udevadm control --reload-rules
