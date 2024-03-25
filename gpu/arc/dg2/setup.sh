@@ -12,7 +12,7 @@ KERNEL_PACKAGE_NAME="linux-image-generic-hwe-22.04"
 
 # symbol
 S_VALID="✓"
-S_INVALID="✗"
+#S_INVALID="✗"
 
 # verify current user
 if [ "$EUID" -eq 0 ]; then
@@ -56,7 +56,7 @@ verify_kernel_package() {
     echo -e "Verifying kernel package"
     LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
     CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
-    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "$LATEST_KERNEL_VERSION[^ ]*" | awk '{print $3}' | tr '-' '.')
+    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "${LATEST_KERNEL_VERSION}[^ ]*" | awk '{print $3}' | tr '-' '.')
 
     # extract flavour name
     KERNEL_FLAVOUR=""
@@ -105,8 +105,8 @@ verify_intel_gpu_package_repo(){
 }
 
 verify_intel_dgpu_package_repo(){
-   arc_repo=$(cat /etc/apt/sources.list.d/intel-gpu-jammy.list | grep "jammy arc")
-   if [ ! $arc_repo]; then
+   arc_repo=$(< /etc/apt/sources.list.d/intel-gpu-jammy.list grep "jammy arc")
+   if [ ! "$arc_repo" ]; then
        echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/graphics/ubuntu jammy arc" | \
            sudo tee /etc/apt/sources.list.d/intel-gpu-jammy.list
        sudo -E apt update
@@ -145,37 +145,37 @@ verify_dgpu_driver(){
     install_packages "${DGPU_PACKAGES[@]}"
     if ! id -nG "$USER" | grep -q -w '\<video\>'; then
         echo "Adding current user to 'video' group"
-        sudo usermod -aG video $USER
+        sudo usermod -aG video "$USER"
     fi
     if ! id -nG "$USER" | grep -q '\<render\>'; then
         echo "Adding current user to 'render' group"
-        sudo usermod -aG render $USER
+        sudo usermod -aG render "$USER"
     fi
 
 }
 # verify platform
 verify_platform() {
     echo -e "\n# Verifying platform"
-    CPU_MODEL=$(cat /proc/cpuinfo | grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
+    CPU_MODEL=$(< /proc/cpuinfo grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
     echo "- CPU model: $CPU_MODEL"
 }
 
 verify_gpu() {
     echo -e "\n# Verifying GPU"
-    DGPU="$(lspci | grep -E 'VGA|DISPLAY' | grep Intel | wc -l)"
+    DGPU="$(lspci | grep -E 'VGA|DISPLAY' | grep Intel -c)"
 
     if [ "$DGPU" -ge 1 ]; then
         if [ ! -e "/dev/dri" ]; then
             IGPU=1
         else
-            IGPU="$(ls /dev/dri | grep 'renderD128' | wc -l)"
+            IGPU="$(find /dev/dri -maxdepth 1 -type c -name 'renderD128*' | wc -l)"
         fi
     fi
     if [ -e "/dev/dri" ]; then
-        IGPU="$(ls /dev/dri | grep 'renderD128' | wc -l)"
+        IGPU="$(find /dev/dri -maxdepth 1 -type c -name 'renderD128*' | wc -l)"
     fi
 
-    if [ $DGPU -ge 2 ]; then
+    if [ "$DGPU" -ge 2 ]; then
         GPU_STAT_LABEL="- iGPU\n- dGPU"
     else
         if [ "$IGPU" -lt 1 ]; then
@@ -209,13 +209,13 @@ verify_kernel() {
     CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
     CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
     
-    if [[ ! -z "$KERNEL_PACKAGE_NAME" ]]; then
+    if [[ -n "$KERNEL_PACKAGE_NAME" ]]; then
         verify_kernel_package
     else
         echo "Error: Custom build kernel not yet supported."
         exit 1
     fi
-    echo "$S_VALID Kernel version: `uname -r`"
+    echo "$S_VALID Kernel version: $(uname -r)"
 }
 
 # verify drivers

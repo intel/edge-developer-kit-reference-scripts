@@ -15,7 +15,7 @@ KERNEL_PACKAGE_NAME="linux-image-intel-iotg"
 
 # symbol
 S_VALID="✓"
-S_INVALID="✗"
+#S_INVALID="✗"
 
 # verify current user
 if [ "$EUID" -eq 0 ]; then
@@ -108,11 +108,11 @@ verify_igpu_driver(){
         install_packages "${IGPU_PACKAGES[@]}"
         if ! id -nG "$USER" | grep -q -w '\<video\>'; then
             echo "Adding current user to 'video' group"
-            sudo usermod -aG video $USER
+            sudo usermod -aG video "$USER"
         fi
         if ! id -nG "$USER" | grep -q '\<render\>'; then
             echo "Adding current user to 'render' group"
-            sudo usermod -aG render $USER
+            sudo usermod -aG render "$USER"
         fi
     fi
 }
@@ -121,7 +121,7 @@ verify_kernel_package() {
     echo -e "Verifying kernel package"
     LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
     CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
-    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "$LATEST_KERNEL_VERSION[^ ]*" | awk '{print $3}' | tr '-' '.')
+    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "${LATEST_KERNEL_VERSION}[^ ]*" | awk '{print $3}' | tr '-' '.')
 
     # extract flavour name
     KERNEL_FLAVOUR=""
@@ -160,26 +160,26 @@ verify_kernel_package() {
 
 verify_platform() {
     echo -e "\n# Verifying platform"
-    CPU_MODEL=$(cat /proc/cpuinfo | grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
+    CPU_MODEL=$(< /proc/cpuinfo grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
     echo "- CPU model: $CPU_MODEL"
 }
 
 verify_gpu() {
     echo -e "\n# Verifying GPU"
-    DGPU="$(lspci | grep VGA | grep Intel | wc -l)"
+    DGPU="$(lspci | grep VGA | grep Intel -c)"
 
     if [ "$DGPU" -ge 1 ]; then
         if [ ! -e "/dev/dri" ]; then
             IGPU=1
         else
-            IGPU="$(ls /dev/dri | grep 'renderD128' | wc -l)"
+            IGPU="$(find /dev/dri -maxdepth 1 -type c -name 'renderD128*' | wc -l)"
         fi
     fi
     if [ -e "/dev/dri" ]; then
-        IGPU="$(ls /dev/dri | grep 'renderD128' | wc -l)"
+        IGPU="$(find /dev/dri -maxdepth 1 -type c -name 'renderD128*' | wc -l)"
     fi
 
-    if [ $DGPU -ge 2 ]; then
+    if [ "$DGPU" -ge 2 ]; then
         GPU_STAT_LABEL="- iGPU\n-dGPU (default)"
         echo kern_upgrade_dgpu
     else
@@ -213,19 +213,19 @@ verify_kernel() {
     CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
     CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
     
-    if [[ ! -z "$KERNEL_PACKAGE_NAME" ]]; then
+    if [[ -n "$KERNEL_PACKAGE_NAME" ]]; then
         verify_kernel_package
     else
         # TODO: option to install kernel via verify_custom_build_kernel
         echo "Error: Custom build kernel not yet supported."
         exit 1
     fi
-    echo "$S_VALID Kernel version: `uname -r`"
+    echo "$S_VALID Kernel version: $(uname -r)"
 }
 
 verify_drivers() {
     echo -e "\n# Verifying drivers"
-    if [ $DGPU -ge 2 ]; then
+    if [ "$DGPU" -ge 2 ]; then
         # TODO: verify_dgpu_driver for supported platform
         echo "Error: dGPU driver is not supported"
         exit 1

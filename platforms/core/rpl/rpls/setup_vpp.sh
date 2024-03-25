@@ -7,7 +7,7 @@ set -e
 
 # symbol
 S_VALID="✓"
-S_INVALID="✗"
+#S_INVALID="✗"
 
 # verify current user
 if [ "$EUID" -eq 0 ]; then
@@ -66,7 +66,7 @@ verify_vpp() {
     cd vpp
     git checkout v24.06-rc0
     make install-dep && make build-release && make install-ext-deps
-    if [ $? != 0 ]; then
+    if ! make install-dep || ! make build-release || ! make install-ext-deps; then
         echo "Error: Failed to build VPP"
         exit 1
     fi
@@ -75,7 +75,7 @@ verify_vpp() {
 
     cd ~/
     ./vpp/build-root/install-vpp-native/vpp/bin/vpp
-    if [ $? == 0 ]; then
+    if ! ./vpp/build-root/install-vpp-native/vpp/bin/vpp; then
         echo "VPP Build Success in ~/vpp/build-root/install-vpp-native/vpp/bin/vpp"
     fi
 }

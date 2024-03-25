@@ -10,7 +10,7 @@ KERNEL_PACKAGE_NAME="linux-image-generic"
 
 # symbol
 S_VALID="✓"
-S_INVALID="✗"
+#S_INVALID="✗"
 
 # verify current user
 if [ "$EUID" -eq 0 ]; then
@@ -53,26 +53,26 @@ verify_dependencies(){
 
 verify_platform() {
     echo -e "\n# Verifying platform"
-    CPU_MODEL=$(cat /proc/cpuinfo | grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
+    CPU_MODEL=$(< /proc/cpuinfo grep -m1 "model name" | cut -d: -f2 | sed 's/^[ \t]*//')
     echo "- CPU model: $CPU_MODEL"
 }
 
 verify_gpu() {
     echo -e "\n# Verifying GPU"
-    DGPU="$(lspci -k | grep -E 'VGA|Display' | wc -l)"
+    DGPU="$(lspci -k | grep -E 'VGA|Display' -c)"
 
     if [ "$DGPU" -ge 1 ]; then
         if [ ! -e "/dev/dri" ]; then
             IGPU=1
         else
-            IGPU="$(ls /dev/dri | grep 'renderD128' | wc -l)"
+            IGPU="$(find /dev/dri -maxdepth 1 -type c -name 'renderD128*' | wc -l )"
         fi
     fi
     if [ -e "/dev/dri" ]; then
-        IGPU="$(ls /dev/dri | grep 'renderD128' | wc -l)"
+        IGPU="$(find /dev/dri -maxdepth 1 -type c -name 'renderD128*' | wc -l)"
     fi
 
-    if [ $DGPU -ge 2 ]; then
+    if [ "$DGPU" -ge 2 ]; then
         GPU_STAT_LABEL="- Flex"
     else
         if [ "$IGPU" -lt 1 ]; then
@@ -103,7 +103,7 @@ verify_kernel_package(){
     echo -e "Verifying kernel package"
     LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
     CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
-    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "$LATEST_KERNEL_VERSION[^ ]*" | awk '{print $3}' | tr '-' '.')
+    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "${LATEST_KERNEL_VERSION}[^ ]*" | awk '{print $3}' | tr '-' '.')
 
     # extract flavour name
     KERNEL_FLAVOUR=""
@@ -146,13 +146,13 @@ verify_kernel(){
     CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
     CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
     
-    if [[ ! -z "$KERNEL_PACKAGE_NAME" ]]; then
+    if [[ -n "$KERNEL_PACKAGE_NAME" ]]; then
         verify_kernel_package
     else
         echo "Error: Custom build kernel not yet supported."
         exit 1
     fi
-    echo "$S_VALID Kernel version: `uname -r`"
+    echo "$S_VALID Kernel version: $(uname -r)"
 
 }
 
@@ -180,38 +180,38 @@ verify_flex_driver(){
         echo "Installing FLEX driver"
         FLEX_PACKAGES=(
             intel-opencl-icd
-	    intel-level-zero-gpu
-	    level-zero
-	    intel-media-va-driver-non-free
-	    libmfx1
-	    libmfxgen1
-	    libvpl2
-	    libegl-mesa0
-	    libegl1-mesa
-	    libegl1-mesa-dev
-	    libgbm1
-	    libgl1-mesa-dev
-	    libgl1-mesa-dri
-	    libglapi-mesa
-	    libgles2-mesa-dev
-	    libglx-mesa0
-	    libigdgmm12
-	    libxatracker2
-	    mesa-va-drivers
-	    mesa-vdpau-drivers
-	    mesa-vulkan-drivers
-	    va-driver-all
-	    vainfo
-            linux-headers-$(uname-r)
-	    flex
+	        intel-level-zero-gpu
+	        level-zero
+	        intel-media-va-driver-non-free
+	        libmfx1
+	        libmfxgen1
+	        libvpl2
+	        libegl-mesa0
+	        libegl1-mesa
+	        libegl1-mesa-dev
+	        libgbm1
+	        libgl1-mesa-dev
+	        libgl1-mesa-dri
+	        libglapi-mesa
+	        libgles2-mesa-dev
+	        libglx-mesa0
+	        libigdgmm12
+	        libxatracker2
+	        mesa-va-drivers
+	        mesa-vdpau-drivers
+	        mesa-vulkan-drivers
+	        va-driver-all
+	        vainfo
+            linux-headers-"$(uname -r)"
+	        flex
             bison
-	    intel-fw-gpu
+	        intel-fw-gpu
             intel-i915-dkms
         )
         install_packages "${FLEX_PACKAGES[@]}"
         if ! id -nG "$USER" | grep -q '\<render\>'; then
             echo "Adding current user to 'render' group"
-            sudo usermod -aG render $USER
+            sudo usermod -aG render "$USER"
         fi
 
         echo "System reboot is required. Re-run the script after reboot"
@@ -228,7 +228,6 @@ verify_drivers(){
         echo "Error: Failed to configure Flex driver"
         exit 1
     fi
-    FLEX_DRIVER_VERSION="$(xpu-smi discovery)"
     echo -e "$S_VALID Intel FLEX Drivers:\n$(xpu-smi discovery)"
 }
 
