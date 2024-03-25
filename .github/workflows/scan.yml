@@ -69,6 +69,11 @@ jobs:
           find . -name .git -type d -prune -o -type f -name \*.sh -print0 |
           xargs -0 -r -n1 shellcheck |
           tee shellcheck.log
+          if [ -s "shellcheck.log" ]; then
+            exit 1
+          else
+            echo "No issues found by ShellCheck" > shellcheck.log
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
