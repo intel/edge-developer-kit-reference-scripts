@@ -38,8 +38,8 @@ pci@0000:00:1f.6  eno1            network        Ethernet Connection (17) I219-L
 ```
 
 ### 3. VPP Config
-Create startup.conf in ~/vpp. Refer sample below
-For more info please refer [Configuring VPP](https://fd.io/docs/vpp/v2101/gettingstarted/users/configuring/)
+Create startup.conf in ~/vpp. Refer to the sample below
+For more info please refer to [Configuring VPP](https://fd.io/docs/vpp/v2101/gettingstarted/users/configuring/)
 
 ```
 unix {
@@ -95,7 +95,7 @@ plugins {
 ```
 
 ### 4. VPP Steps
-For more info please refer [Running VPP](https://s3-docs.fd.io/vpp/24.06/)
+For more info please refer to [Running VPP](https://s3-docs.fd.io/vpp/24.06/)
 
 Run VPP
 ```bash

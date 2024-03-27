@@ -1,6 +1,4 @@
-# Intel® Processor (Products formerly Alder Lake-N)
-
-Intel® Processor (Products formerly Alder Lake-N)
+# Intel® Processor (Products formerly known as Alder Lake-N)
 
 ## Requirements
 
@@ -11,7 +9,7 @@ Intel® Processor (Products formerly Alder Lake-N)
 
 ### 1. Install operating system
 
-Install latest [Ubuntu 22.04 LTS Desktop for Intel IoT platforms](https://cdimage.ubuntu.com/releases/jammy/release/inteliot/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop) if needed.
+Install the latest [Ubuntu* 22.04 LTS Desktop for Intel IoT platforms](https://cdimage.ubuntu.com/releases/jammy/release/inteliot/). Refer to the [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop) if needed.
 
 ### 2. Download scripts
 
@@ -31,7 +29,7 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln
 
 ### 4. Run setup script
 
-This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceed with the step below.
+This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceed to the next step.
 
 ```bash
 ./setup.sh
@@ -44,8 +42,8 @@ During installation, it may ask you to reboot your system. Reboot the system and
 
 ## Next Steps
 
-Refer to available use cases and examples below
+Refer to the available use cases and examples below
 
-1. [OpenVINO](https://docs.openvino.ai/)
+1. [OpenVINO™](https://docs.openvino.ai/)
 2. [Intel® Edge Software Hub](https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/edge-solutions/overview.html) 
 
