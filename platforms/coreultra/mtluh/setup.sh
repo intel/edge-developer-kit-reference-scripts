@@ -235,10 +235,10 @@ verify_npu_driver(){
         else
             mkdir /tmp/npu_temp
             cd /tmp/npu_temp
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-driver-compiler-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-fw-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-level-zero-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/oneapi-src/level-zero/releases/download/v1.10.0/level-zero_1.10.0+u22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-driver-compiler-npu_1.4.0.20240322-8393323322_ubuntu22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-fw-npu_1.4.0.20240322-8393323322_ubuntu22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-level-zero-npu_1.4.0.20240322-8393323322_ubuntu22.04_amd64.deb
+            wget https://github.com/oneapi-src/level-zero/releases/download/v1.16.1/level-zero_1.16.1+u22.04_amd64.deb
 
             sudo dpkg -i ./*.deb
 
