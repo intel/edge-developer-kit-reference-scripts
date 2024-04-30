@@ -2,6 +2,8 @@
 
 This is developer kits best known configurations setup scripts for various kind of Intel platforms and GPUs.
 
+> **Note:** The main branch of this repository contains the latest development version of the project. It may include experimental features, work in progress, or unstable code. If you are looking for the stable production version, please consider checking out the tagged releases.
+
 Based on the platform you are using, select the following to get started:
 
 ## Platform BKC
