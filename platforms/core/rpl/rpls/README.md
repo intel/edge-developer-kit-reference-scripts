@@ -32,4 +32,4 @@ During installation, it may ask you to reboot your system. Reboot the system and
 Refer to the available use cases and examples below
 1. [OpenVINO™](https://docs.openvino.ai/2023.3/home.html)
 2. [Intel® Edge Software Hub](https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/edge-solutions/overview.html)
-3. [Vector Packet Processing](./setup_vpp.md)
+3. [Vector Packet Processing](../../../../usecase/netsec/vpp/setup_vpp.md)
