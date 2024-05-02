@@ -2,12 +2,22 @@
 
 This is developer kits best known configurations setup scripts for various kind of Intel platforms and GPUs.
 
+<<<<<<< HEAD
+=======
+> **Note:** The main branch of this repository contains the latest development version of the project. It may include experimental features, work in progress, or unstable code. If you are looking for the stable production version, please consider checking out the tagged releases.
+
+>>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 Based on the platform you are using, select the following to get started:
 
 ## Platform BKC
 1. [Intel® Processor (Products formerly Alder Lake-N)](platforms/atom/adln#intel-processor-products-formerly-alder-lake-n) 
+<<<<<<< HEAD
 2. [Intel® Core™ Processors (14th gen) (Product formerly Raptor Lake-P)](platforms/core/rpl/rplp#intel-core-processors-products-formerly-raptor-lake-p)
 3. [Intel® Core™ Processors (14th gen) (Product formerly Raptor Lake-S)](platforms/core/rpl/rpls#intel-core-processors-products-formerly-raptor-lake-s)
+=======
+2. [Intel® Core™ Processors (13th gen) (Product formerly Raptor Lake-P)](platforms/core/rpl/rplp#intel-core-processors-products-formerly-raptor-lake-p)
+3. [Intel® Core™ Processors (14th gen) (Product formerly Raptor Lake-S Refresh)](platforms/core/rpl/rpls#intel-core-processors-products-formerly-raptor-lake-s)
+>>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 4. [Intel® Core™ Ultra Processor (Products formerly Meteor Lake-UH)](platforms/coreultra/mtluh#intel-core-ultra-processors-products-formerly-meteor-lake)
 5. [4th Generation Intel® Xeon® Scalable Processors (Products formerly Sapphire Rapids)](platforms/xeon/sprsp#4th-generation-intel-xeon-scalable-processors-products-formerly-sapphire-rapids)
 6. [4th Generation Intel® Xeon® Scalable Processors (Products formerly Sapphire Rapids Edge Enhanced)](platforms/xeon/spree#4th-generation-intel-xeon-scalable-processors-products-formerly-sapphire-rapids-edge-enhanced)
