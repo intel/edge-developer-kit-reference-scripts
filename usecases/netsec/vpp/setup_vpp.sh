@@ -15,6 +15,8 @@ if [ "$EUID" -eq 0 ]; then
     exit 1
 fi
 
+CURRENT_DIR=$(pwd)
+
 install_packages(){
     local PACKAGES=("$@")
     local INSTALL_REQUIRED=0
@@ -38,7 +40,6 @@ verify_dependencies_vpp(){
     DEPENDENCIES_PACKAGES=(
         build-essential
         pkg-config
-        libudev-dev
         yasm
         autoconf
         libtool
@@ -61,62 +62,57 @@ verify_dependencies_vpp(){
 }
 #verify vpp
 verify_vpp() {
-    cd /root/
+    cd ~/
     wget https://packagecloud.io/install/repositories/fdio/release/script.deb.sh --no-check-certificate
     chmod +x script.deb.sh
-    ./script.deb.sh
-    apt install libvppinfra=24.02-release -y
-    apt install vpp=24.02-release -y
-    apt install vpp-plugin-dpdk=24.02-release -y
-    apt install vpp-plugin-core=24.02-release -y
-    cd -
+    sudo -E ./script.deb.sh
+    sudo apt install libvppinfra=24.02-release -y
+    sudo apt install vpp=24.02-release -y
+    sudo apt install vpp-plugin-dpdk=24.02-release -y
+    sudo apt install vpp-plugin-core=24.02-release -y
 }
 
 #verify nasm
 verify_nasm() {
-    cd /root/
+    cd ~/
     wget https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.gz --no-check-certificate
     tar xvf nasm-2.14.02.tar.gz
     cd nasm-2.14.02
     ./configure
     make
-    make install
-    cd -
+    sudo make install
 }
 
 verify_intel_ipsec_mb() {
-    cd /root
+    cd ~/
     git clone https://github.com/01org/intel-ipsec-mb -b v1.5
     cd intel-ipsec-mb
     make
-    make install
-    cd -
+    sudo make install
 }
 
 verify_dpdk() {
-    cd /root
+    cd ~/
     git clone https://dpdk.org/git/dpdk -b v23.11
     cd dpdk
     #git clone git://dpdk.org/dpdk-stable -b v23.11
     #cd dpdk-stable
     CC=gcc meson -Dlibdir=lib -Dexamples=l3fwd,ipsec-secgw -Dc_args=-DRTE_LIBRTE_ICE_16BYTE_RX_DESC,-DCONFIG_RTE_LIBRTE_PMD_QAT_SYM --default-library=static build
     ninja -C build
-    cd -
 }
 
 verify_trex() {
-    cd /opt
+    cd ~/
     git clone https://github.com/cisco-system-traffic-generator/trex-core -b v3.04
     cd trex-core/linux_dpdk
     cp /lib/x86_64-linux-gnu/libstdc++.so.6 ../scripts/so/x86_64/.
     ./b configure --no-mlx=NO_MLX 
     ./b
-    cd -
 }
 copy_config_files() {
-    cp ./trex/trex_cfg.yaml /etc
-    cp ./trex/*.py /opt/trex-core/scripts/stl/
-    cp ./vpp/* /root
+    cp "$CURRENT_DIR"/trex/*.py ~/trex-core/scripts/stl/
+    sudo cp "$CURRENT_DIR"/trex/trex_cfg.yaml /root/
+    sudo cp "$CURRENT_DIR"/vpp/* /root
 }
 
 setup() {
