@@ -214,9 +214,6 @@ verify_igpu_driver(){
         echo "System reboot is required. Re-run the script after reboot"
         exit 0
     fi
-<<<<<<< HEAD
-
-=======
 }
 
 verify_compute_runtime(){
@@ -251,7 +248,6 @@ verify_compute_runtime(){
     echo -e "Cleaning up /tmp/neo_temp folder after installation"
     rm -rf neo_temp
     cd "$CURRENT_DIR"
->>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 }
 
 verify_npu_driver(){
@@ -272,17 +268,10 @@ verify_npu_driver(){
         else
             mkdir /tmp/npu_temp
             cd /tmp/npu_temp
-<<<<<<< HEAD
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-driver-compiler-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-fw-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-level-zero-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/oneapi-src/level-zero/releases/download/v1.10.0/level-zero_1.10.0+u22.04_amd64.deb
-=======
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-driver-compiler-npu_1.2.0.20240404-8553879914_ubuntu22.04_amd64.deb
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-fw-npu_1.2.0.20240404-8553879914_ubuntu22.04_amd64.deb
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-level-zero-npu_1.2.0.20240404-8553879914_ubuntu22.04_amd64.deb
             wget https://github.com/oneapi-src/level-zero/releases/download/v1.16.1/level-zero_1.16.1+u22.04_amd64.deb
->>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 
             sudo dpkg -i ./*.deb
 
@@ -296,10 +285,6 @@ verify_npu_driver(){
 	sudo udevadm control --reload-rules
 	sudo udevadm trigger --subsystem-match=accel
     fi
-<<<<<<< HEAD
-
-=======
->>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 }
 
 
@@ -324,10 +309,7 @@ setup(){
     verify_dependencies
     verify_platform
     verify_gpu
-<<<<<<< HEAD
-=======
     verify_compute_runtime
->>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
     verify_os
     verify_kernel
     verify_drivers
