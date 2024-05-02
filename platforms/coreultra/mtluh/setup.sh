@@ -214,7 +214,44 @@ verify_igpu_driver(){
         echo "System reboot is required. Re-run the script after reboot"
         exit 0
     fi
+<<<<<<< HEAD
 
+=======
+}
+
+verify_compute_runtime(){
+    COMPUTE_RUNTIME_VER="24.13.29138.7"
+    echo -e "\n# Verifying Intel(R) Compute Runtime drivers"
+
+    echo -e "Install Intel(R) Compute Runtime drivers version: $COMPUTE_RUNTIME_VER"
+    if [ -d /tmp/neo_temp ];then
+        echo -e "Found existing folder in path /tmp/neo_temp. Removing the folder"
+        rm -rf /tmp/neo_temp
+    fi
+
+    echo -e "Downloading compute runtime packages"
+    mkdir -p /tmp/neo_temp
+    cd /tmp/neo_temp
+    wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.16510.2/intel-igc-core_1.0.16510.2_amd64.deb
+    wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.16510.2/intel-igc-opencl_1.0.16510.2_amd64.deb
+    wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-level-zero-gpu-dbgsym_1.3.29138.7_amd64.ddeb
+    wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-level-zero-gpu_1.3.29138.7_amd64.deb
+    wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-opencl-icd-dbgsym_24.13.29138.7_amd64.ddeb
+    wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/intel-opencl-icd_24.13.29138.7_amd64.deb
+    wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/libigdgmm12_22.3.18_amd64.deb
+
+    echo -e "Verify sha256 sums for packages"
+    wget https://github.com/intel/compute-runtime/releases/download/24.13.29138.7/ww13.sum
+    sha256sum -c ww13.sum
+
+    echo -e "\nInstalling compute runtime as root"
+    sudo dpkg -i ./*.deb
+
+    cd ..
+    echo -e "Cleaning up /tmp/neo_temp folder after installation"
+    rm -rf neo_temp
+    cd "$CURRENT_DIR"
+>>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 }
 
 verify_npu_driver(){
@@ -235,10 +272,17 @@ verify_npu_driver(){
         else
             mkdir /tmp/npu_temp
             cd /tmp/npu_temp
+<<<<<<< HEAD
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-driver-compiler-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-fw-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-level-zero-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
             wget https://github.com/oneapi-src/level-zero/releases/download/v1.10.0/level-zero_1.10.0+u22.04_amd64.deb
+=======
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-driver-compiler-npu_1.2.0.20240404-8553879914_ubuntu22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-fw-npu_1.2.0.20240404-8553879914_ubuntu22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.2.0/intel-level-zero-npu_1.2.0.20240404-8553879914_ubuntu22.04_amd64.deb
+            wget https://github.com/oneapi-src/level-zero/releases/download/v1.16.1/level-zero_1.16.1+u22.04_amd64.deb
+>>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 
             sudo dpkg -i ./*.deb
 
@@ -252,7 +296,10 @@ verify_npu_driver(){
 	sudo udevadm control --reload-rules
 	sudo udevadm trigger --subsystem-match=accel
     fi
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
 }
 
 
@@ -277,6 +324,10 @@ setup(){
     verify_dependencies
     verify_platform
     verify_gpu
+<<<<<<< HEAD
+=======
+    verify_compute_runtime
+>>>>>>> 3f1130f4249038d9234da5d8b622cdb68df1433c
     verify_os
     verify_kernel
     verify_drivers
