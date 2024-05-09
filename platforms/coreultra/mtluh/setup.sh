@@ -309,10 +309,10 @@ setup(){
     verify_dependencies
     verify_platform
     verify_gpu
-    verify_compute_runtime
     verify_os
     verify_kernel
     verify_drivers
+    verify_compute_runtime
 
     echo -e "\n# Status"
     echo "$S_VALID Platform configured"
