@@ -1,4 +1,4 @@
-# Intel® Core™ Processors (14th gen) (Products formerly known as Raptor Lake-S Refresh)
+# Intel® Core™ Processors (14th gen) (Products formerly known as Raptor Lake-S )
 
 ## Requirement
 ### Validated Hardware
