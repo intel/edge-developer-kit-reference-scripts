@@ -31,8 +31,11 @@ body:
     placeholder: the model can be fine tuned with my own instructions
   validations:
       required: true
+
+- type: textarea
+  attributes:
+    label: User flow
+    description: Describe the step that the persona takes to use this feature
 - type: textarea
   attributes:
     label: Additional Context
-    description: Add any additional information here
-    placeholder: Additional Context
