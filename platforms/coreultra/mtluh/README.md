@@ -24,7 +24,7 @@ git clone https://github.com/intel/edge-developer-kit-reference-scripts
 This step will redirect user to the current platform setup directory
 
 ```bash
-cd edge-developer-kit-reference-scripts/platforms/coreultra/mtl
+cd edge-developer-kit-reference-scripts/platforms/coreultra/mtluh
 ```
 
 ### 4. Run setup script
