@@ -159,8 +159,8 @@ verify_kernel(){
 verify_repo_flex_driver(){
     if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
         echo "Adding Intel Flex DGPU repository"
-        wget -qO - https://repositories.intel.com/graphics/intel-graphics.key | \
-            sudo gpg --dearmor --yes --output /usr/share/keyrings/intel-graphics.gpg
+        wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+            sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy unified" | \
             sudo tee /etc/apt/sources.list.d/intel-gpu-jammy.list
         sudo apt update
