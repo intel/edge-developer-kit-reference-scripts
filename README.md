@@ -6,7 +6,7 @@ This is developer kits best known configurations setup scripts for various kind 
 > 
 Based on the platform you are using, select the following to get started:
 
-## Platform BKC
+## Platform
 1. [Intel® Processor (Products formerly Alder Lake-N)](platforms/atom/adln#intel-processor-products-formerly-alder-lake-n) 
 2. [Intel® Core™ Processors (13th gen) (Product formerly Raptor Lake-P)](platforms/core/rpl/rplp#intel-core-processors-products-formerly-raptor-lake-p)
 3. [Intel® Core™ Processors (14th gen) (Product formerly Raptor Lake-S Refresh)](platforms/core/rpl/rpls#intel-core-processors-products-formerly-raptor-lake-s)
