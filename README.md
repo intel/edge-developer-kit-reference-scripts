@@ -18,5 +18,9 @@ Based on the platform you are using, select the following to get started:
 1. [Intel® Arc™ A-Series Graphics](gpu/arc/dg2#intel-arc-a-series-graphics-products-formerly-alchemist)
 2. [Intel® Data Center GPU Flex Series](gpu/flex/ats#intel-data-center-gpu-flex-series-products-formerly-arctic-sound)
 
+## Use Cases
+1. [Intel® Distribution of OpenVINO™ Toolkit](usecases/openvino/README.md)
+2. [Vector Packet Processing](usecases/netsec/vpp/setup_vpp.md)
+
 ## Disclaimer
 GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.
