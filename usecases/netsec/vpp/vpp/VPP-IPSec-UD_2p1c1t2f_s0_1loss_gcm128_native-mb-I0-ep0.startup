@@ -11,7 +11,7 @@ cpu {
 	main-core 0
 	corelist-workers 2,1
 }
-buffers { buffers-per-numa 5555 }
+buffers { buffers-per-numa 11110 }
 
 dpdk {
 	socket-mem 2048  
@@ -33,4 +33,6 @@ dpdk {
 	}
 	no-multi-seg
 }
+memory { main-heap-page-size 2M
+main-heap-size 2G}
 statseg { size 2G }
