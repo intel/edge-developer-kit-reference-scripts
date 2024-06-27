@@ -2,7 +2,8 @@
 
 ## Requirement
 ### Validated Hardware
-- IEI Tank XM811 with Intel® Core™ i9 processor 14900T
+- [IEI* TANK-XM811AI-RPL AIoT Developer Kit](https://www.ieiworld.com/en/product-ns/model.php?II=8)
+- [ASRock Industrial* iEPF-9030S-EW4](https://www.asrockind.com/iEPF-9030S-EW4)
 
 ## Quick Start
 ### 1. Install operating system

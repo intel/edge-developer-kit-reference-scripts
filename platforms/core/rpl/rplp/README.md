@@ -2,7 +2,7 @@
 
 ## Requirement
 ### Validated Hardware
-- [Seavo Intel Rock Island Reference Design Board](https://www.seavo.com/en/products/products-info_itemid_482.html)
+- [Seavo* RKI-V60 AIoT Developer Kit](https://www.seavo.com/en/rki_devkit/)
 
 ## Quick Start
 ### 1. Install operating system
