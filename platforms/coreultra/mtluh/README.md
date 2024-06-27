@@ -3,7 +3,10 @@
 ## Requirements
 
 #### Validated Hardware
-- [Seavo McLaren Island AIoT Developer Kit](https://www.seavo.com/en/pir_devkit/)
+- [Seavo* PIR-1014A AIoT Developer Kit](https://www.seavo.com/en/pir_devkit/)
+- [AAEON* UP Xtreme i14](https://up-board.org/up-xtreme-i14/)
+- [ASRock Industrial* NUC BOX-155H](https://www.asrockind.com/en-gb/NUC%20BOX-155H)
+- [Asus* NUC 14 Pro](https://www.asus.com/displays-desktops/nucs/nuc-mini-pcs/asus-nuc-14-pro/)
 
 ## Quick Start
 
