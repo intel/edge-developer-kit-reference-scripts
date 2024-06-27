@@ -47,4 +47,4 @@ Refer to the available use cases and examples below
 
 1. [Intel® Distribution of OpenVINO™ Toolkit](../../../usecases/openvino/README.md)
 2. [Intel® Edge Software Hub](https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/edge-solutions/overview.html) 
-
+3. [Run D3 AR0234 MIPI on ADL-N Board](./MIPI/AR0234/README.md) 
