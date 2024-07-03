@@ -8,7 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="22.04"
-KERNEL_PACKAGE_NAME="linux-image-6.5.0-1009-oem"
+KERNEL_PACKAGE_NAME="linux-image-6.5.0-1025-oem"
 
 # symbol
 S_VALID="✓"
