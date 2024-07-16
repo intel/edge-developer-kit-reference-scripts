@@ -5,7 +5,7 @@
 - [Seavo McLaren Island AIoT Developer Kit](https://www.seavo.com/en/pir_devkit/)
 
 ## Pre-requisites
-- Platform MTL-UH BKC installed. Refer to [README.md](../../README.md) 
+- Platform MTL-UH reference setup script installed. Refer to [README.md](../../README.md) 
 - Docker version 24 or later installed
 
 ## Quick Start
