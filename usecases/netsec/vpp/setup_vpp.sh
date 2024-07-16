@@ -23,7 +23,7 @@ install_packages(){
     for PACKAGE in "${PACKAGES[@]}"; do
         INSTALLED_VERSION=$(dpkg-query -W -f='${Version}' "$PACKAGE" 2>/dev/null || true)
         LATEST_VERSION=$(apt-cache policy "$PACKAGE" | grep Candidate | awk '{print $2}')
-        
+
         if [ -z "$INSTALLED_VERSION" ] || [ "$INSTALLED_VERSION" != "$LATEST_VERSION" ]; then
             echo "$PACKAGE is not installed or not the latest version."
             INSTALL_REQUIRED=1
@@ -106,12 +106,13 @@ verify_trex() {
     git clone https://github.com/cisco-system-traffic-generator/trex-core -b v3.04
     cd trex-core/linux_dpdk
     cp /lib/x86_64-linux-gnu/libstdc++.so.6 ../scripts/so/x86_64/.
-    ./b configure --no-mlx=NO_MLX 
+    ./b configure --no-mlx=NO_MLX
     ./b
 }
 copy_config_files() {
     cp "$CURRENT_DIR"/trex/*.py ~/trex-core/scripts/stl/
     sudo cp "$CURRENT_DIR"/trex/trex_cfg.yaml /root/
+    sudo cp "$CURRENT_DIR"/trex/trex_cfg2.yaml /root/
     sudo cp "$CURRENT_DIR"/vpp/* /root
 }
 

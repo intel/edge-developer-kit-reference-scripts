@@ -1,15 +1,15 @@
 unix {
-	exec /root/VPP-IPSec-UD_2p1c1t2f_s0_1loss_gcm128_native-mb-I0-ep0.cfg
+	exec /root/VPP-IPSec-UD_2p1c1t2f_s0_1loss_gcm128_native-mb-I1-ep1.cfg
 	nodaemon
-	cli-listen /run/vpp/cli_I0--ep0.sock
-	log /tmp/vpp_I0--ep0.log
+	cli-listen /run/vpp/cli_I1--ep1.sock
+	log /tmp/vpp_I1--ep1.log
 }
 
-api-segment { prefix vpp_I0-ep0 }
+api-segment { prefix vpp_I1-ep1 }
 
 cpu {
 	main-core 0
-	corelist-workers 1,2
+	corelist-workers 3
 }
 buffers { buffers-per-numa 11110 }
 
