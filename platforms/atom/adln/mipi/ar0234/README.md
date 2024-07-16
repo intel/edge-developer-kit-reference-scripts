@@ -10,13 +10,14 @@ Ensure that your system is set up properly.
 
 #### Validated Hardware
 - [AAEON UP Squared Pro 7000 (UPN-ADLNI3-A10-1664)](https://www.aaeon.com/en/p/up-board-up-squared-pro-7000)
+- [D3 AR0234 MIPI](https://www.d3engineering.com/product/ar0234-medium-fov-samtec-mipi-unsealed/)
 
 ## 1. Go to specific setup directory
 
 This step will redirect user to the current platform setup directory
 
 ```bash
-cd edge-developer-kit-reference-scripts/platforms/atom/adln/MIPI/AR0234
+cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234
 ```
 
 ## 2. Build the Kernel
