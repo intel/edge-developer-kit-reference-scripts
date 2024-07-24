@@ -12,7 +12,7 @@ Ensure that your system is set up properly.
 - [AAEON UP Squared Pro 7000 (UPN-ADLNI3-A10-1664)](https://www.aaeon.com/en/p/up-board-up-squared-pro-7000)
 - [D3 AR0234 MIPI](https://www.d3engineering.com/product/ar0234-medium-fov-samtec-mipi-unsealed/)
 
-## 1. Go to specific setup directory
+## Go to specific setup directory
 
 This step will redirect user to the current platform setup directory
 
@@ -20,36 +20,10 @@ This step will redirect user to the current platform setup directory
 cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234
 ```
 
-## 2. Build the Kernel
-### Hardware Requirements to build the kernel
-
-    Intel® CPU -> 8 core and above
-    RAM: >=16GB
-
-1. Run below script to build the kernel.
-   NOTE: make sure internet is working
-
-   ```
-   cd scripts
-   chmod 755 ./*
-   ./build_kernel.sh
-   ```
-   Once the kernel is built, below 3 files will be created in linux-kernel-overlay directory.
-    - linux-headers-6.1.80--000_6.1.80-0_amd64.deb
-    - linux-image-6.1.80--000_6.1.80-0_amd64.deb
-    - linux-libc-dev_6.1.80-0_amd64.deb
-   
-## Replace the kernel on the target system 
-1. Run below script to replace kernel, the system reboots after this command
-   ```
-   cd linux-kernel-overlay
-   ../replace_kernel.sh
-   ```
-
 ## Install IPU libraries
 1. Run below script to install userspace IPU libraries. 
    ```
-   cd edge-developer-kit-reference-scripts/platforms/atom/adln/MIPI/AR0234/scripts
+   cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234/scripts
    ./install_ipu.sh
    ```
 

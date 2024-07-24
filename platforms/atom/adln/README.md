@@ -31,6 +31,7 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln
 ### 4. Run setup script
 
 This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceed to the next step.
+Running this script might require a minimum of 1 hour. 
 
 ```bash
 ./setup.sh
