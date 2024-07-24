@@ -68,6 +68,7 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234
 
 3. Set environment variables with following commands.
    ```
+   cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234/scripts
    source setup_camera_env.sh
    ```
 
