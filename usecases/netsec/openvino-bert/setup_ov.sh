@@ -48,17 +48,6 @@ verify_dependencies_ov(){
     install_packages "${DEPENDENCIES_PACKAGES[@]}"
     echo "$S_VALID Dependencies installed";
 }
-#verify conda
-verify_conda() {
-    mkdir -p "$HOME"/miniconda3
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-    bash "$HOME"/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-    rm -rf "$HOME"/miniconda3/miniconda.sh
-    "$HOME"/miniconda3/bin/conda init bash
-    "$HOME"/miniconda3/bin/conda config --set auto_activate_base false
-    # shellcheck source=/dev/null
-    source ~/.bashrc
-}
 
 #verify gpu
 verify_gpu() {
@@ -87,7 +76,6 @@ verify_ov() {
 
 setup() {
     verify_dependencies_ov
-    verify_conda
     verify_gpu
     verify_ov
     
