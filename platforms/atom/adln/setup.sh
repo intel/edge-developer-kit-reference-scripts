@@ -10,8 +10,9 @@ OS_ID="ubuntu"
 OS_VERSION="22.04"
 # KERNEL_PACKAGE_NAME="linux-image-generic-hwe-22.04"
 # KERNEL_PACKAGE_NAME="linux-image-oem-22.04d"
-KERNEL_PACKAGE_NAME="linux-image-intel-iotg"
+# KERNEL_PACKAGE_NAME="linux-image-intel-iotg"
 # KERNEL_PACKAGE_NAME="linux-image-6.5.0-1009-oem"
+KERNEL_PACKAGE_NAME="linux-image-6.1.80--000"
 
 # symbol
 S_VALID="✓"
@@ -118,7 +119,7 @@ verify_igpu_driver(){
 }
 
 verify_kernel_package() {
-    echo -e "Verifying kernel package"
+    echo -e "Checking kernel version"
     LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
     CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
     LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "${LATEST_KERNEL_VERSION}[^ ]*" | awk '{print $3}' | tr '-' '.')
@@ -135,8 +136,7 @@ verify_kernel_package() {
 
     if [ -z "$LATEST_KERNEL_INSTALLED" ]; then
         echo "Installing latest '${KERNEL_PACKAGE_NAME}' kernel"
-        KERNEL_PACKAGES=("${KERNEL_PACKAGE_NAME}")
-        install_packages "${KERNEL_PACKAGES[@]}"
+        build_kernel
     fi
     if [[ ! "$LATEST_KERNEL_VERSION" == *"$CURRENT_KERNEL_VERSION_REVISION"* ]]; then
         if dpkg -l | grep -q 'linux-image.*generic$' && [ "$KERNEL_FLAVOUR" != "generic" ]; then
@@ -153,9 +153,45 @@ verify_kernel_package() {
         fi
         echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
         echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
-        echo "System reboot is required. Re-run the script after reboot"
-        exit 0
     fi
+}
+
+build_kernel(){
+    echo -e "Building kernel package"
+    # verify and build packages  
+    BUILD_KERNEL_PACKAGES=(
+        flex 
+        bison 
+        kernel-wedge 
+        gcc 
+        libssl-dev 
+        libelf-dev 
+        quilt 
+        liblz4-tool
+    )
+    install_packages "${BUILD_KERNEL_PACKAGES[@]}"
+    echo "Preparing necessary packages to build kernel..."
+    if [ ! -d "linux-kernel-overlay" ]; then
+        git clone https://github.com/intel/linux-kernel-overlay.git
+    fi
+    cd linux-kernel-overlay || { echo "linux-kernel-overlay folder not found"; exit 1; }
+    if ! ls ./*.deb 1> /dev/null 2>&1; then
+        git checkout tags/lts-overlay-v6.1.80-ubuntu-240430T084807Z
+        echo "Building kernel"
+        echo "This process will take around 1 hour. Please keep the system turned on."
+        ./build.sh
+    fi
+    replace_kernel
+}
+
+replace_kernel(){
+    echo -e "Replacing kernel..."
+    sudo dpkg -i linux-headers-6.1.80--000_6.1.80-0_amd64.deb
+    sudo dpkg -i linux-image-6.1.80--000_6.1.80-0_amd64.deb
+    sudo dpkg -i linux-libc-dev_6.1.80-0_amd64.deb
+    sudo update-grub
+    echo "System reboot is required. Re-run the script after reboot"
+    exit 0
 }
 
 verify_platform() {
@@ -165,6 +201,7 @@ verify_platform() {
 }
 
 verify_gpu() {
+    
     echo -e "\n# Verifying GPU"
     DGPU="$(lspci | grep VGA | grep Intel -c)"
 
@@ -210,7 +247,7 @@ verify_os() {
 verify_kernel() {
     echo -e "\n# Verifying kernel version"
     CURRENT_KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-    CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
+    CURRENT_KERNEL_REVISION=$(uname -r | rev | cut -d'-' -f1 | rev)
     CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
     
     if [[ -n "$KERNEL_PACKAGE_NAME" ]]; then
