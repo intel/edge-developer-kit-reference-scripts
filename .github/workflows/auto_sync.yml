@@ -36,23 +36,25 @@ jobs:
           repository: 'intel/edge-developer-kit-reference-scripts'
           token: ${{ secrets.PUBLIC_REPO_ACCESS_TOKEN }}
           path: 'public_repo' 
-      
-      - name: Create branch at destination repo
+
+      - name: Get last commit message
+        id: get_commit_message
+        run: echo "message=$(git log -1 --pretty=%B | tail -n1)" >> $GITHUB_ENV
+        
+      - name: Create branch at destination repo and delete the branch contents
         run: |
           cd public_repo
           git checkout -b update-branch
           git branch --set-upstream-to=origin/main
-          git pull
+          git rm -r *
           
       - name: Copy changes to public repository
         run: |
           cd public_repo
           git checkout update-branch
-          rsync -av --exclude='.git' --exclude='.github' --exclude='temp_repo' ../temp_repo/ .  
-
-      - name: Get last commit message
-        id: get_commit_message
-        run: echo "message=$(git log -1 --pretty=%B | tail -n1)" >> $GITHUB_ENV
+          rsync -av --exclude='.git' --exclude='.github' --exclude='temp_repo' ../temp_repo/ .
+          git add --all
+          git commit -m "${{ env.message }}" || echo "No changes to commit"
       
       - name: Push to destination repository
         run: |
