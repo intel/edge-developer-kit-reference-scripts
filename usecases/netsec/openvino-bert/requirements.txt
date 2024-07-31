@@ -4,4 +4,4 @@ transformers==4.38.0
 openvino==2023.2.0
 evaluate==0.4.1
 datasets==2.15.0
-torch==2.1.1 
+torch==2.2.0 

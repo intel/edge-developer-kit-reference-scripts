@@ -1,4 +1,4 @@
-# Openvino™
+# OpenVINO™ Bert Model Benchmarking
 Benchmark OpenVINO™  bert model
 
 ## Steps
