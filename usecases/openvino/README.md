@@ -52,7 +52,7 @@ docker exec -it openvino_app /bin/bash
 ### OpenVINO™ Notebooks
 1. Run this command to launch OpenVINO™ Notebooks
 ```bash
-docker run -it --name test_notebooks -v /etc/group:/etc/group  --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -p 8888:8888 openvino_notebooks
+docker run -it --name test_notebooks -v /etc/group:/etc/group  --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -p 127.0.0.1:8888:8888 openvino_notebooks
 ```
 2. Copy the URL printed in the terminal and open in a browser. Example output you will see in terminal:
 ```
