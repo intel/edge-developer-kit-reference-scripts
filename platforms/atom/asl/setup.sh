@@ -134,9 +134,9 @@ install_kernel_overlay() {
     Pin-Priority: 2000" | sudo tee /etc/apt/preferences.d/intel-asl
 
     echo -e "## Install Kernel Overlay"
-    sudo apt -y install linux-image-6.6-intel=240422T024020Z-r1
-    sudo apt -y install linux-headers-6.6-intel=240422T024020Z-r1
-    sudo apt -y install linux-libc-dev=240422T024020Z-r1
+    sudo apt -y install linux-image-6.6-intel
+    sudo apt -y install linux-headers-6.6-intel
+    sudo apt -y install linux-libc-dev
 
     echo -e "## Update grub"
     sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with linux 6.6.0-000"/' /etc/default/grub
