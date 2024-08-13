@@ -134,6 +134,7 @@ install_kernel_overlay() {
     Pin-Priority: 2000" | sudo tee /etc/apt/preferences.d/intel-asl
 
     echo -e "## Install Kernel Overlay"
+    sudo apt -y update
     sudo apt -y install linux-image-6.6-intel
     sudo apt -y install linux-headers-6.6-intel
     sudo apt -y install linux-libc-dev
