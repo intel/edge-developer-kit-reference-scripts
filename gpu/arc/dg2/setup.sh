@@ -98,7 +98,7 @@ verify_intel_gpu_package_repo(){
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
             sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
-        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy/production/2328 unified" | \
+        echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | \
             sudo tee /etc/apt/sources.list.d/intel-gpu-jammy.list
         sudo -E apt update
     fi
@@ -122,6 +122,7 @@ verify_dgpu_driver(){
         intel-opencl-icd
         intel-level-zero-gpu
         level-zero
+        intel-level-zero-gpu-raytracing
         intel-media-va-driver-non-free
         libmfx1
         libmfxgen1
@@ -141,6 +142,8 @@ verify_dgpu_driver(){
         mesa-vdpau-drivers
         mesa-vulkan-drivers
         va-driver-all
+        vainfo 
+        hwinfo 
     )
     install_packages "${DGPU_PACKAGES[@]}"
     if ! id -nG "$USER" | grep -q -w '\<video\>'; then
