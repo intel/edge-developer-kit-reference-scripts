@@ -22,6 +22,10 @@ Based on the platform you are using, select the following to get started:
 ## Use Cases
 1. [Intel® Distribution of OpenVINO™ Toolkit](usecases/openvino/README.md)
 2. [Vector Packet Processing](usecases/netsec/vpp/README.md)
+3. [OpenVINO™ Bert Model Benchmarking](usecases/netsec/openvino-bert/README.md)
+4. [Ollama with Open WebUI on Intel® Discrete GPU](usecases/ollama/README.md)
+5. [LLM Finetuning Benchmark](usecases/llm/finetuning-benchmark/README.md)
+6. [Gen AI validated systems](usecases/genai/README.md)
 
 ## Disclaimer
 GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.
