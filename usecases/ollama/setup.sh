@@ -100,19 +100,10 @@ verify_os() {
     echo "$S_VALID OS version: $CURRENT_OS_ID $CURRENT_OS_VERSION"
 }
 
-verify_ppa_deadsnakes_repo(){
-    if [ ! -e /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-jammy.list ]; then
-        echo "Adding Deadsnakes PPA Repository"
-        sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo -E apt update
-    fi
-}
-
 verify_python3.11_installation(){
     echo -e "\n# Verifying Python 3.11 Installation"
     if ! command -v python3.11 &> /dev/null; then
         echo "Installing Python 3.11"
-        verify_ppa_deadsnakes_repo
         PYTHON_PACKAGES=(
             python3.11
             python3.11-venv
@@ -135,6 +126,7 @@ verify_llm_dependencies(){
     # Install dependencies
     if pip install --upgrade pip && \
     pip install --pre --upgrade 'ipex-llm[cpp]' && \
+    pip install --upgrade accelerate==0.33.0 && \
     pip install --upgrade open-webui && \
     install_packages "curl"
     then
@@ -188,21 +180,16 @@ verify_oneapi(){
 
 
 setup() {
-
     verify_platform
     verify_gpu
     verify_os
     verify_drivers
-
     verify_oneapi
-
     verify_python3.11_installation
     verify_llm_dependencies
     verify_ollama_installation
-
     echo -e "\n# Status"
     echo "$S_VALID Setup Installed"
-    
 }
 
 setup
