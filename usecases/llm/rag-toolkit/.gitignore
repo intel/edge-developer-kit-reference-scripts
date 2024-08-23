@@ -1,0 +1,6 @@
+.venv
+.device
+__pycache__
+data
+logs
+thirdparty
