@@ -43,17 +43,6 @@ verify_dependencies(){
     echo "$S_VALID Dependencies installed"
 }
 
-setup_docker(){
-
-    if ! id -nG "$USER" | grep -q -w '\<docker\>'; then
-        echo -e "\n# Add $USER into docker group"
-        sudo groupadd docker
-        sudo usermod -aG docker "$USER"
-        echo "System reboot is required. Re-run the script after reboot"
-        exit 0
-    fi
-}
-
 install_openvino_docker(){
 
     echo -e "\n# Install OpenVINO™ docker image"
@@ -96,7 +85,6 @@ install_openvino_notebook_docker(){
 
 setup() {
     verify_dependencies
-    setup_docker
     install_openvino_docker
     install_openvino_notebook_docker
 
