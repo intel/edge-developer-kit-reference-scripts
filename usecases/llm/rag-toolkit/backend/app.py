@@ -1,5 +1,5 @@
-# INTEL CONFIDENTIAL
-# Copyright (C) 2024, Intel Corporation
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
 import os
 os.environ['HF_HOME'] = "../data/huggingface"

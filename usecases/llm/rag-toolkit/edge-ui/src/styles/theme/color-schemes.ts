@@ -1,5 +1,7 @@
-import type { ColorSystemOptions } from '@mui/material/styles';
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
+import type { ColorSystemOptions } from '@mui/material/styles';
 import { california, kepple, neonBlue, nevada, redOrange, shakespeare, stormGrey } from './colors';
 import type { ColorScheme } from './types';
 

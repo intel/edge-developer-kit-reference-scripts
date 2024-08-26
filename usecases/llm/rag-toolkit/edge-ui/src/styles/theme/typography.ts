@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import type { TypographyOptions } from '@mui/material/styles/createTypography';
 
 export const typography = {

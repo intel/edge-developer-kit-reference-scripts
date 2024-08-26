@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { type Message } from "@/types/chat";
 import { Avatar, Box, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import React, { useEffect, useRef } from "react";

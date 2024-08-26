@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { type APIResponse } from '@/types/api';
 
 export function constructURL(url: string, page?: number, pageSize?: number, params?: Record<string, string>): string {

@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import React, { useMemo, useState } from 'react';
 import { Delete } from '@mui/icons-material';
 import {
