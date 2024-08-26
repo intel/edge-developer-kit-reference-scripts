@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { type LanguageProps } from "@/hooks/use-record-audio";
 import { FormControl, Grid, MenuItem, Popover, Select, type SelectChangeEvent, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";

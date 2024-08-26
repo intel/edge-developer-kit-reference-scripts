@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import React, { useMemo } from 'react';
 import { Article, CloudUpload, Delete } from '@mui/icons-material';
 import { Box, Button, CircularProgress, IconButton, List, ListItem, ListItemText, Typography } from '@mui/material';

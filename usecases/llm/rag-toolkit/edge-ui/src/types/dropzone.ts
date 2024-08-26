@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 // material-ui ui/src/types/dropzone.ts
 import { type SxProps, type Theme } from '@mui/material/styles';
 //third-party

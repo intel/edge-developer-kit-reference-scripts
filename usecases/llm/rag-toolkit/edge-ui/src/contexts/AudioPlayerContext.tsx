@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { API } from '@/utils/api';
 import React, { useState, useEffect, createContext, type ReactNode, useCallback } from 'react';
 

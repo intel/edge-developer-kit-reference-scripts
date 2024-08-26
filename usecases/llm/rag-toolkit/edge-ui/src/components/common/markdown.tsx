@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 // Framework
 import React from "react";
 import ReactMarkdown from "react-markdown";

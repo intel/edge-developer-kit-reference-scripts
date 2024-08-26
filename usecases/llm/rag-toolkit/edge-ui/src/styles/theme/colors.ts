@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import type { PaletteRange } from '@mui/material/styles/createPalette';
 
 export const california = {

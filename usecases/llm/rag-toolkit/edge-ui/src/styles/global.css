@@ -1,3 +1,6 @@
+/* Copyright (C) 2024 Intel Corporation
+SPDX-License-Identifier: Apache-2.0 */
+
 /* Remove if fonts are not used */
 @import '~@fontsource/inter/100.css';
 @import '~@fontsource/inter/200.css';

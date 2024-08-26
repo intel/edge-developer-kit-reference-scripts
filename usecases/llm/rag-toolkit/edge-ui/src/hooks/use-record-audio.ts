@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 /* eslint-disable @typescript-eslint/no-unsafe-call -- client imported module*/
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- client imported module*/
 /* eslint-disable @typescript-eslint/no-unsafe-argument -- client imported module*/
