@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { KeyboardVoice, Refresh, Send, Stop } from "@mui/icons-material";
 import { Box, CircularProgress, IconButton, Stack, TextField, Tooltip } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";

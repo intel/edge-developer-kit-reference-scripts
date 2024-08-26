@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { FormControlLabel, Popover, Slider, Stack, Switch, Typography } from "@mui/material";
 import React, { useState } from "react";
 

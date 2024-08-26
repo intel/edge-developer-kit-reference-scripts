@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { getSiteURL } from '@/lib/get-site-url';
 import { LogLevel } from '@/lib/logger';
 

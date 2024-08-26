@@ -1,6 +1,6 @@
 #!/bin/bash
-# INTEL CONFIDENTIAL
-# Copyright (C) 2024, Intel Corporation
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
 WORKDIR=$PWD
 S_VALID="✓"

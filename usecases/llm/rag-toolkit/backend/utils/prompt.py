@@ -1,5 +1,5 @@
-# INTEL CONFIDENTIAL
-# Copyright (C) 2024, Intel Corporation
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
 RAG_PROMPT = """Your task is to answer user question based on the provided CONTEXT. DO NOT USE YOUR OWN KNOWLEDGE TO ANSWER THE QUESTION.
 If the QUESTION is out of CONTEXT, STRICTLY do not reply.

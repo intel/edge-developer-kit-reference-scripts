@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 export function getSiteURL(): string {
   let url =
     process.env.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.

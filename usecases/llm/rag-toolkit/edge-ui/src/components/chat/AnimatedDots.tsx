@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 /* eslint-disable react/no-unknown-property -- style jsx false trigger */
 import React from "react";
 

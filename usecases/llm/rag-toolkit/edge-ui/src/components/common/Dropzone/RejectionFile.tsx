@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 // material-ui
 import React from 'react';
 import Box from '@mui/material/Box';
