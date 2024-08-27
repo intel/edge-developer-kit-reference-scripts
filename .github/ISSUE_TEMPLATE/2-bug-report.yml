@@ -1,0 +1,54 @@
+name: "Bug Report"
+description: "I am reporting a bug"
+title: "[Bug]"
+labels:
+  - "bug"
+  - "triage"
+body:
+  - type: textarea
+    attributes:
+      label: Current Behaviour
+      description: Describe what is currently happening
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behaviour
+      description: Describe what you expected to happen
+    validations:
+      required: true
+  - type: textarea
+    id: possible-solution
+    attributes:
+      label: Possible Solution
+      description: Suggest a possible solution.
+    validations:
+      required: false
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Provide detailed steps to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context (Environment)
+      description: Provide any relevant information about your environment.
+    validations:
+      required: false
+  - type: textarea
+    id: detailed-description
+    attributes:
+      label: Detailed Description
+      description: Provide a more detailed description of the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: possible-implementation
+    attributes:
+      label: Possible Implementation
+      description: Suggest a possible implementation.
+    validations:
+      required: false

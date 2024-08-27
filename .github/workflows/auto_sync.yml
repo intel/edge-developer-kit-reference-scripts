@@ -1,0 +1,103 @@
+# Auto sync to public devkit repo when there is push to main branch
+
+name: 'Auto_Sync'
+
+on:
+  workflow_run:
+    workflows: [Scan]
+    types:
+        - completed
+    branches: [main]
+
+jobs:
+  sync-repo:
+    if: ${{ github.event.workflow_run.event == 'push' }}
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4.1.7
+        with:
+          fetch-depth: 2
+      
+      - name: Sync files to temporary directory
+        run: |
+          mkdir temp_repo
+          rsync -av --exclude='.github' ./* temp_repo/
+          
+      - name: Set up Git credential
+        run: |
+          git config --global user.name 'gooishin'
+          git config --global user.email 'shing.shan.gooi@intel.com'
+
+      - name: Checkout public repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'intel/edge-developer-kit-reference-scripts'
+          token: ${{ secrets.PUBLIC_REPO_ACCESS_TOKEN }}
+          path: 'public_repo' 
+
+      - name: Get last commit message
+        id: get_commit_message
+        run: |
+          commit_message=$(git log -1 --pretty=%B | tr -d '\n')
+          if [ -z "$commit_message" ]; then
+            echo "Commit message is empty or only whitespace."
+          else
+            echo "message=$commit_message" >> $GITHUB_ENV
+            echo "The last commit message is $commit_message"
+          fi
+        
+      - name: Create branch at destination repo and delete the branch contents
+        run: |
+          cd public_repo
+          git checkout -b update-branch
+          git branch --set-upstream-to=origin/main
+          git rm -r *
+          
+      - name: Copy changes to public repository
+        run: |
+          cd public_repo
+          git checkout update-branch
+          rsync -av --exclude='.git' --exclude='.github' --exclude='temp_repo' ../temp_repo/ .
+          git add --all
+          git commit -m "${{ env.message }}" || echo "No changes to commit"
+      
+      - name: Push to destination repository
+        run: |
+          cd public_repo
+          git checkout update-branch
+          git add .
+          git commit -m "${{ env.message }}" || echo "No changes to commit"
+          git push origin update-branch
+
+      - name: Clean up temporary directory
+        if: always()
+        run: |
+          rm -rf temp_repo public_repo
+      
+      - name: Create pull request
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PUBLIC_REPO_ACCESS_TOKEN }}
+          script: |
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner: 'intel',
+              repo: 'edge-developer-kit-reference-scripts',
+              state: 'open',
+              head: 'intel:update-branch',
+              base: 'main'
+            });
+          
+            if (pullRequests.length === 0) {
+              await github.rest.pulls.create({
+                owner: 'intel',
+                repo: 'edge-developer-kit-reference-scripts',
+                title: '${{ env.message }}',
+                head: 'update-branch',
+                base: 'main',
+                body: '${{ env.message }}'
+              });
+            } else {
+              console.log('A pull request already exists. Please go to public devkit repo and merge PR first, then re-run this job.', pullRequests[0].html_url);
+            }
