@@ -259,7 +259,7 @@ verify_npu_driver(){
 
     if [[ -z $COMPILER_PKG || -z $LEVEL_ZERO_PKG ]]; then
         echo -e "NPU Driver is not installed. Proceed installing"
-        sudo dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu level-zero
+        sudo dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu
         sudo apt install --fix-broken
         sudo -E apt update
 
@@ -268,13 +268,14 @@ verify_npu_driver(){
         else
             mkdir /tmp/npu_temp
             cd /tmp/npu_temp
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-driver-compiler-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-fw-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.1.0/intel-level-zero-npu_1.1.0.20231117-6904283384_ubuntu22.04_amd64.deb
-            wget https://github.com/oneapi-src/level-zero/releases/download/v1.10.0/level-zero_1.10.0+u22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.6.0/intel-driver-compiler-npu_1.6.0.20240814-10390978568_ubuntu22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.6.0/intel-fw-npu_1.6.0.20240814-10390978568_ubuntu22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.6.0/intel-level-zero-npu_1.6.0.20240814-10390978568_ubuntu22.04_amd64.deb
+            wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb
+            wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero-devel_1.17.6+u22.04_amd64.deb
 
             sudo dpkg -i ./*.deb
-
+                                                                                                                                                                                                 
             cd ..
             rm -rf npu_temp
             cd "$CURRENT_DIR"
