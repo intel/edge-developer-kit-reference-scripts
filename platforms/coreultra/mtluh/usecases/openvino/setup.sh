@@ -48,6 +48,7 @@ install_openvino_docker(){
     echo -e "\n# Install OpenVINO™ docker image"
     if ! docker images | grep openvino/ubuntu22_dev; then
         docker pull openvino/ubuntu22_dev:latest
+        docker tag openvino/ubuntu22_dev:latest openvino/ubuntu22_dev:devkit
     else
         echo "$S_VALID OpenVINO™ docker image already installed"
     fi
@@ -55,7 +56,7 @@ install_openvino_docker(){
     echo -e "\n# Build OpenVINO™ with NPU docker image"
     if ! docker images | grep openvino_npu/ubuntu22_dev; then
         docker build --progress=plain --no-cache -t openvino_npu/ubuntu22_dev:latest -f Dockerfile .
-        docker rmi openvino/ubuntu22_dev:latest
+        docker rmi openvino/ubuntu22_dev:devkit openvino/ubuntu22_dev:latest
     else
         echo "$S_VALID OpenVINO™ with NPU docker image already installed"
     fi
