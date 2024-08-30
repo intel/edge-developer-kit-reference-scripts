@@ -127,7 +127,7 @@ verify_llm_dependencies(){
     if pip install --upgrade pip && \
     pip install --pre --upgrade 'ipex-llm[cpp]' && \
     pip install --upgrade accelerate==0.33.0 && \
-    pip install --upgrade open-webui && \
+    pip install --upgrade open-webui==0.3.15 && \
     install_packages "curl"
     then
         echo "All dependencies were installed successfully"
