@@ -37,7 +37,7 @@ start(){
     
     ./ollama serve &
     P1=$!
-    open-webui serve &
+    open-webui serve --host 127.0.0.1 &
     P2=$!
 
     while ! service_is_ready; do
