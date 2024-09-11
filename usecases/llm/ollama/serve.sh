@@ -6,7 +6,7 @@
 set -e
 
 # BKC
-ONEAPI_VERSION="2024.1"
+ONEAPI_VERSION="2024.0"
 
 OLLAMA_DIR="./ollama_dir"
 ENV_DIR="./llm_env"
