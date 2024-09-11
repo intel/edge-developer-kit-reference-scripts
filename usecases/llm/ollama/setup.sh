@@ -8,7 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="22.04"
-ONEAPI_VERSION="2024.1"
+ONEAPI_VERSION="2024.0"
 
 OLLAMA_DIR="./ollama_dir"
 ENV_DIR="./llm_env"
