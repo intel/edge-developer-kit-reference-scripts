@@ -2,47 +2,42 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-WORKDIR=$PWD
-S_VALID="✓"
+# BKC
+ONEAPI_VERSION="2024.0"
+OV_VLLM_COMMIT=80cbe10
 
-# Settings 
-ONEAPI_VER="2024.2"
-DEFAULT_MODEL_ID=mistralai/Mistral-7B-Instruct-v0.3
-
-# App version
-VLLM_COMMIT=80cbe10
-LLAMACPP_COMMIT="b3538"
-LLAMACPP_PYTHON_VER="0.2.87"
-MODEL_DIR=$WORKDIR/data/model/llm
+export OLLAMA_MODELS="./data/model/ollama/cache"
 
 if [ "$EUID" -eq 0 ]; then
     echo "Must not run with sudo or root user"
     exit 1
 fi
 
-create_python_venv(){
-    echo -e "Installing python3-venv dependencies"
-    sudo apt install -y python3-venv
+# Common
+print_info(){
+    local info="$1"
+    echo -e "\n# $info"
+}
 
-    if [ -d "$WORKDIR/.venv" ]; then
-        echo -e "Virtual environment already exists in $WORKDIR/.venv. Skipping creation"
-    else
-        echo -e "Creating virtual environment in $WORKDIR/.venv"
-        python3 -m venv "$WORKDIR"/.venv
+install_packages(){
+    local PACKAGES=("$@")
+    local INSTALL_REQUIRED=0
+    for PACKAGE in "${PACKAGES[@]}"; do
+        INSTALLED_VERSION=$(dpkg-query -W -f='${Version}' "$PACKAGE" 2>/dev/null || true)
+        LATEST_VERSION=$(apt-cache policy "$PACKAGE" | grep Candidate | awk '{print $2}')
+
+        if [ -z "$INSTALLED_VERSION" ] || [ "$INSTALLED_VERSION" != "$LATEST_VERSION" ]; then
+            echo "$PACKAGE is not installed or not the latest version."
+            INSTALL_REQUIRED=1
+        fi
+    done
+    if [ $INSTALL_REQUIRED -eq 1 ]; then
+        sudo -E apt update
+        sudo -E apt install -y "${PACKAGES[@]}"
     fi
 }
 
-activate_python_venv(){
-    echo -e "Activating python venv"
-    if [ -d "$WORKDIR/.venv" ]; then
-        # shellcheck source=/dev/null
-        source "$WORKDIR"/.venv/bin/activate
-    else
-        echo -e "Unable to find python venv in $WORKDIR/.venv."
-    fi
-}
-
-validate_python_packages() {
+install_python_packages() {
     local packages=("$@")
     for PACKAGE_NAME in "${packages[@]}"; do
         if pip show "$PACKAGE_NAME" &> /dev/null; then
@@ -54,259 +49,176 @@ validate_python_packages() {
     done
 }
 
-validate_hf_token(){
-    packages=(
-        huggingface_hub
+activate_python_venv(){
+    if ! command -v python3.11 &> /dev/null; then
+        print_info "Installing Python 3.11"
+        PYTHON_PACKAGES=(
+            python3.11
+            python3.11-venv
+        )
+        install_packages "${PYTHON_PACKAGES[@]}"
+    fi
+
+    [ ! -d "./.venv" ] && python3.11 -m venv ./.venv
+
+    print_info "Activating Python 3.11 environment"
+    # shellcheck source=/dev/null
+    source "./.venv/bin/activate"
+}
+
+# Steps
+install_inference_backend(){
+    local backend="$1"
+    print_info "Setting up dependencies for $backend"
+    if [[  "$backend" ==  "OLLAMA" ]]; then
+        install_ollama_deps
+    elif [[  "$backend" ==  "OV_VLLM" ]]; then
+        install_ov_vllm_deps
+    fi
+}
+
+install_ov_vllm_deps(){
+    print_info "Installing dependencies for Intel OpenVINO VLLM"
+    dependencies=(
+        git
     )
-    validate_python_packages "${packages[@]}"
-    export HF_HOME="$WORKDIR/data/huggingface"
-    if [ ! -f "$WORKDIR/data/huggingface/token" ]; then
-        echo -e "Input your huggingface token. Please make sure you have the access to download $DEFAULT_MODEL_ID model. Link: https://huggingface.co/$DEFAULT_MODEL_ID"
-        read -rsp 'Hugging Face token: ' HUGGINGFACE_TOKEN
-        huggingface-cli login --token "$HUGGINGFACE_TOKEN"
-    else
-        echo -e "Hugging Face token is already available. Skipping login. If you want to use a new token, please remove your token in $WORKDIR/data/huggingface/token"
+    install_packages "${dependencies[@]}"
+    activate_python_venv
+    if [ ! -d "./thirdparty/vllm" ]; then
+        echo -e "- Cloning VLLM, branch: $OV_VLLM_COMMIT"
+        mkdir -p ./thirdparty
+        git clone https://github.com/vllm-project/vllm.git ./thirdparty/vllm
+        cd ./thirdparty/vllm || exit
+        git checkout $OV_VLLM_COMMIT 
+        cd ../.. || exit
     fi
-}
-
-download_default_model(){
-    echo -e "Downloading model: $DEFAULT_MODEL_ID to $WORKDIR/data/model/llm"
-    huggingface-cli download "$DEFAULT_MODEL_ID" --local-dir "$WORKDIR"/data/model/llm
-
-    if [ ! -d "$WORKDIR/data/model/llm" ]; then
-        echo -e "Failed to download model from Hugging Face"
-        exit 1
-    fi
-}
-
-validate_model_available(){
-    echo -e "Verifying if model available"
-    if [ ! -d "$MODEL_DIR" ]; then
-        echo -e "Unable to find trained model in $MODEL_DIR."
-        activate_python_venv
-        validate_hf_token
-        download_default_model
-    else
-        echo -e "Trained model available."
-    fi
-}
-
-validate_oneapi_available(){
-    echo -e "Verifying if Intel OneAPI basekit available"
-    if [ ! -f "/opt/intel/oneapi/setvars.sh" ]; then
-        echo -e "Intel OneAPI basekit not found. Installing ..."
-        setup_oneapi
-    else
-        echo -e "Intel OneAPI basekit is already installed. Skipping installation"
-    fi
-}
-
-setup_dependencies(){
-    sudo apt update
-    sudo apt install -y build-essential wget git cmake
-
-    echo -e "Installing GPU drivers"
-    wget -O /tmp/setup.sh https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/main/gpu/arc/dg2/setup.sh
-    chmod +x /tmp/setup.sh
-    /tmp/setup.sh
-}
-
-setup_oneapi(){
-    sudo apt update
-    sudo apt install -y gpg-agent wget
-    
-    wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-
-    sudo apt update
-    sudo apt install -y intel-basekit-"$ONEAPI_VER"
-}
-
-setup_llamacpp_sycl(){
-    echo -e "Activating OneAPI environment"
-    # shellcheck source=/dev/null
-    source /opt/intel/oneapi/setvars.sh --force
-
-    echo -e "Activating virtual environment"
-    # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
-
-    echo -e "Installing llama.cpp python, version: $LLAMACPP_PYTHON_VER"
-    CMAKE_ARGS="-DGGML_SYCL=ON -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx" FORCE_CMAKE=1 python3 -m pip install --upgrade --force-reinstall --no-cache-dir "llama-cpp-python[server]==$LLAMACPP_PYTHON_VER"
-
-    mkdir -p "$WORKDIR"/thirdparty
-    cd "$WORKDIR"/thirdparty || exit
-    if [ -d "$WORKDIR/thirdparty/llama.cpp" ]; then
-        echo -e "llama.cpp repository is already available."
-    else
-        echo -e "Cloning llama.cpp, branch: $LLAMACPP_COMMIT"
-        git clone https://github.com/ggerganov/llama.cpp.git llama.cpp && cd llama.cpp && git checkout $LLAMACPP_COMMIT
-    fi
-
-    if [ ! -d "$WORKDIR/thirdparty/llama.cpp/build" ]; then
-        cd "$WORKDIR"/thirdparty/llama.cpp || exit
-        cmake -B build -DGGML_SYCL=ON -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx
-        cmake --build build --config Release -j -v
-    fi
-}
-
-setup_vllm_openvino(){
-    echo -e "Installing git dependencies"
-    sudo apt install -y git
-
-    mkdir -p "$WORKDIR"/thirdparty
-    cd "$WORKDIR"/thirdparty || exit
-    if [ -d "$WORKDIR/thirdparty/vllm" ]; then
-        echo -e "VLLM repository is already available."
-    else
-        echo -e "Cloning VLLM, branch: $VLLM_COMMIT"
-        git clone https://github.com/vllm-project/vllm.git vllm && cd vllm && git checkout "$VLLM_COMMIT"
-    fi
-
-    echo -e "Activating virtual environment"
-    # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
-
-    echo -e "Upgrading pip version"
+    cd ./thirdparty/vllm || exit
     python3 -m pip install --upgrade pip
-
-    echo -e "Installing VLLM with OpenVINO backend"
-    cd "$WORKDIR"/thirdparty/vllm || exit
+    echo -e "- Building VLLM with Intel OpenVINO backend"
     python3 -m pip install -r requirements-build.txt --extra-index-url https://download.pytorch.org/whl/cpu
-    PIP_PRE=1 PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu https://storage.openvinotoolkit.org/simple/wheels/nightly/" VLLM_TARGET_DEVICE=openvino python -m pip install -v .
+    PIP_PRE=1 PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu https://storage.openvinotoolkit.org/simple/wheels/nightly/" VLLM_TARGET_DEVICE=openvino python3 -m pip install -v .
+    python3 -m pip install pynvml
+    cd ../.. || exit
 }
 
-setup_vllm_xpu(){
-    echo -e "Installing git dependencies"
-    sudo apt install -y git
-
-    mkdir -p "$WORKDIR"/thirdparty
-    cd "$WORKDIR"/thirdparty || exit
-    if [ -d "$WORKDIR/thirdparty/vllm-xpu" ]; then
-        echo -e "VLLM repository is already available."
-    else
-        echo -e "Cloning VLLM, branch: main"
-        git clone https://github.com/vllm-project/vllm.git vllm-xpu
-    fi
-
-    echo -e "Activating virtual environment"
-    # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
-
-    echo -e "Upgrading pip version"
-    python3 -m pip install --upgrade pip
-
-    echo -e "Installing VLLM with XPU backend"
-    cd "$WORKDIR"/thirdparty/vllm-xpu || exit
-    # shellcheck source=/dev/null
-    source /opt/intel/oneapi/setvars.sh --force
-    python3 -m pip install -v -r requirements-xpu.txt
-    VLLM_TARGET_DEVICE=xpu python setup.py install
+install_ollama_deps(){
+    print_info "Installing dependencies for OLLAMA"
+    install_gpu_drivers
+    install_oneapi_basekit
+    install_ollama_binary
 }
 
-convert_model_to_ov_format(){
-    TASK=text-generation-with-past
-    WEIGHT_FORMAT=int4
-    FRAMEWORK=pt
+install_gpu_drivers(){
+    print_info "Installing GPU drivers for Intel® Arc™ Graphics"
+    mkdir -p ./thirdparty
+    wget -O ./thirdparty/setup.sh https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/main/gpu/arc/dg2/setup.sh
+    chmod +x ./thirdparty/setup.sh
+    ./thirdparty/setup.sh
+}
 
-    echo -e "Verifying if model weight file is available"
-    if [ ! -d "$MODEL_DIR" ]; then
-        echo -e "Model file is not available. Unable to convert model to OpenVINO format"
-        exit 1
-    fi
+install_oneapi_basekit(){
+    print_info "Verify Intel OneAPI installation"
+    if [ ! -f "/opt/intel/oneapi/$ONEAPI_VERSION/oneapi-vars.sh" ]; then
+        echo -e "- Intel OneAPI basekit not found. Installing ..."
+        sudo apt update
+        sudo apt install -y gpg-agent wget
 
-    if [ -d "$EXPORT_DIR" ]; then
-        echo -e "Model has been converted before. Please check $EXPORT_DIR"
-        exit 0
-    fi
+        wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+        echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
 
-    echo -e "Activating virtual environment"
-    # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
-
-    echo -e "Converting model to OpenVINO IR format"
-    optimum-cli export openvino --task "$TASK" --model "$MODEL_DIR" --weight-format "$WEIGHT_FORMAT" --framework "$FRAMEWORK" "$WORKDIR"/data/model/ov_llm
-
-    if [ ! -d "$MODEL_DIR" ]; then
-        echo -e "Model conversion failed."
-        exit 1
+        sudo apt update
+        sudo apt install -y intel-basekit-"$ONEAPI_VERSION" intel-oneapi-dnnl-"$ONEAPI_VERSION"
     else
-        echo -e "Model converted to OpenVINO IR successfully."
+        echo -e "- Intel OneAPI basekit is installed. Skipping installation"
     fi
 }
 
-convert_model_to_gguf_format(){
-    echo -e "\n# Setting up model for GGUF format"
-    # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
-
-    cd "$WORKDIR"/thirdparty/llama.cpp || exit
-    python3 -m pip install -r requirements.txt
-
-    if [ ! -f "$WORKDIR/data/model/gguf/model.gguf" ]; then
-        echo -e "- Converting model to GGUF format"
-        mkdir -p "$WORKDIR"/data/model/gguf
-        python3 convert_hf_to_gguf.py "$WORKDIR"/data/model/llm --outfile "$WORKDIR"/data/model/gguf/model.gguf
+install_ollama_binary(){
+    print_info "Verify Ollama installation"
+    if [ ! -f "./thirdparty/ollama_bin/ollama" ]; then
+        echo -e "- Ollama binary not found. Installing ..."
+        mkdir -p ./thirdparty/ollama_bin
+        activate_python_venv
+        if pip install --upgrade pip && \
+        pip install --pre --upgrade 'ipex-llm[cpp]==2.2.0b20240917' && \
+        pip install bigdl-core-cpp==2.6.0b20240917 && \
+        pip install --upgrade accelerate==0.33.0 && \
+        install_packages "curl"
+        then
+            cd ./thirdparty/ollama_bin || exit
+            init-ollama
+            echo "- Ollama binary installed successfully"
+            cd ../.. || exit
+        else
+            echo "- Failed to install Ollama binary"
+            exit 1 || exit
+        fi
     else
-        echo -e "- Model found in $WORKDIR/data/model/gguf/model.gguf. Skipping conversion."
-    fi
-
-    if [ ! -f "$WORKDIR/data/model/gguf/model-Q4_K_M.gguf" ]; then
-        echo -e "- Quantize gguf model to Q4_K_M"
-        mkdir -p "$WORKDIR"/data/model/gguf
-        "$WORKDIR"/thirdparty/llama.cpp/build/bin/llama-quantize "$WORKDIR"/data/model/gguf/model.gguf "$WORKDIR"/data/model/gguf/model-Q4_K_M.gguf Q4_K_M
-    else
-        echo -e "- Model is already quantize to Q4_K_M format. Skipping quantization."
+        echo -e "- Ollama binary is available. Skipping installation"
     fi
 }
 
-setup_tts(){
-    echo -e "\n# Installing TTS environment"
-    sudo apt-get install -y build-essential libsndfile1 git
-
-    # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
-    cd "$WORKDIR"/thirdparty || exit
-    if [ -d "$WORKDIR/thirdparty/MeloTTS" ]; then
-        echo -e "- MeloTTS repository is already available."
-    else
+install_tts_deps(){
+    print_info "Verify MeloTTS installation"
+    dependencies=(
+        build-essential
+        libsndfile1
+        git
+    )
+    install_packages "${dependencies[@]}"
+    activate_python_venv
+    if [ ! -d "./thirdparty/MeloTTS" ]; then
         echo -e "- Cloning MeloTTS, branch: main"
-        git clone https://github.com/myshell-ai/MeloTTS.git MeloTTS
+        git clone https://github.com/myshell-ai/MeloTTS.git ./thirdparty/MeloTTS
     fi
 
-    cd "$WORKDIR"/thirdparty/MeloTTS || exit
+    cd ./thirdparty/MeloTTS || exit
+    echo -e "- Installing MeloTTS dependencies"
     python3 -m pip install -e .
     python3 -m unidic download
+    cd ../.. || exit
 }
 
-write_choice(){
-    echo "$1" > "$WORKDIR"/.device
-}
-
-setup_backend(){
-    echo -e "\n# Setting up backend services"
-    # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
+install_backend_api_deps(){
+    print_info "Verify backend API installation"
+    activate_python_venv
+    python_deps=(
+        "optimum[openvino]"
+        "optimum[neural-compressor]"
+    )
+    install_python_packages "${python_deps[@]}"
 
     if [ ! -d "./data/model/embeddings/bge-large-en-v1.5" ]; then
         echo -e "- Getting embedding model: bge-large-en-v1.5"
-        optimum-cli export openvino --model BAAI/bge-large-en-v1.5 --task feature-extraction ./data/model/embeddings/bge-large-en-v1.5
+        if optimum-cli export openvino --model BAAI/bge-large-en-v1.5 --task feature-extraction ./data/model/embeddings/bge-large-en-v1.5
+        then
+            echo -e "- Successfully download embedding model"
+        else
+            echo -e "- Failed to download embedding model"
+            exit 1
+        fi
     fi
 
     if [ ! -d "./data/model/reranker/bge-reranker-large" ]; then
-        echo -e "- Getting embedding model: bge-reranker-large"
-        optimum-cli export openvino --model BAAI/bge-reranker-large --task text-classification ./data/model/reranker/bge-reranker-large
+        echo -e "- Getting reranker model: bge-reranker-large"
+        if optimum-cli export openvino --model BAAI/bge-reranker-large --task text-classification ./data/model/reranker/bge-reranker-large
+        then
+            echo -e "- Successfully download reranker model"
+        else
+            echo -e "- Failed to download reranker model"
+            exit 1
+        fi
     fi
 
     echo -e "- Installing backend dependencies"
-    cd "$WORKDIR"/backend || exit
-    python3 -m pip install --no-deps openai-whisper 
+    cd ./backend || exit
+    python3 -m pip install --no-deps openai-whisper
     python3 -m pip install -r requirements.txt
+    cd .. || exit
 }
 
-setup_ui(){
-    echo -e "\n# Setting up UI services"
-    echo -e "- Verifying if nodejs is available"
+install_edge_ui_deps(){
+    print_info "Verify frontend installation"
     if command -v node &> /dev/null
     then
         NODE_VERSION=$(node -v)
@@ -321,15 +233,16 @@ setup_ui(){
         sudo apt update
         sudo apt install -y curl
 
-        curl -fsSL https://deb.nodesource.com/setup_22.x -o /tmp/nodesource_setup.sh
-        sudo bash /tmp/nodesource_setup.sh
+        curl -fsSL https://deb.nodesource.com/setup_22.x -o ./nodesource_setup.sh
+        sudo bash ./nodesource_setup.sh
         sudo apt install -y nodejs
-        rm -rf /tmp/nodesource_setup.sh
+        rm -rf ./nodesource_setup.sh
     fi
 
-    echo -e "- Setting up UI in $WORKDIR/edge-ui"
-    cd "$WORKDIR"/edge-ui || exit
+    cd ./edge-ui || exit
+    echo -e "- Installing frontend dependencies"
     npm install
+    cd .. || exit
 }
 
 entrypoint(){
@@ -338,36 +251,28 @@ entrypoint(){
     echo -e "############################"
     echo -e ""
     echo -e "Select the device you would like to run on:"
-    echo -e "1) CPU"
-    echo -e "2) GPU"
+    echo -e "1) VLLM (OpenVINO - CPU)"
+    echo -e "2) OLLAMA (SYCL LLAMA.CPP - CPU/GPU)"
+    echo -e ""
     read -rp "Enter your choice [1 or 2]: " choice
     case $choice in
     1)
-        setup_dependencies
-        create_python_venv
-        validate_model_available
-        setup_vllm_openvino
-        convert_model_to_ov_format
-        write_choice "CPU"
+        install_inference_backend "OV_VLLM"
+        echo "OV_VLLM" > ./.framework
         ;;
     2)
-        setup_dependencies
-        create_python_venv
-        validate_model_available
-        validate_oneapi_available
-        setup_llamacpp_sycl
-        convert_model_to_gguf_format
-        write_choice "GPU"
+        install_inference_backend "OLLAMA"
+        echo "OLLAMA" > ./.framework
         ;;
     *)
         echo "Invalid choice. Please enter 1 or 2."
         exit 1
         ;;
     esac
-    setup_tts
-    setup_backend
-    setup_ui
-    echo -e "$S_VALID Successfully setup the application. Please execute the run script to start the application"
+    install_tts_deps
+    install_backend_api_deps
+    install_edge_ui_deps
+    print_info "Successfully setup the application. Please execute the run script to start the application"
 }
 
 entrypoint

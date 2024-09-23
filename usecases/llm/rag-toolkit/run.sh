@@ -2,145 +2,313 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-WORKDIR=$PWD
-# S_VALID="✓"
-S_INVALID="✗"
+# Settings
+BACKEND_HOST=127.0.0.1
+BACKEND_PORT=8011
+SERVING_HOST=127.0.0.1
+SERVING_PORT=8012
+OLLAMA_MODEL_ID="mistral"
+QUANT_FORMAT="Q4_K_M"
+OV_VLLM_MODEL_ID="mistralai/Mistral-7B-Instruct-v0.3"
+OV_QUANT_FORMAT="int4"
+OLLAMA_CUSTOM_MODEL_ID="intel-llm-model"
 
+# Applications
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 SERVING_LOGFILE="$TIMESTAMP/serving.log"
 BACKEND_LOGFILE="$TIMESTAMP/backend.log"
 UI_LOGFILE="$TIMESTAMP/ui.log"
+ONEAPI_VERSION="2024.0"
+FRAMEWORK=""
 
-DEVICE=""
-SERVING_PORT=8012
-MODEL_DIR=$WORKDIR/data/model
+export OLLAMA_MODELS="./data/model/ollama/cache"
 
 if [ "$EUID" -eq 0 ]; then
-    echo "$S_INVALID Must not run with sudo or root user"
+    print_info "Must not run with sudo or root user"
     exit 1
 fi
 
+# Common
+print_info(){
+    local info="$1"
+    echo -e "\n# $info"
+}
+
 read_choice(){
-    echo -e "- Verifying if device choice is available"
-    if [[ -f "$WORKDIR"/.device ]]
+    print_info "Verifying if framework choice is available"
+    if [[ -f "./.framework" ]]
     then
-        DEVICE=$(cat .device)
+        FRAMEWORK=$(cat ./.framework)
+        echo -e "Framework: $FRAMEWORK"
     else
-        echo "$S_INVALID Cannot get the device choice. Please run the setup.sh script first."
+        echo "- Unable to get the framework choice. Please run the setup.sh script first."
         exit 1
+    fi
+
+    if [ "$FRAMEWORK" == "OV_VLLM" ]; then
+        validate_hf_token
     fi
 }
 
 prepare_env(){
-    if [ ! -d "$WORKDIR/logs/$TIMESTAMP" ]; then
-        mkdir -p "$WORKDIR/logs/$TIMESTAMP"
+    if [ ! -d "./logs/$TIMESTAMP" ]; then
+        mkdir -p "./logs/$TIMESTAMP"
     fi
 }
 
-verify_ov_model_exist(){
-    echo -e "Verifying if OV model is available"
-    if [ ! -d "$MODEL_DIR/ov_llm" ]; then
-        echo -e "OV model not found in $MODEL_DIR/ov_llm. Please run the setup.sh script first."
-        exit 1
-    fi
+# Utils
+install_python_packages() {
+    local packages=("$@")
+    for PACKAGE_NAME in "${packages[@]}"; do
+        if pip show "$PACKAGE_NAME" &> /dev/null; then
+            echo "Package '$PACKAGE_NAME' is installed. Skipping installation"
+        else
+            echo "Package '$PACKAGE_NAME' is not installed. Installing ..."
+            python3 -m pip install "$PACKAGE_NAME"
+        fi
+    done
 }
 
-verify_gguf_model_exist(){
-    echo -e "Verifying if GGUF model is available"
-    if [ ! -d "$MODEL_DIR/gguf" ]; then
-        echo -e "GGUF model not found in $MODEL_DIR/gguf. Please run the setup.sh script first."
-        exit 1
+activate_python_venv(){
+    if ! command -v python3.11 &> /dev/null; then
+        print_info "Installing Python 3.11"
+        PYTHON_PACKAGES=(
+            python3.11
+            python3.11-venv
+        )
+        install_packages "${PYTHON_PACKAGES[@]}"
     fi
-}
 
-activate_virtual_env(){
-    echo -e "Verifying if python3 virtual env is available"
-    if [ ! -d "$WORKDIR/.venv" ]; then
-        echo -e "OV model not found in $WORKDIR/.venv. Please run the setup.sh script first to setup the environment"
-        exit 1
-    fi
+    [ ! -d "./.venv" ] && python3.11 -m venv ./.venv
+
+    print_info "Activating Python 3.11 environment"
     # shellcheck source=/dev/null
-    source "$WORKDIR"/.venv/bin/activate
+    source "./.venv/bin/activate"
 }
 
-vllm_openvino_serving(){
-    if [ -f "$WORKDIR/data/serving.pid" ]; then
-        echo -e "Serving service is already running."
-        return
+validate_hf_token(){
+    activate_python_venv
+    packages=(
+        huggingface_hub
+    )
+    install_python_packages "${packages[@]}"
+    export HF_HOME="./data/huggingface"
+    if [ ! -f "./data/huggingface/token" ]; then
+        if [ -z "$HF_TOKEN" ]; then
+            echo -e "Input your Hugging Face token."
+            read -rsp 'Hugging Face token: ' HF_TOKEN
+            if [ -z "$HF_TOKEN" ]; then
+                echo -e "\n- Please enter a valid Hugging Face token"
+                exit 1
+            fi
+        fi
+        huggingface-cli login --token "$HF_TOKEN"
+    else
+        echo -e "Hugging Face token is already available. Skipping login. If you want to use a new token, please remove your token in $WORKDIR/data/huggingface/token"
     fi
-
-    verify_ov_model_exist
-    activate_virtual_env
-
-    echo -e "Starting model serving using device: CPU"
-    VLLM_OPENVINO_KVCACHE_SPACE=8 VLLM_OPENVINO_CPU_KV_CACHE_PRECISION=u8 VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS=ON \
-        python3 -m vllm.entrypoints.openai.api_server \
-            --host 0.0.0.0 \
-            --port "$SERVING_PORT" \
-            --model "$MODEL_DIR" \
-            --device openvino > "$WORKDIR/logs/$SERVING_LOGFILE"
 }
 
-llamacpp_serving(){
-    if [ -f "$WORKDIR/data/serving.pid" ]; then
-        echo -e "Serving service is already running."
-        return
-    fi
+verify_ov_vllm_model(){
+    local downloaded_model_dir="./data/model/llm"
+    local model_dir="./data/model/ov"
 
-    echo -e "Starting serving services"
-    verify_gguf_model_exist
-    activate_virtual_env
-    echo -e "Activating OneAPI environment"
+    print_info "Verify OpenVINO LLM model available"
+    if [ ! -d "$model_dir" ]; then
+        if [ ! -d "$downloaded_model_dir" ]; then
+            echo -e "- Downloading default model: $OV_VLLM_MODEL_ID for OpenVINO. Please ensure you have network access."
+            if optimum-cli export openvino --model "$OV_VLLM_MODEL_ID" \
+                --weight-format "$OV_QUANT_FORMAT" "$model_dir"
+            then
+                echo -e "- Successfully download OV model: $OV_VLLM_MODEL_ID"
+            else
+                echo -e "- Failed to download OV model: $OV_VLLM_MODEL_ID"
+                exit 1
+            fi
+        else
+            echo -e "- Converting model to OpenVINO format"
+            if optimum-cli export openvino --task text-generation-with-past \
+                --framework pt \
+                --weight-format "$OV_QUANT_FORMAT" \
+                --model "$downloaded_model_dir" "$model_dir"
+            then
+                echo -e "- Successfully convert OV model: $downloaded_model_dir"
+            else
+                echo -e "- Failed to convert OV model: $downloaded_model_dir"
+                exit 1
+            fi
+        fi
+    else
+        echo -e "- OpenVINO model is available. Skipping downloading"
+    fi
+}
+
+is_ollama_running(){
+    curl -s -o /dev/null http://localhost:11434
+}
+
+verify_ollama_model(){
+    local downloaded_model_dir="./data/model/llm"
+    local ollama_modelfile="./data/model/gguf/Modelfile"
+
+    activate_python_venv
+    print_info "Verify Ollama model available"
+    if [ ! -d "$downloaded_model_dir" ]; then
+        echo -e "- Downloading default model for Ollama. Please ensure you have network access."
+        ./thirdparty/ollama_bin/ollama serve &
+        P1=$!
+        echo -e "- Waiting for Ollama service ready to download model"
+        while ! is_ollama_running; do
+            sleep 5
+        done
+        if ./thirdparty/ollama_bin/ollama pull $OLLAMA_MODEL_ID
+        then
+            echo -e "- Successfully download Ollama model: $OLLAMA_MODEL_ID"
+            kill "$P1"
+        else
+            echo -e "- Failed to download Ollama model: $OLLAMA_MODEL_ID. Please ensure you have valid network connection."
+            kill "$P1"
+            exit 1
+        fi
+    else
+        if [ ! -f "$ollama_modelfile" ]; then
+            echo -e "- Creating custom Ollama Modelfile"
+            mkdir -p ./data/model/gguf
+            python3 ./backend/scripts/convert_ollama.py --model_path ./data/model/llm --save_path $ollama_modelfile
+        fi
+
+        ./thirdparty/ollama_bin/ollama serve &
+        P1=$!
+        echo -e "- Waiting for Ollama service ready to create model"
+        while ! is_ollama_running; do
+            sleep 5
+        done
+        cd ./data/model/gguf || exit
+        if ../../../thirdparty/ollama_bin/ollama create --quantize "$QUANT_FORMAT" "$OLLAMA_CUSTOM_MODEL_ID"
+        then
+            echo -e "- Successfully to create Ollama model"
+            kill "$P1"
+        else
+            echo -e "- Failed to create Ollama model"
+            kill "$P1"
+            exit 1
+        fi
+        cd ../../.. || exit
+    fi
+}
+
+# Steps
+start_ollama_backend(){
+    print_info "Starting Ollama backend"
+    export OLLAMA_HOST="$SERVING_HOST:$SERVING_PORT"
+    export OLLAMA_NUM_GPU=999
+    export no_proxy=localhost,127.0.0.1
+    export ZES_ENABLE_SYSMAN=1
+
     # shellcheck source=/dev/null
-    source /opt/intel/oneapi/setvars.sh --force
+    source /opt/intel/oneapi/$ONEAPI_VERSION/oneapi-vars.sh --force
+    export SYCL_CACHE_PERSISTENT=1
+    export SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
 
-    echo -e "Starting model serving using device: GPU"
-    ZES_ENABLE_SYSMAN=1 python3 -m llama_cpp.server \
-        --host 0.0.0.0 \
+    ./thirdparty/ollama_bin/ollama serve > "./logs/$SERVING_LOGFILE"
+}
+
+start_ov_vllm_backend(){
+    local model_dir="./data/model/ov"
+    print_info "Starting OV VLLM backend"
+    if [ ! -f "$model_dir/openvino_model.xml" ]; then
+        echo -e "- Unable to find the OpenVINO LLM model in $model_dir"
+        exit 1
+    fi
+
+    activate_python_venv
+    export VLLM_OPENVINO_KVCACHE_SPACE=8 
+    export VLLM_OPENVINO_CPU_KV_CACHE_PRECISION=u8 
+    export VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS=ON
+    python3 -m vllm.entrypoints.openai.api_server \
+        --host "$SERVING_HOST" \
         --port "$SERVING_PORT" \
-        --model ./data/model/gguf/model.gguf \
-        --n_ctx 4096 \
-        --n_gpu_layers -1 \
-        --split_mode 0 \
-        --main_gpu 0 > "$WORKDIR/logs/$SERVING_LOGFILE"
+        --model "$model_dir" \
+        --device openvino > "./logs/$SERVING_LOGFILE"
 }
 
 start_serving(){
-    if [ "$DEVICE" == "CPU" ]; then
-        vllm_openvino_serving
-    elif [ "$DEVICE" == "GPU" ]; then
-        llamacpp_serving
+    if [ "$FRAMEWORK" == "OV_VLLM" ]; then
+        verify_ov_vllm_model
+        start_ov_vllm_backend
+    elif [ "$FRAMEWORK" == "OLLAMA" ]; then
+        verify_ollama_model
+        start_ollama_backend
     else
-        echo "$S_INVALID Device: $DEVICE is not supported. Please uninstall and install again"
+        echo "- FRAMEWORK: $FRAMEWORK is not supported. Please uninstall and install again"
         exit 1
     fi
 }
 
 start_backend(){
-    echo -e "Starting backend services"
-    activate_virtual_env
-    cd "$WORKDIR"/backend || exit
-    python3 app.py > "$WORKDIR/logs/$BACKEND_LOGFILE"
+    print_info "Starting backend services"
+    activate_python_venv
+    cd ./backend || exit
+    uvicorn app:app --host "$BACKEND_HOST" --port "$BACKEND_PORT" > "../logs/$BACKEND_LOGFILE"
 }
 
 start_ui(){
-    echo -e "Starting ui services"
-    cd "$WORKDIR"/edge-ui || exit
-    npm run dev > "$WORKDIR/logs/$UI_LOGFILE"
+    print_info "Starting ui services"
+    cd ./edge-ui || exit
+    export NEXT_TELEMETRY_DISABLED=1
+    npm run dev > "../logs/$UI_LOGFILE"
+}
+
+is_serving_running(){
+    curl -s -o /dev/null "http://localhost:$SERVING_PORT"
+}
+
+validate_serving_running(){
+    print_info "Verifying if serving service is ready"
+    while ! is_serving_running; do
+        sleep 5
+    done
+    echo -e "- Serving service is ready!"
+}
+
+is_backend_running(){
+    if curl -s "http://localhost:$BACKEND_PORT/healthcheck" | grep -q 'OK'; then
+        return 0 
+    else
+        return 1 
+    fi
+}
+
+validate_backend_running(){
+    print_info "Verifying if backend service is ready"
+    while ! is_backend_running; do
+        sleep 5
+    done
+    echo -e "- Backend service is ready!"
+}
+
+is_ui_running(){
+    curl -s -o /dev/null "http://localhost:8010"
+}
+
+validate_ui_running(){
+    print_info "Verifying if UI service is ready"
+    while ! is_ui_running; do
+        sleep 5
+    done
+    echo -e "- UI service is ready!"
 }
 
 stop_services() {
-    echo -e "\n Stopping all running services ..."
+    print_info "Stopping all running services ..."
     kill "$P_SERVING" "$P_BACKEND" "$P_UI"
     wait "$P_SERVING" "$P_BACKEND" "$P_UI"
-    exit 1
+    exit 0
 }
 
 main(){
     echo -e "######################"
     echo -e "# Intel® LLM On Edge #"
     echo -e "######################"
-    echo -e ""
     trap stop_services SIGINT
 
     read_choice
@@ -148,12 +316,18 @@ main(){
 
     start_serving &
     P_SERVING=$!
+    validate_serving_running
 
     start_backend &
     P_BACKEND=$!
+    validate_backend_running
 
     start_ui &
     P_UI=$!
+    validate_ui_running
+
+    print_info "Application started successfully"
+    echo -e "- Application is running on http://localhost:8010"
 
     wait "$P_SERVING" "$P_BACKEND" "$P_UI"
 }
