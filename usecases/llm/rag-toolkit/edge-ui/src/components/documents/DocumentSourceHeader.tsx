@@ -10,11 +10,7 @@ import { Box, IconButton, Stack } from "@mui/material";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import AddDocumentDialog from "./dialogs/AddDocumentDialog";
 
-export default function DocumentSourceHeader({
-  source,
-}: {
-  source: string[];
-}): React.JSX.Element {
+export default function DocumentSourceHeader(): React.JSX.Element {
   const { isOpen, onClose, onOpenChange } = useDisclosure();
   return (
     <>
@@ -34,7 +30,7 @@ export default function DocumentSourceHeader({
           </IconButton>
         </Box>
       </Stack>
-      <AddDocumentDialog source={source} isOpen={isOpen} onClose={onClose} />
+      <AddDocumentDialog isOpen={isOpen} onClose={onClose} />
     </>
   );
 }

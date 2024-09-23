@@ -9,10 +9,11 @@ import shutil
 import logging
 
 import chromadb
+from chromadb.config import Settings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
     TextLoader,
-    PyMuPDFLoader,
+    PyPDFLoader,
     UnstructuredHTMLLoader,
     UnstructuredPowerPointLoader,
 )
@@ -44,7 +45,7 @@ class ChromaClient:
         self.reranker = self._verify_reranker_model_exists(reranker_device)
 
         self.collection_name = "text-embeddings"
-        self.client = chromadb.PersistentClient(self.db_dir)
+        self.client = chromadb.PersistentClient(self.db_dir, settings=Settings(anonymized_telemetry=False))
         self.client.get_or_create_collection(
             self.collection_name,
             metadata={"hnsw:space": "cosine"},
@@ -55,7 +56,7 @@ class ChromaClient:
             embedding_function=self.text_embedding,
         )
 
-        text_search_kwargs = {"k": 3, "score_threshold": 0.0}
+        text_search_kwargs = {"k": 3, "score_threshold": 0.01}
         self.text_retriever = self.text_vector_store.as_retriever(
             search_kwargs=text_search_kwargs, search_type="similarity_score_threshold")
         self.text_retriever = ContextualCompressionRetriever(
@@ -128,7 +129,7 @@ class ChromaClient:
         if file_path.endswith(".txt"):
             loader = TextLoader(file_path)
         elif file_path.endswith(".pdf"):
-            loader = PyMuPDFLoader(str(file_path))
+            loader = PyPDFLoader(str(file_path))
         else:
             raise NotImplementedError(
                 f"No loader implemented for {file_path}.")

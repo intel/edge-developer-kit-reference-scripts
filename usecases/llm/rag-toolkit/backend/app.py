@@ -11,6 +11,7 @@ sys.path.append("../thirdparty/MeloTTS")
 import io
 import time
 import uuid
+import asyncio
 import logging
 import requests
 import numpy as np
@@ -25,7 +26,7 @@ import uvicorn
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from starlette.background import BackgroundTasks
 
@@ -38,10 +39,6 @@ from utils.tts import load_tts_model
 logger = logging.getLogger('uvicorn.error')
 
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:8012/v1")
-FEATURE_SUPPORTED = {
-    "RAG": True,
-    "FUNCTION_CALLING": False
-}
 ASR_MODEL = None
 TTS_MODEL = None
 TTS_SPEAKER_IDS = None
@@ -136,23 +133,30 @@ async def speech_to_text(data: TTSData, bg_task: BackgroundTasks):
 
     if TTS_MODEL == None or TTS_SPEAKER_IDS == None:
         raise HTTPException(
-            status_code=403, detail="Model is not loaded. Please call the /v1/")
+            status_code=403, detail="Model is not loaded.")
 
     output_path = f"../data/temp/tts/{str(uuid.uuid4())}.wav"
 
-    start_time = time.time()
-    TTS_MODEL.tts_to_file(
-        data.input, TTS_SPEAKER_IDS[data.voice], output_path, speed=data.speed)
-    elapsed_time = time.time() - start_time
-    logger.info(f"TTS Inference time: {elapsed_time:.2} secs")
+    try:
+        loop = asyncio.get_event_loop()
+        start_time = time.time()
+        await loop.run_in_executor(
+            None, 
+            lambda: TTS_MODEL.tts_to_file(
+                data.input, TTS_SPEAKER_IDS[data.voice], output_path, 
+                speed=data.speed, quiet=True
+            )
+        )
+        elapsed_time = time.time() - start_time
+        logger.info(f"TTS Inference time: {elapsed_time:.2f} secs")
+        
+        if os.path.isfile(output_path):
+            return FileResponse(output_path, media_type="audio/wav", background=bg_task.add_task(remove_file, output_path))
 
-    if os.path.isfile(output_path):
-        return FileResponse(output_path, media_type="audio/wav", background=bg_task.add_task(remove_file, output_path))
-    else:
-        raise HTTPException(
-            status_code=500, detail="Error in getting the generated output wav.")
-
-
+    except Exception as error:
+        logger.error(f"Error in speech_to_text: {str(error)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
 # STT Routes
 @app.post("/v1/audio/transcriptions")
 async def stt_transcription(file: UploadFile = File(...), language: Optional[str] = Form(None)):
@@ -267,7 +271,7 @@ async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[Upload
 
 # Chat completions routes
 @app.post("/v1/chat/completions", status_code=200)
-async def chat_completion(data: ICreateChatCompletions):
+async def chat_completion(request: Request, data: ICreateChatCompletions):
     global CHROMA_CLIENT
 
     def _streamer():
@@ -301,8 +305,8 @@ async def chat_completion(data: ICreateChatCompletions):
 
     isRAG = False
 
-    if 'rag' in data:
-        isRAG = data['rag']
+    if request.headers.get("rag"):
+        isRAG = True if request.headers.get("rag") == "ON" else False
 
     if isRAG:
         logger.info("RAG settings is enabled. Verifying embedding is available")

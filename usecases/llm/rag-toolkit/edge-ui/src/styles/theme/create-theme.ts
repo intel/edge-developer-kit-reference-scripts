@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { experimental_extendTheme as extendTheme } from '@mui/material/styles';
+
 import { colorSchemes } from './color-schemes';
 import { components } from './components/components';
 import { shadows } from './shadows';

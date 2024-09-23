@@ -16,6 +16,7 @@
     "format:check": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^0.0.54",
     "@emotion/cache": "11.11.0",
     "@emotion/react": "^11.11.4",
     "@emotion/server": "11.11.0",
@@ -33,11 +34,12 @@
     "@mui/x-date-pickers": "7.7.1",
     "@phosphor-icons/react": "2.1.6",
     "@tanstack/react-query": "5.51.11",
+    "ai": "^3.3.20",
     "apexcharts": "3.49.2",
     "dayjs": "1.11.11",
     "extendable-media-recorder": "^9.2.10",
     "extendable-media-recorder-wav-encoder": "^7.0.114",
-    "next": "14.2.4",
+    "next": "14.2.12",
     "notistack": "^3.0.1",
     "openai": "4.53.0",
     "react": "18.3.1",
@@ -48,17 +50,24 @@
     "react-markdown": "^9.0.1",
     "react-perfect-scrollbar": "1.5.8",
     "remark-gfm": "^4.0.0",
-    "zod": "3.23.8"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.2.1",
+    "@testing-library/jest-dom": "6.4.6",
+    "@testing-library/react": "16.0.0",
+    "@types/jest": "29.5.12",
     "@types/mapbox-gl": "3.1.0",
     "@types/node": "20.14.9",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@types/react-syntax-highlighter": "15.5.13",
+    "@vercel/style-guide": "6.0.0",
     "eslint": "8.57.0",
+    "eslint-config-next": "14.2.4",
     "eslint-config-prettier": "9.1.0",
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "29.7.0",
     "prettier": "3.3.2",
     "typescript": "5.5.2"
   }
