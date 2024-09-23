@@ -1,91 +1,147 @@
 // Copyright (C) 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-import { type Message } from "@/types/chat";
-import { Avatar, Box, CircularProgress, Paper, Stack, Typography } from "@mui/material";
-import React, { useEffect, useRef } from "react";
-import Markdown from "../common/markdown";
+import React, { useEffect, useRef, memo, useCallback } from 'react';
+import { Avatar, Box, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import Markdown from '../common/markdown';
+import { type Message } from 'ai';
+import AnimatedDots from './AnimatedDots';
 
-export default function ChatHistory({ isInit, isError, messages }: { isError: boolean, isInit: boolean, messages: Message[] }): React.JSX.Element {
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const scrollToBottom = (): void => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    useEffect(scrollToBottom, [messages]);
-
-    return (
-        <Box
-            flexGrow={1}
-            overflow="auto"
-            sx={{ border: 1, borderRadius: 2, mt: 2, mb: 2 }}
-        >
-            {
-                isInit ?
-                    <Stack gap="1rem" height="100%" justifyContent="center" alignItems="center">
-                        {
-                            isError ?
-                                <>
-                                    <Typography variant="h6">Oops, model fail to be fetched.</Typography>
-                                    <Typography variant="h6">Please refresh the page to try again</Typography>
-                                </>
-                                :
-                                <>
-                                    <Typography variant="h6">Model Loading...</Typography>
-                                    <CircularProgress />
-                                </>
-                        }
-                    </Stack>
-                    :
-                    messages.length < 1 ?
-                        <Stack gap="1rem" height="100%" justifyContent="center" alignItems="center">
-                            <Typography variant="h6">Start by typing some message to me below.</Typography>
-                        </Stack>
-                        :
-                        messages.map((message, index) => (
-                            <Box
-                                key={index}
-                                sx={theme => ({
-                                    justifyContent:
-                                        message.role === "user" ? "flex-end" : "flex-start",
-                                    display: "flex",
-                                    padding: theme.spacing(2),
-                                })}
-                            >
-                                <Paper sx={theme => ({
-                                    padding: theme.spacing(2),
-                                    maxWidth: "70%",
-                                    borderRadius: "25px",
-                                    backgroundColor: message.role === "user"
-                                        ? theme.palette.primary.main
-                                        : theme.palette.grey[300],
-                                    color: message.role === "user"
-                                        ? theme.palette.primary.contrastText
-                                        : theme.palette.text.primary,
-                                })} elevation={1}>
-                                    <Stack direction="row" spacing={2}>
-                                        <Avatar
-                                            sx={{
-                                                mr: 2,
-                                                mt: ".5rem",
-                                                border: "1px solid black",
-                                                bgcolor:
-                                                    message.role === "user"
-                                                        ? "white"
-                                                        : "secondary.main",
-                                                color: message.role === "user" ? "black" : "white"
-                                            }}
-                                        >
-                                            {message.role === "user" ? "U" : "A"}
-                                        </Avatar>
-                                        <Markdown content={message.status === "pending" && message.role === "assistant" ? "Loading..." : message.content} />
-                                    </Stack>
-                                </Paper>
-                            </Box>
-                        ))
-            }
-
-            <div ref={messagesEndRef} />
-        </Box>
-    )
+interface ChatMessageProps {
+  message: Message;
+  isLoading?: boolean;
 }
+
+const ChatMessage = memo(({ message, isLoading }: ChatMessageProps) => {
+  const isUser = message.role === 'user';
+  
+  return (
+    <Box
+      sx={(theme) => ({
+        justifyContent: isUser ? 'flex-end' : 'flex-start',
+        display: 'flex',
+        padding: theme.spacing(2),
+      })}
+    >
+      <Paper
+        sx={(theme) => ({
+          padding: theme.spacing(2),
+          maxWidth: '70%',
+          borderRadius: '25px',
+          backgroundColor: isUser ? theme.palette.primary.main : theme.palette.grey[300],
+          color: isUser ? theme.palette.primary.contrastText : theme.palette.text.primary,
+        })}
+        elevation={1}
+      >
+        <Stack direction="row" spacing={2}>
+          <Avatar
+            sx={{
+              mr: 2,
+              mt: '.5rem',
+              border: '1px solid black',
+              bgcolor: isUser ? 'white' : 'secondary.main',
+              color: isUser ? 'black' : 'white',
+            }}
+          >
+            {isUser ? 'U' : 'A'}
+          </Avatar>
+          {isLoading ? (
+            <Box sx={{ my: '1.5rem', pt: '.5rem' }}>
+              <AnimatedDots />
+            </Box>
+          ) : (
+            <Markdown content={message.content} />
+          )}
+        </Stack>
+      </Paper>
+    </Box>
+  );
+});
+
+ChatMessage.displayName = 'ChatMessage';
+
+interface ChatHistoryProps {
+  isLoading: boolean;
+  isError: boolean;
+  messages: Message[];
+  isGettingResponse: boolean;
+}
+
+const ChatHistory: React.FC<ChatHistoryProps> = memo(({
+  isLoading,
+  isError,
+  messages,
+  isGettingResponse,
+}) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [scrollToBottom, messages.length]);
+
+  if (isError) {
+    return (
+      <ErrorDisplay isLoading={isLoading} />
+    );
+  }
+
+  if (messages.length < 1) {
+    return (
+      <EmptyStateDisplay />
+    );
+  }
+
+  return (
+    <Box
+      flexGrow={1}
+      overflow="auto"
+      sx={{ border: 1, borderRadius: 2, mt: 2, mb: 2 }}
+    >
+      {messages.map((message) => (
+        <ChatMessage key={message.id || `${message.role}_${message.content.substring(0, 10)}`} message={message} />
+      ))}
+      {isGettingResponse && messages[messages.length - 1].role !== 'assistant' && (
+        <ChatMessage
+          key="ChatMessage_loading"
+          message={{ role: 'assistant', content: 'Loading...' } as Message}
+          isLoading
+        />
+      )}
+      <div ref={messagesEndRef} />
+    </Box>
+  );
+});
+
+ChatHistory.displayName = 'ChatHistory';
+
+const ErrorDisplay = memo<{ isLoading: boolean }>(({ isLoading }) => (
+  <Stack gap="1rem" height="100%" justifyContent="center" alignItems="center">
+    {isLoading ? (
+      <>
+        <Typography variant="h6">Oops, model failed to be fetched.</Typography>
+        <Typography variant="h6">Please refresh the page to try again</Typography>
+      </>
+    ) : (
+      <>
+        <Typography variant="h6">Model Loading...</Typography>
+        <CircularProgress />
+      </>
+    )}
+  </Stack>
+));
+
+ErrorDisplay.displayName = 'ErrorDisplay';
+
+const EmptyStateDisplay = memo(() => (
+  <Stack gap="1rem" height="100%" justifyContent="center" alignItems="center">
+    <Typography variant="h6">Start by typing some message to me below.</Typography>
+  </Stack>
+));
+
+EmptyStateDisplay.displayName = 'EmptyStateDisplay';
+
+export default ChatHistory;

@@ -38,7 +38,7 @@ export default function ConversationHistoryPopover({ count, updateCount, open, a
             <Stack sx={{ p: "1rem", minWidth: "300px", gap: ".5rem" }}>
                 <Typography variant="body2" fontWeight="bold">Set limited history messages</Typography>
                 <Stack direction="row" alignItems="center" gap="1rem" justifyContent="space-between">
-                    <Slider disabled={unlimited} step={1} min={1} max={30} valueLabelDisplay="auto" value={count} onChange={handleChange} />
+                    <Slider disabled={unlimited} step={1} min={0} max={30} valueLabelDisplay="auto" value={count} onChange={handleChange} />
                     <FormControlLabel control={<Switch checked={unlimited}
                         onChange={handleSwitchChange} />} label="Unlimited" />
                 </Stack>

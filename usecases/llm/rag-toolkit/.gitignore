@@ -1,5 +1,5 @@
 .venv
-.device
+.framework
 __pycache__
 data
 logs

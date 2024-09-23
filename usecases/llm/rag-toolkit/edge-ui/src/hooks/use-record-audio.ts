@@ -58,27 +58,53 @@ export const useRecordAudio = (): {
     return []
   }, [])
 
-  const updateLanguage = (selectedLanguage: LanguageProps): void => {
-    setLanguage(selectedLanguage)
-  }
-
-  const clearText = (): void => {
-    setText({ type: "none", result: "" })
-  }
-
   const getText = useCallback(
-    async (audioBlob: Blob, mimeType: string) => {
+    async (audioBlob: Blob, mimeType: string, selectedLanguage: LanguageProps) => {
       const form = new FormData();
+      console.log(selectedLanguage)
       form.append('file', new File([audioBlob], 'test.wav', { type: mimeType }));
-      form.append('language', language.value);
-      const response = await API.post(`audio/${language.type}`, form, {
+      form.append('language', selectedLanguage.value);
+      const response = await API.post(`audio/${selectedLanguage.type}`, form, {
         headers: {}
       });
 
       return response;
     },
-    [language]
+    []
   );
+
+  const updateLanguage = useCallback((selectedLanguage: LanguageProps): void => {
+    setLanguage(selectedLanguage)
+    setMediaRecorder(recorder => {
+      const tempRecorder = recorder
+      if (!tempRecorder)
+        return tempRecorder
+
+      tempRecorder.onstop = () => {
+        const mimeType = tempRecorder.mimeType;
+        const audioBlob = new Blob(chunks.current, { type: mimeType });
+        setRecording(false);
+        setSpeechProcessing(true)
+        getText(audioBlob, mimeType, selectedLanguage).then((result) => {
+          if (result.status)
+            setText({ type: "success", result: result.text ?? "" });
+          else
+            setText({ type: "error", result: result.data });
+
+        }).catch((err: unknown) => {
+          console.log(err)
+        }).finally(() => {
+          setSpeechProcessing(false)
+        });
+      }
+
+      return tempRecorder
+    })
+  }, [getText])
+
+  const clearText = (): void => {
+    setText({ type: "none", result: "" })
+  }
 
   const initialMediaRecorder = useCallback(
     (stream: MediaStream, MediaRecorder: any) => {
@@ -102,7 +128,7 @@ export const useRecordAudio = (): {
         const audioBlob = new Blob(chunks.current, { type: mimeType });
         setRecording(false);
         setSpeechProcessing(true)
-        getText(audioBlob, mimeType).then((result) => {
+        getText(audioBlob, mimeType, language).then((result) => {
           if (result.status)
             setText({ type: "success", result: result.text ?? "" });
           else
@@ -125,7 +151,7 @@ export const useRecordAudio = (): {
 
       setAnalyser(sourceAnalyser)
     },
-    [getText]
+    [getText, language]
   );
 
   const updateThresholdActivation = (status: boolean): void => {

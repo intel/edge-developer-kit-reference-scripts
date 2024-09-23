@@ -2,64 +2,72 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-WORKDIR=$PWD
-S_VALID="✓"
-
 if [ "$EUID" -eq 0 ]; then
     echo "Must not run with sudo or root user"
     exit 1
 fi
 
-remove_python3_env(){
-    echo -e "- Removing the python3 environment"
-    if [ -d "$WORKDIR/.venv" ]; then
-        rm -rf "$WORKDIR"/.venv
-        echo -e "$S_VALID Successfully removed python3 environment\n"
-    fi
+print_info(){
+    local info="$1"
+    echo -e "\n# $info"
 }
 
-remove_device(){
-    echo -e "- Removing the .device file"
-    if [ -f "$WORKDIR/.device" ]; then
-        rm "$WORKDIR"/.device
-        echo -e "$S_VALID Successfully removed .device file\n"
+remove_python3_env(){
+    print_info "Removing the python3 environment"
+    if [ -d "./.venv" ]; then
+        rm -rf ./.venv
+        echo -e "- Successfully removed python3 environment"
     fi
 }
 
 remove_ui_build_files(){
-    echo -e "- Removing the UI cache files"
-    if [ -d "$WORKDIR/edge-ui/.next" ]; then
-        rm -rf "$WORKDIR"/edge-ui/.next
+    print_info "Removing the UI cache files"
+    if [ -d "./edge-ui/.next" ]; then
+        rm -rf ./edge-ui/.next
+        echo -e "- Successfully removed UI cache"
     fi
 
-    if [ -d "$WORKDIR/edge-ui/node_modules" ]; then
-        rm -rf "$WORKDIR"/edge-ui/node_modules
+    if [ -d "./edge-ui/node_modules" ]; then
+        rm -rf ./edge-ui/node_modules
+        echo -e "- Successfully removed UI node_modules"
     fi
-    echo -e "$S_VALID Successfully removed UI cache files\n"
 }
 
 remove_thirdparty_dir(){
-    echo -e "- Removing the thirdparty directory"
-    if [ -d "$WORKDIR/thirdparty" ]; then
-        rm -rf "$WORKDIR"/thirdparty
-        echo -e "$S_VALID Successfully removed thirdparty directory\n"
+    print_info "Removing the thirdparty directory"
+    if [ -d "./thirdparty" ]; then
+        rm -rf ./thirdparty
+        echo -e "- Successfully removed thirdparty directory"
     fi
 }
 
-remove_temp_dir(){
-    echo -e "- Removing the temporary directory"
-    if [ -d "$WORKDIR/data/temp" ]; then
-        rm -rf "$WORKDIR"/data/temp
-        echo -e "$S_VALID Successfully removed temporary directory\n"
+remove_lock(){
+    print_info "Removing lockfile for installation"
+    if [ -f "./.framework" ]; then
+        rm -rf ./.framework
+        echo -e "- Successfully removed the lockfile"
+    fi
+}
+
+remove_ollama_cache(){
+    print_info "Removing ollama cache"
+    if [ -d "./data/model/ollama" ]; then
+        rm -rf ./data/model/ollama
+        echo -e "- Successfully removed the ollama cache"
+    fi
+
+    if [ -d "./data/model/gguf" ]; then
+        rm -rf ./data/model/gguf
+        echo -e "- Successfully removed the gguf cache"
     fi
 }
 
 uninstall(){
     remove_python3_env
     remove_thirdparty_dir
+    remove_lock
     remove_ui_build_files
-    remove_device
-    remove_temp_dir
+    remove_ollama_cache
 }
 
 entrypoint(){
@@ -80,7 +88,7 @@ entrypoint(){
         exit 1
         ;;
     esac
-    echo -e "Successfully uninstall the application. You can reinstall the application by running the install.sh script again"
+    print_info "Successfully uninstall the application. You can reinstall the application by running the install.sh script again"
 }
 
 entrypoint

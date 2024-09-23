@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type LanguageProps } from "@/hooks/use-record-audio";
-import { FormControl, Grid, MenuItem, Popover, Select, type SelectChangeEvent, Typography } from "@mui/material";
+import { FormControl, Grid, MenuItem, Popover, Select, type SelectChangeEvent, Switch, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-export default function LanguagePopover({ languages, language, updateLanguage, open, anchorEl, handleClose }:
+export default function LanguagePopover({ languages, language, updateLanguage, open, anchorEl, handleClose, enableAudio, updateAudio }:
     {
         languages: { name: string, value: string }[], language: LanguageProps, updateLanguage: (selectedLanguage: LanguageProps) => void,
-        open: boolean, anchorEl: HTMLDivElement | null, handleClose: VoidFunction
+        open: boolean, anchorEl: HTMLDivElement | null, handleClose: VoidFunction,
+        enableAudio: boolean, updateAudio: VoidFunction
     }): React.JSX.Element {
     const [init, setInit] = useState(true)
     const [spokenLanguage, setSpokenLanguage] = useState("english")
@@ -24,14 +25,13 @@ export default function LanguagePopover({ languages, language, updateLanguage, o
 
     useEffect(() => {
         let type = "translations"
-        let selectedLanguage = outputLanguage
+        let selectedLanguage = spokenLanguage
         if (spokenLanguage === outputLanguage) {
             type = "transcriptions"
-            selectedLanguage = spokenLanguage
+            selectedLanguage = outputLanguage
         }
         updateLanguage({ value: selectedLanguage, type } as LanguageProps)
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- will cause inifinite loop if add updatelanguage
-    }, [spokenLanguage, outputLanguage])
+    }, [spokenLanguage, outputLanguage, updateLanguage])
 
     useEffect(() => {
         if (init) {
@@ -61,6 +61,14 @@ export default function LanguagePopover({ languages, language, updateLanguage, o
             }}
         >
             <Grid container rowGap="1rem" sx={{ p: "1rem" }}>
+                <Grid item xs={5} sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography variant="body2" fontWeight="bold">Audio: </Typography>
+                </Grid>
+                <Grid item xs={7}>
+                    <FormControl fullWidth>
+                        <Switch checked={enableAudio} onChange={() => { updateAudio(); }} />
+                    </FormControl>
+                </Grid>
                 <Grid item xs={5} sx={{ display: "flex", alignItems: "center" }}>
                     <Typography variant="body2" fontWeight="bold">Spoken Language: </Typography>
                 </Grid>

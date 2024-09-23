@@ -4,18 +4,18 @@
 import { Input, Popover, Slider, Stack, Typography } from "@mui/material";
 import React from "react";
 
-export default function TemperaturePopover({ temperature, updateTemperature, open, anchorEl, handleClose }:
+export default function MaxTokensPopover({ maxTokens, updateMaxTokens, open, anchorEl, handleClose }:
     {
-        temperature: number, updateTemperature: (temp: number) => void,
+        maxTokens: number, updateMaxTokens: (num: number) => void,
         open: boolean, anchorEl: HTMLDivElement | null, handleClose: VoidFunction
     }): React.JSX.Element {
 
-    const min = 0
-    const max = 1
-    const step = 0.01
+    const min = 128
+    const max = 4096
+    const step = 1
 
     const handleChange = (event: Event, newValue: number | number[]): void => {
-        updateTemperature(newValue as number);
+        updateMaxTokens(newValue as number);
     };
 
     const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -25,20 +25,20 @@ export default function TemperaturePopover({ temperature, updateTemperature, ope
         } else if (value > max) {
             value = max
         }
-        updateTemperature(value);
+        updateMaxTokens(value);
     }
 
     const handleBlur = (): void => {
-        if (temperature < min) {
-            updateTemperature(min);
-        } else if (temperature > max) {
-            updateTemperature(max);
+        if (maxTokens < min) {
+            updateMaxTokens(min);
+        } else if (maxTokens > max) {
+            updateMaxTokens(max);
         }
     };
 
     return (
         <Popover
-            id="temperature-popover"
+            id="maxTokens-popover"
             open={open}
             anchorEl={anchorEl}
             onClose={handleClose}
@@ -52,11 +52,11 @@ export default function TemperaturePopover({ temperature, updateTemperature, ope
             }}
         >
             <Stack sx={{ p: "1rem", minWidth: "250px", gap: ".5rem" }}>
-                <Typography variant="body2" fontWeight="bold">Temperature</Typography>
+                <Typography variant="body2" fontWeight="bold">Max Tokens</Typography>
                 <Stack direction="row" alignItems="center" justifyContent="center" gap="1rem">
-                    <Slider step={step} min={min} max={max} valueLabelDisplay="auto" aria-label="temperature" value={temperature} onChange={handleChange} />
+                    <Slider step={step} min={min} max={max} valueLabelDisplay="auto" aria-label="maxTokens" value={maxTokens} onChange={handleChange} />
                     <Input
-                        value={temperature}
+                        value={maxTokens}
                         size="small"
                         onChange={handleTextChange}
                         onBlur={handleBlur}

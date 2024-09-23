@@ -29,7 +29,7 @@ export default async function DocumentsPage(): Promise<React.JSX.Element> {
           <InfoTypography>
             Create your vector database by uploading your documents.
           </InfoTypography>
-          <DocumentSourceHeader source={source} />
+          <DocumentSourceHeader />
           <DocumentSourceTable data={source ?? []} />
         </Stack>
       </Box>
