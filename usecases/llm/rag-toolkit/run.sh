@@ -20,6 +20,7 @@ BACKEND_LOGFILE="$TIMESTAMP/backend.log"
 UI_LOGFILE="$TIMESTAMP/ui.log"
 ONEAPI_VERSION="2024.0"
 FRAMEWORK=""
+RUNNING_OLLAMA_MODEL_ID=""
 
 export OLLAMA_MODELS="./data/model/ollama/cache"
 
@@ -152,47 +153,51 @@ verify_ollama_model(){
 
     activate_python_venv
     print_info "Verify Ollama model available"
+
+    ./thirdparty/ollama_bin/ollama serve &
+    P1=$!
+    while ! is_ollama_running; do
+        sleep 5
+    done
+
     if [ ! -d "$downloaded_model_dir" ]; then
-        echo -e "- Downloading default model for Ollama. Please ensure you have network access."
-        ./thirdparty/ollama_bin/ollama serve &
-        P1=$!
-        echo -e "- Waiting for Ollama service ready to download model"
-        while ! is_ollama_running; do
-            sleep 5
-        done
-        if ./thirdparty/ollama_bin/ollama pull $OLLAMA_MODEL_ID
-        then
-            echo -e "- Successfully download Ollama model: $OLLAMA_MODEL_ID"
-            kill "$P1"
-        else
-            echo -e "- Failed to download Ollama model: $OLLAMA_MODEL_ID. Please ensure you have valid network connection."
-            kill "$P1"
-            exit 1
+        RUNNING_OLLAMA_MODEL_ID=$OLLAMA_MODEL_ID
+    else
+        RUNNING_OLLAMA_MODEL_ID=$OLLAMA_CUSTOM_MODEL_ID
+    fi
+
+    output=$(./thirdparty/ollama_bin/ollama list 2>&1 | grep $RUNNING_OLLAMA_MODEL_ID)
+    if [[ $output == "" ]]; then
+        echo -e "- Ollama model: $RUNNING_OLLAMA_MODEL_ID not found. Preparing model ..."
+        if [[ $RUNNING_OLLAMA_MODEL_ID == "$OLLAMA_MODEL_ID" ]]; then
+            if ./thirdparty/ollama_bin/ollama pull "$OLLAMA_MODEL_ID"
+            then
+                echo -e "- Successfully download Ollama model: $OLLAMA_MODEL_ID"
+                kill "$P1"
+            else
+                echo -e "- Failed to download Ollama model: $OLLAMA_MODEL_ID. Please ensure you have valid network connection."
+                kill "$P1"
+                exit 1
+            fi
+        elif [[ $RUNNING_OLLAMA_MODEL_ID == "$OLLAMA_CUSTOM_MODEL_ID" ]]; then
+            if [ ! -f "$ollama_modelfile" ]; then
+                echo -e "- Creating custom Ollama Modelfile"
+                mkdir -p ./data/model/gguf
+                python3 ./backend/scripts/convert_ollama.py --model_path ./data/model/llm --save_path "$ollama_modelfile"
+            fi
+
+            if ./thirdparty/ollama_bin/ollama create -f "$ollama_modelfile" --quantize "$QUANT_FORMAT" "$OLLAMA_CUSTOM_MODEL_ID"
+            then
+                echo -e "- Successfully to create Ollama model"
+                kill "$P1"
+            else
+                echo -e "- Failed to create Ollama model"
+                kill "$P1"
+                exit 1
+            fi
         fi
     else
-        if [ ! -f "$ollama_modelfile" ]; then
-            echo -e "- Creating custom Ollama Modelfile"
-            mkdir -p ./data/model/gguf
-            python3 ./backend/scripts/convert_ollama.py --model_path ./data/model/llm --save_path $ollama_modelfile
-        fi
-
-        ./thirdparty/ollama_bin/ollama serve &
-        P1=$!
-        echo -e "- Waiting for Ollama service ready to create model"
-        while ! is_ollama_running; do
-            sleep 5
-        done
-        cd ./data/model/gguf || exit
-        if ../../../thirdparty/ollama_bin/ollama create --quantize "$QUANT_FORMAT" "$OLLAMA_CUSTOM_MODEL_ID"
-        then
-            echo -e "- Successfully to create Ollama model"
-            kill "$P1"
-        else
-            echo -e "- Failed to create Ollama model"
-            kill "$P1"
-            exit 1
-        fi
-        cd ../../.. || exit
+        echo -e "- Ollama model: $RUNNING_OLLAMA_MODEL_ID is already available"
     fi
 }
 
@@ -200,6 +205,7 @@ verify_ollama_model(){
 start_ollama_backend(){
     print_info "Starting Ollama backend"
     export OLLAMA_HOST="$SERVING_HOST:$SERVING_PORT"
+    export OLLAMA_KEEP_ALIVE=-1
     export OLLAMA_NUM_GPU=999
     export no_proxy=localhost,127.0.0.1
     export ZES_ENABLE_SYSMAN=1
@@ -210,6 +216,33 @@ start_ollama_backend(){
     export SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
 
     ./thirdparty/ollama_bin/ollama serve > "./logs/$SERVING_LOGFILE"
+}
+
+preload_ollama_model(){
+    local downloaded_model_dir="./data/model/llm"
+    
+    if [ ! -d "$downloaded_model_dir" ]; then
+        RUNNING_OLLAMA_MODEL_ID=$OLLAMA_MODEL_ID
+    else
+        RUNNING_OLLAMA_MODEL_ID=$OLLAMA_CUSTOM_MODEL_ID
+    fi
+
+    print_info "Preloading Ollama model: $RUNNING_OLLAMA_MODEL_ID"
+    if ! curl http://localhost:$SERVING_PORT/v1/chat/completions \
+        -H "Content-Type: application/json" \
+        -d '{
+            "model": "'"$RUNNING_OLLAMA_MODEL_ID"'",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Reply yes"
+                }
+            ]
+        }'
+    then
+        echo -e "Failed to preload Ollama model: $RUNNING_OLLAMA_MODEL_ID"
+        exit 1
+    fi
 }
 
 start_ov_vllm_backend(){
@@ -267,6 +300,7 @@ validate_serving_running(){
     while ! is_serving_running; do
         sleep 5
     done
+    preload_ollama_model
     echo -e "- Serving service is ready!"
 }
 

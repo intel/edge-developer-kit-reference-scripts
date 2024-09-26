@@ -10,7 +10,7 @@ export default function TemperaturePopover({ temperature, updateTemperature, ope
         open: boolean, anchorEl: HTMLDivElement | null, handleClose: VoidFunction
     }): React.JSX.Element {
 
-    const min = 0
+    const min = 0.01
     const max = 1
     const step = 0.01
 
