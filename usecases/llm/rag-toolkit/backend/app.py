@@ -91,8 +91,11 @@ async def lifespan(app: FastAPI):
     configs = read_config_file("./config.yaml")
 
     CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, configs["EMBEDDINGS"]["DEVICE"], configs["RERANKER"]["DEVICE"])
-    ASR_MODEL = load_stt_model(model_id=configs["STT"]["MODEL_ID"], device=configs["STT"]["DEVICE"])
-    
+    ASR_MODEL = load_stt_model(
+        model_id=configs["STT"]["MODEL_ID"], 
+        encoder_device=configs["STT"]["ENCODER_DEVICE"],
+        decoder_device=configs["STT"]["DECODER_DEVICE"]
+    )
     TTS_MODEL, TTS_SPEAKER_IDS = load_tts_model(language='EN', device="cpu")
     yield
     logger.info("Stopping server services ...")
@@ -154,7 +157,7 @@ async def speech_to_text(data: TTSData, bg_task: BackgroundTasks):
             return FileResponse(output_path, media_type="audio/wav", background=bg_task.add_task(remove_file, output_path))
 
     except Exception as error:
-        logger.error(f"Error in speech_to_text: {str(error)}")
+        logger.error(f"Error in TTS generation: {str(error)}")
         raise HTTPException(status_code=500, detail="Internal server error")
     
 # STT Routes
@@ -171,6 +174,7 @@ async def stt_transcription(file: UploadFile = File(...), language: Optional[str
         )
 
     except Exception as error:
+        logger.error(f"Error in STT transcriptions: {str(error)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to transcribe the voice input. Error: {error}")
 
@@ -190,6 +194,7 @@ async def stt_translation(file: UploadFile = File(...), language: Optional[str] 
         )
 
     except Exception as error:
+        logger.error(f"Error in STT translations: {str(error)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to translate the voice input. Error: {error}")
 
