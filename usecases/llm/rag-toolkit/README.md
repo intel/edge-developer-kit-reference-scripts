@@ -51,7 +51,17 @@ Run the script to start all the services. During the first time running, the scr
 ./run.sh
 ```
 
-## Advanced Settings
+## FAQ
+### Utilize NPU in AI PC
+The Speech to Text model inference can be offloaded on the NPU device on an AI PC. Edit the `ENCODER_DEVICE` to *NPU* in `backend/config.yaml` to run the encoder model on NPU. *Currently only encoder model is supported to run on NPU device*
+```
+# Example:
+STT:
+  MODEL_ID: base
+  ENCODER_DEVICE: NPU # <- Edit this line to NPU
+  DECODER_DEVICE: CPU
+```
+
 ### Uninstall the app
 ```bash
 ./uninstall.sh

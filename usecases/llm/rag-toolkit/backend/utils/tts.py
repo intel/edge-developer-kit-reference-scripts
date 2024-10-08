@@ -10,6 +10,12 @@ logger = logging.getLogger('uvicorn.error')
 
 from melo.api import TTS
 
+loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+for logger in loggers:
+    print(logger)
+    if "transformers" in logger.name.lower():
+        logger.setLevel(logging.ERROR)
+
 def download_nltk_data(download_dir='../data/nltk_data'):
     logger.info(f"NLTK data is not found in {download_dir}. Downloading NLTK data. Please ensure you have network access.")
     import nltk
