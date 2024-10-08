@@ -212,7 +212,7 @@ install_backend_api_deps(){
 
     echo -e "- Installing backend dependencies"
     cd ./backend || exit
-    python3 -m pip install --no-deps openai-whisper
+    python3 -m pip install --no-deps openai-whisper==20240927
     python3 -m pip install -r requirements.txt
     cd .. || exit
 }

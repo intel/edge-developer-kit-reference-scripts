@@ -27,6 +27,16 @@ class OpenVINOAudioEncoder(torch.nn.Module):
     def __init__(self, core: ov.Core, model_path: Path, device="CPU"):
         super().__init__()
         self.model = core.read_model(model_path)
+        logger.info(f"Compiling the encoder model to {device}")
+        if device == "NPU":
+            available_devices = core.available_devices
+            logger.info(available_devices)
+            if "NPU" in available_devices:
+                logger.info("Reshape model input to static shape to support NPU device")
+                self.model.reshape((1, 80, 3000))
+            else:
+                logger.warning("Unable to find NPU device on the platform. Fallback to use CPU device")
+                device = "CPU"
         self.compiled_model = core.compile_model(self.model, device)
         self.output_blob = self.compiled_model.output(0)
 
@@ -396,8 +406,8 @@ def download_and_convert_decoder(model, model_id, save_dir="../data/model/stt"):
     ov.save_model(decoder_model, f"{save_dir}/whisper_{model_id}_decoder.xml")
 
 
-def load_stt_model(model_id='base', device='CPU'):
-    logger.info(f"Initializing STT model on device: {device}")
+def load_stt_model(model_id='base', encoder_device='CPU', decoder_device='CPU'):
+    logger.info(f"Initializing STT encoder on device: {encoder_device} and decoder on device: {decoder_device}")
     model = whisper.load_model(model_id, 'cpu')
     model.eval()
 
@@ -423,9 +433,9 @@ def load_stt_model(model_id='base', device='CPU'):
     core = ov.Core()
     patch_whisper_for_ov_inference(model)
     model.encoder = OpenVINOAudioEncoder(
-        core, whisper_encoder_ov, device=device)
+        core, whisper_encoder_ov, device=encoder_device)
     model.decoder = OpenVINOTextDecoder(
-        core, whisper_decoder_ov, device=device)
+        core, whisper_decoder_ov, device=decoder_device)
 
     return model
 
