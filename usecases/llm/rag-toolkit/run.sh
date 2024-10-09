@@ -288,7 +288,7 @@ start_ui(){
     print_info "Starting ui services"
     cd ./edge-ui || exit
     export NEXT_TELEMETRY_DISABLED=1
-    npm run dev > "../logs/$UI_LOGFILE"
+    npm run start > "../logs/$UI_LOGFILE"
 }
 
 is_serving_running(){

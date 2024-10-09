@@ -12,7 +12,7 @@ import DocumentSourceHeader from "@/components/documents/DocumentSourceHeader";
 import DocumentSourceTable from "@/components/documents/DocumentSourceTable";
 
 export default async function DocumentsPage(): Promise<React.JSX.Element> {
-  const { data: source } = await getDatasetEmbeddingSourcesAPI();
+  const { status, data: source } = await getDatasetEmbeddingSourcesAPI();
 
   return (
     <Container maxWidth="md" >
@@ -30,7 +30,7 @@ export default async function DocumentsPage(): Promise<React.JSX.Element> {
             Create your vector database by uploading your documents.
           </InfoTypography>
           <DocumentSourceHeader />
-          <DocumentSourceTable data={source ?? []} />
+          <DocumentSourceTable data={status ? source : []} />
         </Stack>
       </Box>
     </Container>

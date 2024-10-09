@@ -22,8 +22,10 @@ If you are using this bundle without any finetuned model, you **must** follow th
 ### 1. Install operating system
 Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
+<a name="hf-token-anchor"></a>
 ### 2. Create a Hugging Face account and generate an access token. For more information, please refer to [link](https://huggingface.co/docs/hub/en/security-tokens).
 
+<a name="hf-access-anchor"></a>
 ### 3. Login to your Hugging Face account and browse to [mistralai/Mistral-7B-Instruct-v0.3](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3) and click on the `Agree and access repository` button.
 
 ### 4. Clone repository
@@ -49,6 +51,34 @@ This step will download all the dependencies needed to run the application.
 Run the script to start all the services. During the first time running, the script will download some assets required to run the services, please ensure you have internet connection.
 ```bash
 ./run.sh
+```
+## Docker Setup
+### Prerequisite
+1. Docker and docker compose should be setup before running the commands below. Refer to [here](https://docs.docker.com/engine/install/) to setup docker.
+1. Install necessary GPU drivers.
+   - Refer to [here](../../../gpu/arc/dg2/README.md) to setup GPU drivers
+
+
+### 1. Setup env
+Set the INSTALL_OPTION in env file. 
+
+1 = VLLM (OpenVINO - CPU)
+  - Please also provide HF_TOKEN if using this option. Refer [here](#hf-token-anchor) to create a token.
+  - Ensure the hugging face token has access to Mistral 7b instruct v0.3 model. Refer [here](#hf-access-anchor) to get access to model.
+
+2 [default] = OLLAMA (SYCL LLAMA.CPP - CPU/GPU)
+```bash
+cp .env.template .env
+```
+
+### 2. Build docker container
+```bash
+docker compose build
+```
+ 
+### 3. Start docker container
+```bash
+docker compose up -d
 ```
 
 ## FAQ
