@@ -1,0 +1,22 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args: 
+        - INSTALL_OPTION=${INSTALL_OPTION}
+        - HF_TOKEN=${HF_TOKEN}
+    image: rag-toolkit.deployment
+    container_name: rag-toolkit.deployment
+    privileged: true
+    ipc: host
+    network_mode: host
+    volumes:
+      - /home/intel/edge-ui/.next
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    command: './run.sh'
