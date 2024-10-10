@@ -14,7 +14,7 @@ interface ChatMessageProps {
 
 const ChatMessage = memo(({ message, isLoading }: ChatMessageProps) => {
   const isUser = message.role === 'user';
-  
+
   return (
     <Box
       sx={(theme) => ({
@@ -83,7 +83,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = memo(({
     scrollToBottom();
   }, [scrollToBottom, messages.length]);
 
-  if (isError) {
+  if (isError || isLoading) {
     return (
       <ErrorDisplay isLoading={isLoading} />
     );
@@ -104,13 +104,11 @@ const ChatHistory: React.FC<ChatHistoryProps> = memo(({
       {messages.map((message) => (
         <ChatMessage key={message.id || `${message.role}_${message.content.substring(0, 10)}`} message={message} />
       ))}
-      {isGettingResponse && messages[messages.length - 1].role !== 'assistant' && (
-        <ChatMessage
-          key="ChatMessage_loading"
-          message={{ role: 'assistant', content: 'Loading...' } as Message}
-          isLoading
-        />
-      )}
+      {isGettingResponse && messages[messages.length - 1].role !== 'assistant' ? <ChatMessage
+        key="ChatMessage_loading"
+        message={{ role: 'assistant', content: 'Loading...' } as Message}
+        isLoading
+      /> : null}
       <div ref={messagesEndRef} />
     </Box>
   );

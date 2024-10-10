@@ -49,17 +49,21 @@ class FetchAPI {
 
   private async handleResponse(response: Response): Promise<APIResponse> {
     const responseURL = response.url;
-    const data = await response.json();
-    if (!response.ok) {
-      return {
-        status: false,
-        message: 'Error communicating with backend',
-        url: response.url,
-      } as APIResponse;
+    try {
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          status: false,
+          message: 'Error communicating with backend',
+          url: response.url,
+        } as APIResponse;
+      }
+      if (typeof data === 'object' && data !== null && 'status' in data)
+        return data as APIResponse
+      return { status: true, data, url: responseURL } as APIResponse;
+    } catch {
+      return { status: false, message: "Error processing response", url: responseURL }
     }
-    if (typeof data === 'object' && data !== null && 'status' in data)
-      return data as APIResponse
-    return { status: true, data, url: responseURL } as APIResponse;
   }
 
   public async get(url: string, config?: RequestConfig): Promise<APIResponse> {

@@ -120,14 +120,14 @@ install_oneapi_basekit(){
     print_info "Verify Intel OneAPI installation"
     if [ ! -f "/opt/intel/oneapi/$ONEAPI_VERSION/oneapi-vars.sh" ]; then
         echo -e "- Intel OneAPI basekit not found. Installing ..."
-        sudo apt update
-        sudo apt install -y gpg-agent wget
+        sudo -E apt update
+        sudo -E apt install -y gpg-agent wget
 
         wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
         echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
 
-        sudo apt update
-        sudo apt install -y intel-basekit-"$ONEAPI_VERSION" intel-oneapi-dnnl-"$ONEAPI_VERSION"
+        sudo -E apt update
+        sudo -E apt install -y intel-basekit-"$ONEAPI_VERSION" intel-oneapi-dnnl-"$ONEAPI_VERSION"
     else
         echo -e "- Intel OneAPI basekit is installed. Skipping installation"
     fi
@@ -230,33 +230,42 @@ install_edge_ui_deps(){
         fi
     else
         echo -e "- Installing Node.js version 22"
-        sudo apt update
-        sudo apt install -y curl
+        sudo -E apt update
+        sudo -E apt install -y curl
 
         curl -fsSL https://deb.nodesource.com/setup_22.x -o ./nodesource_setup.sh
-        sudo bash ./nodesource_setup.sh
-        sudo apt install -y nodejs
+        sudo -E bash ./nodesource_setup.sh
+        sudo -E apt install -y nodejs
         rm -rf ./nodesource_setup.sh
     fi
 
     cd ./edge-ui || exit
     echo -e "- Installing frontend dependencies"
     npm install
+    export NEXT_TELEMETRY_DISABLED=1
+    npm run build
     cd .. || exit
 }
 
 entrypoint(){
-    echo -e "############################"
-    echo -e "# LLM On Edge Installation #"
-    echo -e "############################"
-    echo -e ""
-    echo -e "Select the device you would like to run on:"
-    echo -e "1) VLLM (OpenVINO - CPU)"
-    echo -e "2) OLLAMA (SYCL LLAMA.CPP - CPU/GPU)"
-    echo -e ""
-    read -rp "Enter your choice [1 or 2]: " choice
+    choice="${INSTALL_OPTION}"
+    if [ -z "$choice" ]; then
+        echo -e "############################"
+        echo -e "# LLM On Edge Installation #"
+        echo -e "############################"
+        echo -e ""
+        echo -e "Select the device you would like to run on:"
+        echo -e "1) VLLM (OpenVINO - CPU)"
+        echo -e "2) OLLAMA (SYCL LLAMA.CPP - CPU/GPU)"
+        echo -e ""
+        read -rp "Enter your choice [1 or 2]: " choice
+    fi
     case $choice in
     1)
+        if [ -z "$HF_TOKEN" ]; then
+            echo "HF_TOKEN not provided"
+            exit 1
+        fi
         install_inference_backend "OV_VLLM"
         echo "OV_VLLM" > ./.framework
         ;;

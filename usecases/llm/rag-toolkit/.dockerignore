@@ -1,0 +1,6 @@
+data
+thirdparty
+.venv
+.framework
+node_modules
+.next
