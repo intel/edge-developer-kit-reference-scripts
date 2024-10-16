@@ -64,7 +64,7 @@ verify_intel_gpu_package_repo(){
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
             sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
-        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy/production/2328 unified" | \
+        echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | \
             sudo tee /etc/apt/sources.list.d/intel-gpu-jammy.list
         sudo -E apt update
     fi
@@ -80,6 +80,8 @@ verify_igpu_driver(){
         IGPU_PACKAGES=(
             intel-opencl-icd
             intel-level-zero-gpu
+            libze1
+            clinfo
             level-zero
             intel-media-va-driver-non-free
             libmfx1
