@@ -247,22 +247,21 @@ export const useRecordAudio = (): {
     async function loadRecorder(): Promise<void> {
       const { connect } = (await import('extendable-media-recorder-wav-encoder'));
       const { MediaRecorder, register } = (await import('extendable-media-recorder'))
-      connect().then((res) => {
-        register(res).then(() => {
-          try {
-            const recorder = navigator.mediaDevices;
-            if (recorder)
-              recorder.getUserMedia({ audio: true })
-                .then((stream) => { initialMediaRecorder(stream, MediaRecorder) })
-                .catch((err: unknown) => {
-                  console.log(err)
-                })
-          } catch (error) {
-            console.log(error);
-          }
-        }).catch((err: unknown) => {
-          console.log(err)
-        });;
+      connect().then(async (res) => {
+        if (!MediaRecorder.isTypeSupported("audio/wav")) {
+          await register(res)
+        }
+        try {
+          const recorder = navigator.mediaDevices;
+          if (recorder)
+            recorder.getUserMedia({ audio: true })
+              .then((stream) => { initialMediaRecorder(stream, MediaRecorder) })
+              .catch((err: unknown) => {
+                console.log(err)
+              })
+        } catch (error) {
+          console.log(error);
+        }
       }).catch((err: unknown) => {
         console.log(err)
       });

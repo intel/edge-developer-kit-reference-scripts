@@ -12,7 +12,6 @@ from melo.api import TTS
 
 loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
 for logger in loggers:
-    print(logger)
     if "transformers" in logger.name.lower():
         logger.setLevel(logging.ERROR)
 
