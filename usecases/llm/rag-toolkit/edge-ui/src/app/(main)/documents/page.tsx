@@ -13,7 +13,6 @@ import DocumentSourceTable from "@/components/documents/DocumentSourceTable";
 
 export default async function DocumentsPage(): Promise<React.JSX.Element> {
   const { status, data: source } = await getDatasetEmbeddingSourcesAPI();
-
   return (
     <Container maxWidth="md" >
       <Box

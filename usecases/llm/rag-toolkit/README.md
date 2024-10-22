@@ -1,4 +1,5 @@
 # LLM RAG Toolkit
+![LLM On Edge](./assets/ui.gif)
 
 ## Requirements
 ### Validated hardware

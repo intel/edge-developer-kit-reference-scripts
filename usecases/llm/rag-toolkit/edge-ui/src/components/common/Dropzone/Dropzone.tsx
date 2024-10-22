@@ -94,31 +94,31 @@ export default function Dropzone({
         <Typography>{acceptedFileString}</Typography>
       </Box>
       <List sx={{ maxHeight: 200, overflow: 'auto' }}>
-        {fileRejections.length > 0 && <RejectionFiles fileRejections={fileRejections} />}
+        {fileRejections.length > 0 && <RejectionFiles fileRejections={[...fileRejections]} />}
         {files
           ? files.map((file, index) => (
-              <ListItem
-                key={index}
-                secondaryAction={
-                  <IconButton
-                    color="error"
-                    edge="end"
-                    aria-label="delete"
-                    disabled={isUploading}
-                    onClick={() => {
-                      onRemove(file);
-                    }}
-                  >
-                    <Delete />
-                  </IconButton>
-                }
-              >
-                <Stack gap=".5rem" direction="row" alignItems="center" sx={{ overflow: 'hidden' }}>
-                  <Article />
-                  <ListItemText primary={file.name} secondary={`${(file.size / 1024).toFixed(2)} KB`} />
-                </Stack>
-              </ListItem>
-            ))
+            <ListItem
+              key={index}
+              secondaryAction={
+                <IconButton
+                  color="error"
+                  edge="end"
+                  aria-label="delete"
+                  disabled={isUploading}
+                  onClick={() => {
+                    onRemove(file);
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+              }
+            >
+              <Stack gap=".5rem" direction="row" alignItems="center" sx={{ overflow: 'hidden' }}>
+                <Article />
+                <ListItemText primary={file.name} secondary={`${(file.size / 1024).toFixed(2)} KB`} />
+              </Stack>
+            </ListItem>
+          ))
           : null}
       </List>
       {files && files.length > 0 ? (
