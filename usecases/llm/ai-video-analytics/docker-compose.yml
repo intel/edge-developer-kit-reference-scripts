@@ -1,0 +1,22 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-video-analytics
+    container_name: ai-video-analytics
+    privileged: true
+    ipc: host
+    network_mode: host
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    volumes:
+      - datadb:/usr/src/app/data:rw
+
+volumes:
+  datadb:
+
