@@ -27,6 +27,7 @@ Based on the platform you are using, select the following to get started:
 5. [LLM Finetuning Benchmark](usecases/llm/finetuning-benchmark/README.md)
 6. [LLM RAG Toolkit](usecases/llm/rag-toolkit/README.md)
 7. [Gen AI validated systems](usecases/genai/README.md)
+9. [AI Video Analytics](usecases/llm/ai-video-analytics/README.md)
 
 ## Disclaimer
 GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.

@@ -1,0 +1,5 @@
+.venv
+flagged
+data
+__pycache__
+kernel.errors.txt
