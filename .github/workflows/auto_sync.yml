@@ -40,7 +40,7 @@ jobs:
       - name: Get last commit message
         id: get_commit_message
         run: |
-          commit_message=$(git log -1 --pretty=%B | tr -d '\n')
+          commit_message=$(git log -1 --pretty=%B | head -n 1 | tr -d '\n')
           if [ -z "$commit_message" ]; then
             echo "Commit message is empty or only whitespace."
           else
