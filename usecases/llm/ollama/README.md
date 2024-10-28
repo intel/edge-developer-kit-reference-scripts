@@ -1,4 +1,7 @@
 # Ollama with Open WebUI on Intel® Discrete GPU
+This repository provides detailed instructions and steps to successfully run Ollama and OpenWebUI on Intel platforms.
+
+<img src="./assets/example.gif" width="100%" />
 
 ## Requirements
 ### Validated Hardware
