@@ -12,7 +12,7 @@ pypdf==5.0.0
 chromadb==0.5.5
 langchain-chroma==0.1.2
 langchain==0.2.16
-langchain-community==0.2.16
+langchain-community==0.3.0
 huggingface_hub>=0.23.0
 botocore==1.34.88
 cached_path==1.6.3
