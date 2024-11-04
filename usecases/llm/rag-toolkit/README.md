@@ -1,4 +1,6 @@
 # LLM RAG Toolkit
+The RAG Toolkit is a sophisticated Language Model (LLM) application designed to leverage the power of Intel CPUs and GPUs. It features Retrieval Augmented Generation (RAG), a cutting-edge technology that enhances the model's ability to generate accurate and contextually relevant responses by integrating external information retrieval mechanisms.
+
 ![LLM On Edge](./assets/ui.gif)
 
 ## Requirements
