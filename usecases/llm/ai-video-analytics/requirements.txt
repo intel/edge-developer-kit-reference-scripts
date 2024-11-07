@@ -1,4 +1,4 @@
-gradio==5.0.0
+gradio==5.5.0
 openvino-dev==2024.4.0
 nncf==2.13.0
 optimum==1.22.0
