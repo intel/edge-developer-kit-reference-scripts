@@ -8,7 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="22.04"
-KERNEL_PACKAGE_NAME="linux-image-6.5.0-1025-oem"
+KERNEL_PACKAGE_NAME="linux-image-generic-hwe-22.04"
 
 # symbol
 S_VALID="✓"
@@ -174,28 +174,10 @@ verify_igpu_driver(){
     if [ -z "$(clinfo | grep 'Driver Version' | awk '{print $NF}')" ]; then
         verify_intel_gpu_package_repo
         IGPU_PACKAGES=(
-            intel-opencl-icd
-	    intel-level-zero-gpu
-	    level-zero
-	    intel-media-va-driver-non-free
-	    libmfx1
-	    libmfxgen1
-	    libvpl2
-	    libegl-mesa0
-	    libegl1-mesa
-	    libegl1-mesa-dev
-	    libgbm1
-	    libgl1-mesa-dev
-	    libgl1-mesa-dri
-	    libglapi-mesa
-	    libgles2-mesa-dev
-	    libglx-mesa0
-	    libigdgmm12
-	    libxatracker2
-	    mesa-va-drivers
-	    mesa-vdpau-drivers
-	    mesa-vulkan-drivers
-	    va-driver-all
+        libze1
+        intel-level-zero-gpu
+        intel-opencl-icd
+        clinfo
 	    vainfo
 	    hwinfo
         )
