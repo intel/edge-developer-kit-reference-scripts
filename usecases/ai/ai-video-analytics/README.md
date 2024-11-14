@@ -4,11 +4,15 @@ A sample application to perform semantic search and face identification with emb
 ## Example
 ![Alt Text](./assets/example.gif)
 
-## Requirements
-### Validated hardware
+## Validated hardware
 * CPU: Intel® Core™ Ultra 7 processors
-* RAM: 32GB
+* RAM: 16GB
 * DISK: 128GB
+
+## Prerequisite
+### 1. Install operating system
+Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
+
 
 ### Application ports
 Please ensure that you have these ports available before running the applications.
@@ -18,22 +22,7 @@ Please ensure that you have these ports available before running the application
 | Server   | 5980 |
 
 ## Quick Start
-### 1. Install operating system
-Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
-
-### 2. Clone repository
-This step will clone the repository
-```
-sudo apt install git
-git clone https://github.com/intel/edge-developer-kit-reference-scripts
-```
-
-### 3. Go to the AI Video Analytics use case directory
-This step will redirect user to the current platform setup directory.
-```bash
-cd edge-developer-kit-reference-scripts/usecases/llm/ai-video-analytics
-```
-### 4. Model Preparation
+### 1. Model Preparation
 Download face detection and face regression models
 ```bash
 sudo apt-get update
@@ -46,7 +35,7 @@ wget -O ./data/model/facial_recognition/face-detection-retail-0004.bin https://s
 wget -O ./data/model/facial_recognition/landmarks-regression-retail-0009.xml https://storage.openvinotoolkit.org/repositories/open_model_zoo/2023.0/models_bin/1/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009.xml
 wget -O ./data/model/facial_recognition/landmarks-regression-retail-0009.bin https://storage.openvinotoolkit.org/repositories/open_model_zoo/2023.0/models_bin/1/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009.bin
 ```
-### 5. Setup environment
+### 2. Setup environment
 Setup the application dependencies
 ```bash
 sudo apt-get update
@@ -57,20 +46,19 @@ python3 -m pip install -U pip
 python3 -m pip install -r requirements.txt
 ```
 
-### 6. Run the application
+### 3. Run the application
 Run the following command to start the app
 ```bash
 source .venv/bin/activate
 python3 app.py
 ```
 
-### 7. Access the App
-1. Open browser Google Chrome
-2. Access http://localhost:5980
+### 4. Access the App
+Navigate to http://localhost:5980
 
 ## Docker Setup
 ### Prerequisite
-1. Docker and docker compose should be setup before running the commands below. Refer to [here](https://docs.docker.com/engine/install/) to setup docker.
+Docker and docker compose should be setup before running the commands below. Refer to [here](https://docs.docker.com/engine/install/) to setup docker.
 
 ### 1. Build docker container
 ```
@@ -82,5 +70,4 @@ docker compose build
 docker compose up -d
 ```
 ### 3. Access the App
-1. Open browser Google Chrome
-2. Access http://localhost:5980
+Navigate to http://localhost:5980

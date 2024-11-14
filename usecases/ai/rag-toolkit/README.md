@@ -31,26 +31,13 @@ Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy
 <a name="hf-access-anchor"></a>
 ### 3. Login to your Hugging Face account and browse to [mistralai/Mistral-7B-Instruct-v0.3](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3) and click on the `Agree and access repository` button.
 
-### 4. Clone repository
-This step will clone the repository.
-```bash
-sudo apt install git
-git clone https://github.com/intel/edge-developer-kit-reference-scripts
-```
-
-### 5. Go to the LLM RAG Toolkit use case directory
-This step will redirect user to the current platform setup directory.
-```bash
-cd edge-developer-kit-reference-scripts/usecases/llm/rag-toolkit
-```
-
-### 6. Run the setup script
+### 4. Run the setup script
 This step will download all the dependencies needed to run the application.
 ```bash
 ./install.sh
 ```
 
-### 7. Start all the services
+### 5. Start all the services
 Run the script to start all the services. During the first time running, the script will download some assets required to run the services, please ensure you have internet connection.
 ```bash
 ./run.sh
