@@ -1,0 +1,91 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  tts_service:
+    build:
+      context: ../microservices/text-to-speech
+      dockerfile: Dockerfile
+    image: tts_service
+    hostname: tts_service
+    container_name: tts_service
+    privileged: true
+    restart: always
+    networks:
+      - app-network
+    environment:
+      - TTS_DEVICE=CPU
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    command: "python3 -m uvicorn main:app --host tts_service --port 5995"
+
+  stt_service:
+    build:
+      context: ../microservices/speech-to-text
+      dockerfile: Dockerfile
+    image: stt_service
+    hostname: stt_service
+    container_name: stt_service
+    privileged: true
+    networks:
+      - app-network
+    environment:
+      - STT_MODEL_ID=base 
+      - STT_ENCODED_DEVICE=CPU
+      - STT_DECODED_DEVICE=CPU
+    restart: always
+    volumes:
+      - stt_volume:/usr/src/app/data:rw
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    command: "python3 -m uvicorn main:app --host stt_service --port 5996"
+
+  open-webui:
+    hostname: open-webui
+    container_name: open-webui
+    image: ghcr.io/open-webui/open-webui:main
+    restart: always
+    ports:
+      - 80:8080
+    networks:
+      - app-network
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open-webui:/app/backend/data
+
+  ollama:
+    build:
+      context: ../microservices/ollama
+      dockerfile: Dockerfile
+    hostname: ollama
+    container_name: ollama
+    image: intel-ipex-ollama
+    restart: always
+    privileged: true
+    networks:
+      - app-network
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_NUM_GPU=999
+      - ZES_ENABLE_SYSMAN=1
+      - SYCL_CACHE_PERSISTENT=1
+      - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
+      - ONEAPI_DEVICE_SELECTOR=level_zero:0
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    volumes:
+      - ./serving/ollama/setup.sh:/setup.sh
+      - ollama:/root/.ollama
+    command: "./ollama serve"
+
+networks:
+  app-network:
+
+volumes:
+  stt_volume:
+  ollama:
+  open-webui:

@@ -1,0 +1,8 @@
+fastapi[all]
+uvicorn
+pydantic<2
+openai-whisper==20240927
+openvino-dev==2024.1.0
+soundfile==0.12.1
+onnx==1.17.0
+pydub==0.25.1
