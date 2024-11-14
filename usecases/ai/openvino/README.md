@@ -9,12 +9,7 @@
 - Docker version 24 or later installed
 
 ## Quick Start
-### 1. Go to OpenVINO™ usecase directory
-```bash
-cd edge-developer-kit-reference-scripts/usecases/openvino
-```
-
-### 2. Run the setup script
+### 1. Run the setup script
 This script will create 2 docker images: OpenVINO™ docker image and OpenVINO™ Notebooks docker image.
 ```bash
 ./setup.sh

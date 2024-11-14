@@ -18,27 +18,14 @@ Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy
 
 ### 3. Intel® oneAPI Base Toolkit (version 2024.2.0): [link](https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html?operatingsystem=linux&linux-install-type=offline)
 
-### 4. Download scripts
-This step will download all reference scripts from the repository.
-```bash
-sudo apt install git
-git clone https://github.com/intel/edge-developer-kit-reference-scripts
-```
-
-### 5. Go to specific setup directory
-This step will redirect user to the current platform setup directory
-```bash
-cd edge-developer-kit-reference-scripts/usecases/llm/finetuning-benchmark
-```
-
-### 6. Set up and create Python 3.11 virtual environment
+### 4. Set up and create Python 3.11 virtual environment
 ```bash
 sudo apt update
 sudo apt install -y python3.11 python3.11-venv
 python3.11 -m venv .venv
 ```
 
-### 7. Installing Python packages
+### 5. Installing Python packages
 ```bash
 source .venv/bin/activate
 python3 -m pip install --pre --upgrade ipex-llm[xpu] --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
@@ -47,13 +34,13 @@ python3 -m pip install setuptools==69.5.1 numpy==1.26.4
 python3 -m pip install transformers==4.43.3 accelerate==0.33.0 datasets==2.20.0 peft==0.12.0 bitsandbytes==0.43.2 scipy==1.14.0 fire==0.6.0 trl==0.9.6
 ```
 
-### 8. Activate Python 3.11 environment and run the finetuning benchmark scripts
+### 6. Activate Python 3.11 environment and run the finetuning benchmark scripts
 ```bash
 source .venv/bin/activate
 ./benchmark.sh
 ```
 
-### 9. Verify the training efficiency (token/secs) in the logs folder
+### 7. Verify the training efficiency (token/secs) in the logs folder
 ```bash
 tail -f logs/training.log
 ```
