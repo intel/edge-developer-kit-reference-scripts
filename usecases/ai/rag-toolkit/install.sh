@@ -103,17 +103,8 @@ install_ov_vllm_deps(){
 
 install_ollama_deps(){
     print_info "Installing dependencies for OLLAMA"
-    install_gpu_drivers
     install_oneapi_basekit
     install_ollama_binary
-}
-
-install_gpu_drivers(){
-    print_info "Installing GPU drivers for Intel® Arc™ Graphics"
-    mkdir -p ./thirdparty
-    wget -O ./thirdparty/setup.sh https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/main/gpu/arc/dg2/setup.sh
-    chmod +x ./thirdparty/setup.sh
-    ./thirdparty/setup.sh
 }
 
 install_oneapi_basekit(){
