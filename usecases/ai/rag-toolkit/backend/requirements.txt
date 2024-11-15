@@ -9,10 +9,10 @@ numpy==1.26.4
 openai==1.39.0
 pyyaml==6.0.1
 pypdf==5.0.0
-chromadb==0.5.5
-langchain-chroma==0.1.2
-langchain==0.3.5
-langchain-community==0.3.5
+langchain==0.3.7
+langchain-chroma==0.1.4
+langchain-community===0.3.5
+chromadb==0.5.18
 huggingface_hub>=0.23.0
 botocore==1.34.88
 cached_path==1.6.3
