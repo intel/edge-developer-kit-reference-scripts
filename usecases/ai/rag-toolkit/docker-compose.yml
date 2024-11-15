@@ -1,22 +1,63 @@
-# Copyright (C) 2024 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
-
 services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./docker/Dockerfile
       args: 
-        - INSTALL_OPTION=${INSTALL_OPTION}
-        - HF_TOKEN=${HF_TOKEN}
-    image: rag-toolkit.deployment
-    container_name: rag-toolkit.deployment
+        - INSTALL_OPTION
+        - HF_TOKEN
+    image: edge-ai-development-assistance-tool.deployment
+    container_name: edge-ai-development-assistance-tool.deployment-backend
+    privileged: true
+    ipc: host
+    network_mode: host
+    depends_on:
+      serving:
+        condition: service_healthy
+    volumes:
+      - app-data:/home/intel/data
+    devices:
+      - /dev/dri:/dev/dri:rw
+      - /lib/modules:/lib/modules:rw
+    working_dir: /home/intel/backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8011/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: ["/bin/bash", "-c", "source /home/intel/.venv/bin/activate && uvicorn app:app --host localhost --port 8011"]
+
+  serving:
+    image: edge-ai-development-assistance-tool.deployment
+    container_name: edge-ai-development-assistance-tool.deployment-serving
     privileged: true
     ipc: host
     network_mode: host
     volumes:
-      - /home/intel/edge-ui/.next
+      - app-data:/home/intel/data
     devices:
-      - /dev:/dev:rw
+      - /dev/dri:/dev/dri:rw
       - /lib/modules:/lib/modules:rw
-    command: './run.sh'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8012/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: './run-serving.sh'
+
+  frontend:
+    image: edge-ai-development-assistance-tool.deployment
+    container_name: edge-ai-development-assistance-tool.deployment-frontend
+    network_mode: host
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - /home/intel/edge-ui/.next
+    working_dir: /home/intel/edge-ui
+    command: npm run start
+
+volumes:
+  app-data:
+
+    
