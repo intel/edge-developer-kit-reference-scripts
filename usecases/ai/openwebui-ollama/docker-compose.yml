@@ -49,6 +49,11 @@ services:
     restart: always
     ports:
       - 80:8080
+    depends_on:
+      stt_service:
+        condition: service_healthy
+      tts_service:
+        condition: service_healthy
     networks:
       - app-network
     environment:

@@ -40,4 +40,4 @@ COPY . .
 
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD wget --no-verbose -O /dev/null --tries=1 http://localhost:5996/healthcheck || exit 1
+    CMD wget --no-verbose -O /dev/null --tries=1 http://stt_service:5996/healthcheck || exit 1
