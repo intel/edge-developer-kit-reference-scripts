@@ -76,7 +76,7 @@ docker compose up -d
 * Click on `Settings`
 * Replace OpenAI API link:
     * Click on `Connections`
-    * Replace the OpenAI API link with `http://ollama-1:11434/v1`and provide any API Key.
+    * Replace the OpenAI API link with `http://ollama:11434/v1`and provide any API Key.
     * Click on `Verify Connection` to ensure the server connection is verified.
     * Click `Save` button for save the changes
 
