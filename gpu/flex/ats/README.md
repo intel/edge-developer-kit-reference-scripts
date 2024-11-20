@@ -29,6 +29,9 @@ This step will configure the basic setup of the platform. Make sure all of the r
 During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ Platform configured
 
+> **Note**
+> Cold rebooting the system after installing the Intel® Data Center GPU Flex 170 driver to ensures that all hardware components are correctly recognized and initialized by the operating system. This step helps prevent potential issues that could arise from an incomplete or improper initialization of the GPU.
+
 ## Next Steps
 Refer to the available use cases and examples below
 1. [Intel® Distribution of OpenVINO™ Toolkit](../../../usecases/openvino/README.md)
