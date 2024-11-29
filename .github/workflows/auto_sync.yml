@@ -59,7 +59,7 @@ jobs:
         run: |
           cd public_repo
           git checkout update-branch
-          rsync -av --exclude='.git' --exclude='.github' --exclude='temp_repo' ../temp_repo/ .
+          rsync -av --exclude='.git' --exclude='.github' --exclude='automation' --exclude='temp_repo' ../temp_repo/ .
           git add --all
           git commit -m "${{ env.message }}" || echo "No changes to commit"
       
