@@ -32,12 +32,12 @@ RUN wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/leve
 RUN pip install "transformers>=4.35" "torch>=2.1" onnx "git+https://github.com/huggingface/optimum-intel.git" "peft==0.6.2" --extra-index-url https://download.pytorch.org/whl/cpu
 RUN rm -r *.deb neo npu-driver
 
-RUN groupadd -g 110 render
+ARG RENDER_GROUP_ID
+RUN groupadd -g ${RENDER_GROUP_ID} render
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
 COPY . .
 
-
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD wget --no-verbose -O /dev/null --tries=1 http://stt_service:5996/healthcheck || exit 1
+HEALTHCHECK --interval=60s --timeout=180s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --no-proxy -O /dev/null --tries=1 http://stt_service:5996/healthcheck || exit 1

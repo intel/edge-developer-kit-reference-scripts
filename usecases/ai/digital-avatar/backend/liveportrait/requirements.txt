@@ -1,0 +1,21 @@
+--pre
+--extra-index-url https://download.pytorch.org/whl/nightly/xpu
+torch==2.6.0.dev20241115+xpu
+torchvision
+torchaudio
+transformers==4.46.2
+
+tyro==0.8.14
+opencv-python==4.10.*
+imageio==2.36.0
+scipy==1.14.1
+onnxruntime-gpu==1.20.0
+onnx==1.17.0
+requests==2.32.3
+tqdm==4.67.0
+scikit-image==0.24.0
+pykalman==0.9.7
+pyyaml==6.0.2
+imageio[ffmpeg]==2.36.0
+
+fastapi[standard]

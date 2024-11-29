@@ -18,8 +18,9 @@ from typing import Optional
 from fastapi.responses import FileResponse
 from fastapi import FastAPI, HTTPException
 from starlette.background import BackgroundTasks
-
+from fastapi.middleware.cors import CORSMiddleware
 from melo.api import TTS
+import json
 
 TTS_PROCESSOR = None
 TTS_SPEAKER_IDS = None
@@ -62,9 +63,15 @@ async def lifespan(app: FastAPI):
     yield
     clean_up()
 
+allowed_cors =  json.loads(os.getenv("ALLOWED_CORS", '["http://localhost"]'))
 app = FastAPI(lifespan=lifespan)
-
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_cors,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 class TTSData(BaseModel):
     input: str
     model: str = '-'
