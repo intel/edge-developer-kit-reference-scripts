@@ -1,0 +1,12 @@
+__pycache__
+.env
+
+ffmpeg*/
+checkpoints
+cache/
+backend/musetalk/models
+backend/musetalk/data/avatars
+backend/wav2lip/wav2lip/results
+backend/wav2lip/wav2lip/temp
+weights/*
+backend/liveportrait/templates

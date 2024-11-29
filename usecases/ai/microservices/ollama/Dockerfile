@@ -5,7 +5,7 @@ FROM intel/oneapi-basekit:2024.2.1-0-devel-ubuntu22.04
 
 WORKDIR /opt/intel/llm-app
 RUN apt update \
-    && apt install -y python3.11-venv \
+    && apt install -y python3.11-venv jq \
     wget \
     && wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg \
     && echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | tee /etc/apt/sources.list.d/intel-gpu-jammy.list \
@@ -20,4 +20,8 @@ RUN python3 -m pip install --upgrade pip \
     && python3 -m pip install --upgrade accelerate==0.33.0 \
     && init-ollama
 
-CMD ["/opt/intel/llm-app/ollama", "serve"]
+COPY ./run.sh .
+
+COPY ./healthcheck.sh .
+HEALTHCHECK --interval=60s --timeout=20m --start-period=5s --retries=20 \
+    CMD ./healthcheck.sh

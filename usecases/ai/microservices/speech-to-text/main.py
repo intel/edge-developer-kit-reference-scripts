@@ -9,6 +9,7 @@ import openvino as ov
 import logging
 from pathlib import Path
 import soundfile as sf
+import json
 from typing import Optional
 from fastapi import FastAPI, UploadFile, Form, File, HTTPException
 from contextlib import asynccontextmanager
@@ -18,6 +19,7 @@ from utils import (
     inference_translate
 )
 from pydub import AudioSegment
+from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger('uvicorn.error')
 ASR_MODEL = None
@@ -41,8 +43,15 @@ async def lifespan(app: FastAPI):
     clean_up()
 
 
+allowed_cors =  json.loads(os.getenv("ALLOWED_CORS", '["http://localhost"]'))
 app = FastAPI(lifespan=lifespan)
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_cors,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 @app.post("/v1/audio/transcriptions")
 async def stt_transcription(file: UploadFile = File(...), language: Optional[str] = Form(None)):
