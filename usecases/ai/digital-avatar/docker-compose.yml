@@ -1,0 +1,168 @@
+services:
+  wav2lip:
+    build:
+      context: .
+      dockerfile: ./backend/wav2lip/Dockerfile
+      args:
+        - RENDER_GROUP_ID=110 # Please update this if you are not using Ubuntu 20.04
+    image: digital-avatar.backend.wav2lip
+    container_name: digital-avatar.backend.wav2lip
+    privileged: true
+    restart: always
+    depends_on:
+      liveportrait:
+        condition: service_healthy
+    devices:
+      - /dev:/dev:rw
+    environment:
+      - SERVER_PORT=8011
+      - DEVICE=CPU
+      - ALLOWED_CORS=["http://localhost"] # frontend url
+    volumes:
+      - wav2lip-checkpoints:/usr/src/app/wav2lip/checkpoints
+      - ./assets:/usr/src/app/assets
+      - ./weights/wav2lip_gan.pth:/usr/src/app/setup/wav2lip_gan.pth
+    ports:
+      - 8011:8011
+    command: "python3 main.py"
+
+  liveportrait:
+    build:
+      context: .
+      dockerfile: ./backend/liveportrait/Dockerfile
+      args:
+        - RENDER_GROUP_ID=110 # Please update this if you are not using Ubuntu 20.04
+    image: digital-avatar.backend.liveportrait
+    container_name: digital-avatar.backend.liveportrait
+    privileged: true
+    restart: always
+    environment:
+      - SERVER_PORT=8012
+      - ALLOWED_CORS=["http://localhost"] # frontend url
+    devices:
+      - /dev:/dev:rw
+    volumes:
+      - ./assets:/usr/src/app/assets
+    ports:
+      - 8012:8012
+    command: "python3 main.py"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - NEXT_PUBLIC_LLM_MODEL=${LLM_MODEL:-qwen2.5}
+        - NEXT_PUBLIC_TTS_URL=localhost:8013
+        - NEXT_PUBLIC_LLM_URL=ollama:8015
+        - NEXT_PUBLIC_STT_URL=localhost:8014
+        - NEXT_PUBLIC_LIPSYNC_URL=localhost:8011
+    image: digital-avatar.frontend
+    container_name: digital-avatar.frontend
+    restart: always
+    depends_on:
+      liveportrait:
+        condition: service_healthy
+      wav2lip:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      stt_service:
+        condition: service_healthy
+      tts_service:
+        condition: service_healthy
+    networks:
+      - app-network
+    volumes:
+      - ./assets:/app/public/assets
+    ports:
+      - "80:3000"
+    command: "npm start"
+
+  tts_service:
+    build:
+      context: ../microservices/text-to-speech
+      dockerfile: Dockerfile
+    image: tts_service
+    hostname: tts_service
+    container_name: tts_service
+    privileged: true
+    restart: always
+    networks:
+      - app-network
+    environment:
+      - TTS_DEVICE=CPU
+      - ALLOWED_CORS=["http://localhost"] # frontend url
+    ports:
+      - 8013:5995
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    command: "python3 -m uvicorn main:app --host tts_service --port 5995"
+
+  stt_service:
+    build:
+      context: ../microservices/speech-to-text
+      dockerfile: Dockerfile
+      args:
+        - RENDER_GROUP_ID=110 # Please update this if you are not using Ubuntu 20.04
+    image: stt_service
+    hostname: stt_service
+    container_name: stt_service
+    privileged: true
+    networks:
+      - app-network
+    environment:
+      - STT_MODEL_ID=base
+      - STT_ENCODED_DEVICE=CPU
+      - STT_DECODED_DEVICE=CPU
+      - ALLOWED_CORS=["http://localhost"] # frontend url
+    restart: always
+    ports:
+      - 8014:5996
+    volumes:
+      - stt_volume:/usr/src/app/data:rw
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    command: "python3 -m uvicorn main:app --host stt_service --port 5996"
+
+  ollama:
+    build:
+      context: ../microservices/ollama
+      dockerfile: Dockerfile
+    hostname: ollama
+    container_name: ollama
+    image: intel-ipex-ollama
+    restart: always
+    privileged: true
+    ports:
+      - 8015:8015
+    environment:
+      - OLLAMA_HOST=0.0.0.0:8015
+      - OLLAMA_NUM_GPU=999
+      - ZES_ENABLE_SYSMAN=1
+      - SYCL_CACHE_PERSISTENT=1
+      - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
+      - ONEAPI_DEVICE_SELECTOR=level_zero:0
+      - LLM_MODEL=${LLM_MODEL:-qwen2.5}
+    networks:
+      - app-network
+    devices:
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:rw
+    volumes:
+      - ../microservices/ollama:/root/.ollama
+    command: "./run.sh"
+
+networks:
+  app-network:
+
+
+volumes:
+  tts_volume:
+  stt_volume:
+  data_volume:
+  ollama:
+    name: "ollama-data"
+  wav2lip-checkpoints:

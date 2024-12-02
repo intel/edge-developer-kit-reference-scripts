@@ -29,4 +29,4 @@ RUN python3 nltk_download.py
 COPY . .
 
 HEALTHCHECK --interval=30s --timeout=180s --start-period=50s --retries=5 \
-    CMD wget --no-verbose -O /dev/null --tries=1 http://tts_service:5995/healthcheck || exit 1
+    CMD wget --no-verbose --no-proxy -O /dev/null --tries=1 http://tts_service:5995/healthcheck || exit 1
