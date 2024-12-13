@@ -16,7 +16,7 @@
     "format:check": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^0.0.54",
+    "@ai-sdk/openai": "^1.0.8",
     "@emotion/cache": "11.11.0",
     "@emotion/react": "^11.11.4",
     "@emotion/server": "11.11.0",

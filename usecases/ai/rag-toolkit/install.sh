@@ -142,7 +142,7 @@ install_ollama_binary(){
             cd ../.. || exit
         else
             echo "- Failed to install Ollama binary"
-            exit 1
+            exit 1 
         fi
     else
         echo -e "- Ollama binary is available. Skipping installation"
