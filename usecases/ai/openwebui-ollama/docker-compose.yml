@@ -28,19 +28,23 @@ services:
     hostname: stt_service
     container_name: stt_service
     privileged: true
+    group_add:
+      - ${RENDER_GROUP_ID:-110}
     networks:
       - app-network
+    ports:
+      - 5996:5996
     environment:
-      - STT_MODEL_ID=base 
-      - STT_ENCODED_DEVICE=CPU
-      - STT_DECODED_DEVICE=CPU
+      - DEFAULT_MODEL_ID=openai/whisper-tiny 
+      - STT_DEVICE=CPU
+      - ALLOWED_CORS=["http://localhost"]
     restart: always
     volumes:
-      - stt_volume:/usr/src/app/data:rw
+      - ./data:/usr/src/app/data:rw
     devices:
-      - /dev:/dev:rw
-      - /lib/modules:/lib/modules:rw
-    command: "python3 -m uvicorn main:app --host stt_service --port 5996"
+      - /dev:/dev
+      - /lib/modules:/lib/modules
+    command: "python3 -m uvicorn server:app --host stt_service --port 5996"
 
   open-webui:
     hostname: open-webui
@@ -58,6 +62,8 @@ services:
       - app-network
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
+      - AUDIO_STT_OPENAI_API_BASE_URL=http://stt_service:5996/v1
+      - AUDIO_STT_OPENAI_API_KEY=-
     volumes:
       - open-webui:/app/backend/data
 
@@ -91,6 +97,5 @@ networks:
   app-network:
 
 volumes:
-  stt_volume:
   ollama:
   open-webui:
