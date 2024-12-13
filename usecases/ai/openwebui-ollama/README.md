@@ -32,11 +32,10 @@ Please ensure that you have these ports available before running the application
 ## Device-Specific Workload Configuration
 You can offload model inference to specific device by modifying the environment variable setting in the `docker-compose.yml` file.
 
-| Workload             | Environment Variable |Supported Device        | 
+| Workload             | Environment Variable |Supported Device         | 
 |----------------------|----------------------|-------------------------|
-| LLM                  |            -         |        GPU              |
-| STT - Encoded Device | STT_ENCODED_DEVICE   | CPU,GPU,NPU             | 
-| STT - Decided Device | STT_DECODED_DEVICE   | CPU,GPU                 |
+| LLM                  |            -         | GPU                     |
+| STT                  | STT_DEVICE           | CPU, GPU, NPU           | 
 | TTS                  | TTS_DEVICE           | CPU                     |
 
 Example Configuration:
@@ -48,8 +47,7 @@ stt_service:
   ...
   environment:
     ...
-    STT_ENCODED_DEVICE=NPU
-    STT_DECODED_DEVICE=CPU
+    STT_DEVICE=NPU
     ...
 ```
 
@@ -62,8 +60,10 @@ docker compose build
 
 ### 2. Start the Docker Container
 ```
+RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
 docker compose up -d
 ```
+
 ### 3. Access the Web UI
 * Navigate to: http://localhost:80
 

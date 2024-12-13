@@ -104,24 +104,23 @@ services:
     build:
       context: ../microservices/speech-to-text
       dockerfile: Dockerfile
-      args:
-        - RENDER_GROUP_ID=110 # Please update this if you are not using Ubuntu 20.04
     image: stt_service
     hostname: stt_service
     container_name: stt_service
     privileged: true
+    group_add:
+      - ${RENDER_GROUP_ID:-110}
     networks:
       - app-network
     environment:
-      - STT_MODEL_ID=base
-      - STT_ENCODED_DEVICE=CPU
-      - STT_DECODED_DEVICE=CPU
+      - DEFAULT_MODEL_ID=openai/whisper-tiny 
+      - STT_DEVICE=CPU
       - ALLOWED_CORS=["http://localhost"] # frontend url
     restart: always
     ports:
       - 8014:5996
     volumes:
-      - stt_volume:/usr/src/app/data:rw
+      - ./data:/usr/src/app/data:rw
     devices:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
@@ -158,10 +157,8 @@ services:
 networks:
   app-network:
 
-
 volumes:
   tts_volume:
-  stt_volume:
   data_volume:
   ollama:
     name: "ollama-data"
