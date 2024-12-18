@@ -8,5 +8,7 @@ backend/musetalk/models
 backend/musetalk/data/avatars
 backend/wav2lip/wav2lip/results
 backend/wav2lip/wav2lip/temp
+assets/*
 weights/*
 backend/liveportrait/templates
+data/ollama

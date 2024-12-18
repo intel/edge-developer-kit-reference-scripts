@@ -6,22 +6,25 @@ FROM openvino/ubuntu22_dev:2024.5.0
 USER root
 
 # Install dependencies
-RUN apt-get update && apt-get install -y ffmpeg \
-    wget \
-    gnupg2 \
-    libtbb12 \
-    python3.11 \
-    python3.11-venv 
+RUN apt-get update \
+    && apt-get install -y ffmpeg \
+        wget \
+        gnupg2 \
+        libtbb12 \
+        python3.11 \
+        python3.11-venv 
 
 # Install GPU drivers
-RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg \
-    && echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | tee /etc/apt/sources.list.d/intel-gpu-jammy.list \
-    && apt update \
-    && apt-get install -y libze1 \
-        intel-level-zero-gpu \
-        intel-opencl-icd \
-        clinfo \
-    && rm -rf /var/lib/apt/lists/*
+RUN mkdir /tmp/neo \
+    && cd /tmp/neo \
+    && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-core_1.0.17791.9_amd64.deb \
+    && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-opencl_1.0.17791.9_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu-dbgsym_1.6.31294.12_amd64.ddeb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu_1.6.31294.12_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-opencl-icd-dbgsym_24.39.31294.12_amd64.ddeb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-opencl-icd_24.39.31294.12_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/libigdgmm12_22.5.2_amd64.deb \
+    && dpkg -i *.deb
 
 # Install NPU drivers
 RUN mkdir /tmp/npu-driver \
@@ -33,7 +36,11 @@ RUN mkdir /tmp/npu-driver \
     && dpkg -i *.deb
 
 RUN mkdir -p /usr/src \
-    && chown -R openvino:openvino /usr/src
+    && chown -R openvino:openvino /usr/src \
+    && mkdir -p /usr/src/app/data \
+    && chown -R openvino:openvino /usr/src/app/data \
+    && mkdir -p /usr/src/app/tmp_audio \
+    && chown -R openvino:openvino /usr/src/app/tmp_audio
 
 USER openvino
 WORKDIR /usr/src/app
@@ -44,8 +51,10 @@ ENV PATH="/usr/src/.venv/bin:$PATH"
 COPY --chown=openvino:openvino requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
-COPY --chown=openvino:openvino server.py .
+COPY --chown=openvino:openvino main.py .
 COPY --chown=openvino:openvino utils.py .
 
 HEALTHCHECK --interval=60s --timeout=180s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --no-proxy -O /dev/null --tries=1 http://stt_service:5996/healthcheck || exit 1
+    CMD wget --no-verbose -O /dev/null --tries=1 http://stt_service:5996/healthcheck || exit 1
+
+CMD ["python3", "-m", "uvicorn", "main:app", "--host", "stt_service", "--port", "5996"]

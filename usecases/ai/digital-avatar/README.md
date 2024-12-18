@@ -85,8 +85,7 @@ You can offload model inference to specific device by modifying the environment 
 | Workload             | Environment Variable |Supported Device         | 
 |----------------------|----------------------|-------------------------|
 | LLM                  |            -         |        GPU              |
-| STT - Encoded Device | STT_ENCODED_DEVICE   | CPU,GPU,NPU             | 
-| STT - Decided Device | STT_DECODED_DEVICE   | CPU,GPU                 |
+| STT                  | STT_DEVICE           | CPU,GPU,NPU             | 
 | TTS                  | TTS_DEVICE           | CPU                     |
 | Lipsync (Wav2lip)    | DEVICE               | CPU, GPU                |
 
@@ -95,13 +94,17 @@ Example Configuration:
 * To offload the STT encoded workload to `NPU`, you can use the following configuration.
 
 ```
-wav2lip:
+stt_service:
   ...
   environment:
     ...
-    DEVICE=CPU
+    STT_DEVICE=CPU
     ...
 ```
+
+## Limitations
+### 1. Automatic Speech Recognition Compatibility
+Automatic speech recognition functionality is not supported in Firefox. Please use Chrome for validated performance.
 
 ## FAQ
 ### 1. Update Render Group ID
@@ -116,4 +119,3 @@ wav2lip:
     ```
 4. The group ID is the number in the third field (e.g., `110` in the example above).
 5. Ensure the `RENDER_GROUP_ID` in the [docker-compose.yml](./docker-compose.yml) file matches the render group ID.
-

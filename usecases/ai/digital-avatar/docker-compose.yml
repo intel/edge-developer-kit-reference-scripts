@@ -120,7 +120,7 @@ services:
     ports:
       - 8014:5996
     volumes:
-      - ./data:/usr/src/app/data:rw
+      - stt_volume:/usr/src/app/data:rw
     devices:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
@@ -151,13 +151,22 @@ services:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
     volumes:
-      - ../microservices/ollama:/root/.ollama
+      - ./data/ollama:/root/.ollama
+      - ./scripts/run.sh:/opt/intel/llm-app/run.sh
+      - ./scripts/healthcheck.sh:/opt/intel/llm-app/healthcheck.sh
+    healthcheck:
+      test: ["CMD", "bash", "/opt/intel/llm-app/healthcheck.sh"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     command: "./run.sh"
 
 networks:
   app-network:
 
 volumes:
+  stt_volume:
   tts_volume:
   data_volume:
   ollama:
