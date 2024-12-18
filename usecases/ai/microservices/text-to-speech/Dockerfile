@@ -23,10 +23,11 @@ RUN mkdir -p thirdparty && \
 WORKDIR /usr/src/app
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
-COPY nltk_download.py .
-RUN python3 nltk_download.py
-
 COPY . .
+
+ENV NLTK_DATA="/usr/src/app/data/nltk_data"
 
 HEALTHCHECK --interval=30s --timeout=180s --start-period=50s --retries=5 \
     CMD wget --no-verbose --no-proxy -O /dev/null --tries=1 http://tts_service:5995/healthcheck || exit 1
+
+CMD ["python3", "-m", "uvicorn", "main:app", "--host", "tts_service", "--port", "5995"]

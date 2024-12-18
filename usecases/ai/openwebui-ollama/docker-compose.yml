@@ -18,7 +18,9 @@ services:
     devices:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
-    command: "python3 -m uvicorn main:app --host tts_service --port 5995"
+    volumes:
+      - ./data/huggingface:/root/.cache/huggingface
+      - ./data/nltk_data:/usr/src/app/data/nltk_data
 
   stt_service:
     build:
@@ -44,7 +46,6 @@ services:
     devices:
       - /dev:/dev
       - /lib/modules:/lib/modules
-    command: "python3 -m uvicorn server:app --host stt_service --port 5996"
 
   open-webui:
     hostname: open-webui
@@ -58,12 +59,20 @@ services:
         condition: service_healthy
       tts_service:
         condition: service_healthy
+      ollama:
+        condition: service_healthy
     networks:
       - app-network
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
+      - AUDIO_STT_ENGINE=openai
       - AUDIO_STT_OPENAI_API_BASE_URL=http://stt_service:5996/v1
       - AUDIO_STT_OPENAI_API_KEY=-
+      - AUDIO_TTS_ENGINE=openai
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://tts_service:5995/v1
+      - AUDIO_TTS_OPENAI_API_KEY=-
+      - AUDIO_TTS_MODEL=
+      - AUDIO_TTS_VOICE=
     volumes:
       - open-webui:/app/backend/data
 
@@ -84,14 +93,11 @@ services:
       - ZES_ENABLE_SYSMAN=1
       - SYCL_CACHE_PERSISTENT=1
       - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
-      - ONEAPI_DEVICE_SELECTOR=level_zero:0
     devices:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
     volumes:
-      - ./serving/ollama/setup.sh:/setup.sh
       - ollama:/root/.ollama
-    command: "./ollama serve"
 
 networks:
   app-network:
