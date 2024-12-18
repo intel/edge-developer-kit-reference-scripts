@@ -116,3 +116,7 @@ Example:
 * STT Pipeline: Click on the `Record Voice` icon to start recording, and click again to stop. The generated text will appear in the input field.
 
     ![Alt Test](./assets/stt-example.gif)
+
+## Limitations
+### 1. Automatic Speech Recognition Compatibility
+Automatic speech recognition functionality is not supported in Firefox. Please use Chrome for validated performance.

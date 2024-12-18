@@ -6,21 +6,19 @@ sys.path.append("/opt/thirdparty/MeloTTS")
 
 import os
 import uuid
-# import torch
 import time
-# import intel_extension_for_pytorch as ipex
-# import ipex_llm
-from scipy.io.wavfile import write as write_wav
-
-from contextlib import asynccontextmanager
-from pydantic import BaseModel
+import json
 from typing import Optional
-from fastapi.responses import FileResponse
+
+from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 from starlette.background import BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+
+import nltk
 from melo.api import TTS
-import json
 
 TTS_PROCESSOR = None
 TTS_SPEAKER_IDS = None
@@ -42,11 +40,22 @@ def warmup(model, speaker_ids):
     os.remove(output_path)
     print("Model warmup completed ...")
 
+def download_nltk_packages():
+    print("Downloading NLTK packages ...")
+    if not os.path.exists("./data/nltk_data/corpora/cmudict"):
+        nltk.download('cmudict')
+        
+    if not os.path.exists("./data/nltk_data/taggers/averaged_perceptron_tagger"):
+        nltk.download('averaged_perceptron_tagger')
+    
+    if not os.path.exists("./data/nltk_data/taggers/averaged_perceptron_tagger_eng"):
+        nltk.download('averaged_perceptron_tagger_eng')
 
 def startup():
     global TTS_MODEL, TTS_SPEAKER_IDS, TTS_DEVICE
     if not os.path.exists("/tmp_audio"):
         os.makedirs("/tmp_audio")
+    download_nltk_packages()
     TTS_DEVICE = os.getenv('TTS_DEVICE').lower()
     print("Starting up model ...")
     TTS_MODEL, TTS_SPEAKER_IDS = load_bark_model(language='EN', device=TTS_DEVICE)
@@ -88,8 +97,6 @@ class TTSModel(BaseModel):
 @app.post("/v1/audio/load_speech_model")
 async def load_model(data: TTSModel):
     global TTS_MODEL, TTS_SPEAKER_IDS
-    # device = "xpu" if torch.xpu.is_available() else "cpu"
-    # device = "xpu"
     TTS_MODEL, TTS_SPEAKER_IDS = load_bark_model(
         language=data.language, device=data.device)
 

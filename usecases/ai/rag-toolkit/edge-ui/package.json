@@ -39,7 +39,7 @@
     "dayjs": "1.11.11",
     "extendable-media-recorder": "^9.2.11",
     "extendable-media-recorder-wav-encoder": "^7.0.115",
-    "next": "14.2.12",
+    "next": "^14.2.20",
     "notistack": "^3.0.1",
     "openai": "4.53.0",
     "react": "18.3.1",
