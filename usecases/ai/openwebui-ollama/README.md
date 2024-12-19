@@ -60,7 +60,7 @@ docker compose build
 
 ### 2. Start the Docker Container
 ```
-RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
+export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
 docker compose up -d
 ```
 
