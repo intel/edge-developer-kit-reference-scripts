@@ -46,7 +46,7 @@ docker run -it --rm \
 
 * **GPU**
 ```bash
-RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
+export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
 docker run -it --rm \
     --group-add $RENDER_GROUP_ID \
     --device /dev/dri:/dev/dri \
