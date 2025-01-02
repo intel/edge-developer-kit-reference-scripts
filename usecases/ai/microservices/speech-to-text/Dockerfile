@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-FROM openvino/ubuntu22_dev:2024.5.0
+FROM openvino/ubuntu22_dev:2024.6.0
 
 USER root
 
