@@ -3,7 +3,7 @@
 
 FROM debian:12-slim
 ARG DEBIAN_FRONTEND=noninteractive
-ARG VLLM_VERSION=v0.6.5
+ARG VLLM_VERSION=v0.6.6
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && apt-get upgrade -y \
