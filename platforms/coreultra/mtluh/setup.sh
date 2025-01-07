@@ -148,8 +148,6 @@ verify_kernel_package() {
         fi
         echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
         echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
-        echo "System reboot is required. Re-run the script after reboot"
-        exit 0
     fi
 }
 
