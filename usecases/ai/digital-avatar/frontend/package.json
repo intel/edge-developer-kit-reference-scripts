@@ -18,7 +18,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
-    "next": "14.2.16",
+    "next": "^14.2.22",
     "ollama-ai-provider": "^0.16.0",
     "react": "^18",
     "react-dom": "^18",
