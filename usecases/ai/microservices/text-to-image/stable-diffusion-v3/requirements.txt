@@ -1,0 +1,25 @@
+# requirements.txt
+
+# Dependency from GitHub
+git+https://github.com/initml/diffusers.git@clement/feature/flash_sd3
+
+# Dependencies with version specifications
+gradio>=4.19
+torch>=2.1
+transformers
+nncf>=2.12.0
+datasets>=2.14.6
+opencv-python
+pillow
+peft>=0.7.0
+ipywidgets
+
+# Additional index URL for PyTorch dependencies
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# OpenVINO with version specification
+openvino>=2024.3.0
+
+# Server
+fastapi
+uvicorn
