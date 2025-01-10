@@ -36,6 +36,7 @@ docker run -it --rm \
     -e MODEL_PRECISION=int4 \
     -e SERVED_MODEL_NAME=ov-vllm \
     -e MAX_MODEL_LEN=2048 \
+    -e MAX_NUM_SEQS=1 \
     -e VLLM_OPENVINO_DEVICE=CPU \
     -e VLLM_OPENVINO_KVCACHE_SPACE=8 \
     -e VLLM_OPENVINO_CPU_KV_CACHE_PRECISION=u8 \
@@ -55,6 +56,7 @@ docker run -it --rm \
     -e MODEL_PRECISION=int4 \
     -e SERVED_MODEL_NAME=ov-vllm \
     -e MAX_MODEL_LEN=2048 \
+    -e MAX_NUM_SEQS=1 \
     -e GPU_MEMORY_UTILIZATION=0.9 \
     -e VLLM_OPENVINO_DEVICE=GPU \
     -e VLLM_OPENVINO_KVCACHE_SPACE=8 \
@@ -116,7 +118,10 @@ rm -rf ./data/ov_model
 2. Rerun the `docker run` command to load and quantize the new model.
 
 ### 3. How can I avoid redownload the model everytime to convert and quantize the model?
-1. Mount the huggingface cache path into the container
+1. Mount the huggingface cache path into the container.
 ```bash
 -v $HOME/.cache/huggingface:/home/intel/.cache/huggingface
 ```
+
+### 4. How can I increase the batch size of waiting queue?
+1. You can increase the number of `MAX_NUM_SEQS` to the batch size of waiting queue.
