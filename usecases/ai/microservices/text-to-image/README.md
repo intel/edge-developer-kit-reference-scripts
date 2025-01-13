@@ -5,6 +5,7 @@ Text-to-image generation microservice is a FastAPI-based API that interacts with
 It provides endpoints for managing the pipeline, checking the pipeline status, retrieving the generated image, and performing a health check.
 
 ### Supported Models
+* Stable Diffusion XL
 * Stable Diffusion v3.5 
 * Stable Diffusion v3
 
