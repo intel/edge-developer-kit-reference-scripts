@@ -1,32 +1,19 @@
 # Copyright (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+import time
+import openvino.runtime as ov_runtime
+import random
+import torch
 import gc
 import os
-import time
+
+from pathlib import Path
 from functools import wraps
+from cmd_helper import optimum_cli
+from optimum.intel.openvino import OVStableDiffusionXLPipeline
+
 from pydantic import BaseModel
-
-import torch
-import openvino.runtime as ov_runtime
-
-from sd3_helper import (
-    get_pipeline_options,
-    convert_sd3,
-    init_pipeline,
-    TEXT_ENCODER_PATH,
-    TEXT_ENCODER_2_PATH,
-    TEXT_ENCODER_3_PATH,
-    TRANSFORMER_PATH,
-    VAE_DECODER_PATH
-)
-from sd3_quantization_helper import (
-    TRANSFORMER_INT8_PATH,
-    TEXT_ENCODER_INT4_PATH,
-    TEXT_ENCODER_2_INT4_PATH,
-    TEXT_ENCODER_3_INT4_PATH,
-    VAE_DECODER_INT4_PATH
-)
 from fastapi import FastAPI, HTTPException, Response, BackgroundTasks
 from contextlib import asynccontextmanager
 import uvicorn
@@ -60,24 +47,35 @@ def lock_api(func):
             raise e
     return wrapper
 
+# -------------------------------------------------------------------------
+# Generator Class
+# -------------------------------------------------------------------------
+class Generator:
+    def __init__(self, seed=None):
+        # If no seed is provided, generate a random one
+        if seed is None:
+            seed = random.randint(0, 2**32 - 1)
+        self.generator = torch.Generator(device="cpu").manual_seed(seed)
+
+    def next(self):
+        # Generate a single random float number
+        return torch.randn(1, generator=self.generator, dtype=torch.float32).item()
+
+    def randn_tensor(self, shape):
+        # Generate a tensor with the specified shape using the generator
+        return torch.randn(shape, generator=self.generator, dtype=torch.float32)
+
+
 
 # -------------------------------------------------------------------------
-# Main Installer & Pipeline Preparation
+# Main Class for Stable Diffusion v3.5
 # -------------------------------------------------------------------------
-class StableDiffusionV3:
+class StableDiffusionXL:
     def __init__(self, quantize=False):
-        """
-        :param quantize: Whether to enable quantization.
-        """
         self.quantize = quantize
-        self.opt_models_dict = {
-            "transformer": TRANSFORMER_INT8_PATH,
-            "text_encoder": TEXT_ENCODER_INT4_PATH,
-            "text_encoder_2": TEXT_ENCODER_2_INT4_PATH,
-            "vae": VAE_DECODER_INT4_PATH,
-        }
-        if TEXT_ENCODER_3_PATH.exists():
-            self.opt_models_dict["text_encoder_3"] = TEXT_ENCODER_3_INT4_PATH
+        self.model_name = "stabilityai/stable-diffusion-xl-base-1.0"
+        self.model_dir = Path("openvino-sd-xl-base-1.0")
+        self.random_generator = Generator(42).generator
 
         # Automatically convert models during initialization
         print("Converting models during initialization...")
@@ -99,8 +97,9 @@ class StableDiffusionV3:
     @log_elapsed_time
     def convert_models(self):
         """Convert PyTorch models to OpenVINO IR (if not already done)."""
-        pt_pipeline_options, use_flash_lora, load_t5 = get_pipeline_options()
-        convert_sd3(load_t5.value, use_flash_lora.value)
+        if not self.model_dir.exists():
+            print(f"Downloading model: {self.model_name} to {self.model_dir}...")
+            optimum_cli(self.model_name, self.model_dir, additional_args={"weight-format": "int8"})
         print("Model conversion completed.")
 
     @staticmethod
@@ -151,6 +150,7 @@ class StableDiffusionV3:
             print(f"Error while selecting device: {selected_device_or_message}")
             return {"status": "error", "message": selected_device_or_message}
 
+
         # Clear previous pipeline and perform garbage collection
         if hasattr(self, 'ov_pipe') and self.ov_pipe is not None:
             print("Releasing resources from the previous pipeline...")
@@ -158,19 +158,8 @@ class StableDiffusionV3:
             gc.collect()
 
         print(f"Preparing OpenVINO pipeline on {selected_device_or_message}...")
-        models_dict = {
-            "transformer": TRANSFORMER_PATH,
-            "vae": VAE_DECODER_PATH,
-            "text_encoder": TEXT_ENCODER_PATH,
-            "text_encoder_2": TEXT_ENCODER_2_PATH,
-        }
-
-        pt_pipeline_options, use_flash_lora, load_t5 = get_pipeline_options()
-        if load_t5.value:
-            models_dict["text_encoder_3"] = TEXT_ENCODER_3_PATH
-
         try:
-            self.ov_pipe = init_pipeline(models_dict, selected_device_or_message, use_flash_lora.value)
+            self.ov_pipe = OVStableDiffusionXLPipeline.from_pretrained(self.model_dir, device=selected_device_or_message)
             success_message = f"Pipeline prepared successfully on {selected_device_or_message}."
             print(success_message)
             return {"status": "success", "message": success_message}
@@ -182,23 +171,29 @@ class StableDiffusionV3:
 
     @log_elapsed_time
     def run_pipeline(self, prompt, width, height, num_inference_steps):
+        # if not self.ov_pipe:
+        #     raise RuntimeError("Pipeline is not initialized. Please call `prepare_pipeline` first.")
+
         """Run inference on the pipeline with a specific prompt."""
         print("Running inference...")
         print(f"Generating image with prompt: '{prompt}'")
+
         ov_pipe = self.ov_pipe
-        pt_pipeline_options, use_flash_lora, _ = get_pipeline_options()
+
+        # try:
         image = ov_pipe(
             prompt,
-            negative_prompt="",
-            num_inference_steps=num_inference_steps if not use_flash_lora.value else 4,
-            guidance_scale=5 if not use_flash_lora.value else 0,
-            height=height,
             width=width,
-            generator=torch.Generator().manual_seed(141)
+            height=height,
+            num_inference_steps=num_inference_steps,
+            generator=self.random_generator
         ).images[0]
         print("Inference completed.")
         return image
 
+        # except Exception as e:
+        #     print(f"Image generation failed: {e}")
+        #     raise
 
 # -------------------------------------------------------------------------
 # FastAPI - REST API
@@ -210,14 +205,13 @@ class DeviceRequest(BaseModel):
 
 class PromptRequest(BaseModel):
     prompt: str
-    width: int = 1024  # Default value of 512 for width
-    height: int = 1024  # Default value of 512 for height
-    num_inference_steps: int = 28  # Default value for number of inference steps
-
+    width: int = 512  # Default value of 512 for width
+    height: int = 512  # Default value of 512 for height
+    num_inference_steps: int = 25  # Default value for number of inference steps
 
 class Sdv3API:
     def __init__(self):
-        self.installer = StableDiffusionV3(quantize=True)
+        self.installer = StableDiffusionXL(quantize=True)
         self.image_path = "tmp_output_image.png"
         self.pipeline_status = {"running": False, "completed": False}
 
@@ -319,3 +313,4 @@ class Sdv3API:
 if __name__ == "__main__":
     api = Sdv3API()
     uvicorn.run(api.app, host="0.0.0.0", port=8100, reload=False)
+
