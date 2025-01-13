@@ -45,7 +45,7 @@ class PipelineClient:
         except IOError as e:
             print(f"Failed to save image: {e}")
 
-    def wait_for_completion(self, timeout=60, poll_interval=2):
+    def wait_for_completion(self, timeout=300, poll_interval=2):
         """
         Wait for the pipeline to complete.
         :param timeout: Maximum time to wait in seconds.
@@ -79,6 +79,7 @@ class PipelineClient:
             return False
 
 
+
 def main():
     client = PipelineClient()
 
@@ -87,10 +88,10 @@ def main():
         print("Health check failed. Exiting.")
         return
 
-    # Step 2: Select the device
-    response = client.make_request("POST", "/pipeline/select-device", {"device": "CPU"})
-    if response:
-        print(response.json())
+    # # Step 2: Select the device
+    # response = client.make_request("POST", "/pipeline/select-device", {"device": "CPU"})
+    # if response:
+    #     print(response.json())
 
     # Step 3: Trigger the pipeline with additional parameters
     response = client.make_request(
@@ -112,12 +113,12 @@ def main():
     if not client.wait_for_completion():
         return
 
-    # Step 5: Retrieve the generated image
-    response = client.make_request("GET", "/pipeline/image")
-    if response:
-        client.save_image(response.content, "output_image.png")
-    else:
-        print("Failed to retrieve the generated image.")
+    # # Step 5: Retrieve the generated image
+    # response = client.make_request("GET", "/pipeline/image")
+    # if response:
+    #     client.save_image(response.content, "output_image.png")
+    # else:
+    #     print("Failed to retrieve the generated image.")
 
 
 if __name__ == "__main__":
