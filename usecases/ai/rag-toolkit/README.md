@@ -1,7 +1,7 @@
 # LLM Deployment Toolkit
 The Deployment Toolkit is a sophisticated Language Model (LLM) application designed to leverage the power of Intel CPUs and GPUs. It features Retrieval Augmented Generation (RAG), a cutting-edge technology that enhances the model's ability to generate accurate and contextually relevant responses by integrating external information retrieval mechanisms.
 
-![LLM On Edge](./assets/ui.gif)
+![LLM Deployment Toolkit](./assets/ui.gif)
 
 ## Requirements
 ### Validated hardware
@@ -10,85 +10,110 @@ The Deployment Toolkit is a sophisticated Language Model (LLM) application desig
 * RAM: 32GB
 * DISK: 128GB
 
+### Validated software version
+* OpenVINO: 2024.6.0
+* NodeJS: v22.13.0 LTS
+
 ### Application ports
 Please ensure that you have these ports available before running the applications.
-| Apps    | Port |
-|---------|------|
-| UI      | 8010 |
-| Backend | 8011 |
-| Serving | 8012 |
+| Apps                   | Port |
+|------------------------|------|
+| UI                     | 8010 |
+| Backend                | 8011 |
+| LLM Service            | 8012 |
+| Text to Speech Service | 8013 |
+| Speech to Text Service | 8014 |
 
 ## Quick Start
-### 1. Install operating system
-Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
+<details open><summary>Ubuntu 22.04 LTS</summary>
 
-### 2. Install GPU driver (Optional)
-If you plan to use GPU to perform inference, please install the GPU driver according to your GPU version.
-* Intel® Arc™ A-Series Graphics: [link](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
-* Intel® Data Center GPU Flex Series: [link](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
+### 1. Install prerequisite
+- [Docker](https://docs.docker.com/engine/install/)
 
-### 3. Setup docker
-Refer to [here](https://docs.docker.com/engine/install/) to setup docker and docker compose.
+### 2. Install GPU driver
+- [Intel® Arc™ A-Series Graphics](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
+- [Intel® Data Center GPU Flex Series](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
 
-<a name="hf-token-anchor"></a>
-### 4. Create a Hugging Face account and generate an access token. For more information, please refer to [link](https://huggingface.co/docs/hub/en/security-tokens).
+### 3. Download LLM model (Skip if you already have a LLM model in data folder)
+```bash
+# Install OpenVINO library
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install openvino==2024.6 optimum-intel[openvino,nncf]==1.21.0 --extra-index-url https://download.pytorch.org/whl/cpu
 
-<a name="hf-access-anchor"></a>
-### 5. Login to your Hugging Face account and browse to [mistralai/Mistral-7B-Instruct-v0.3](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3) and click on the `Agree and access repository` button.
+# Download & Convert LLM Model
+optimum-cli export openvino --model Qwen/Qwen2.5-7B-Instruct --weight-format int4 --sym --ratio 1.0 --group-size -1 ./data/models/llm
+```
 
-### 6. Build docker images with with your preference inference backend
+### 4. Download embedding model and reranker model
+```bash
+# Download & Convert Embedding Model
+optimum-cli export openvino --model BAAI/bge-large-en-v1.5 --task feature-extraction --weight-format fp16 ./data/models/embeddings/bge-large-en-v1.5
+
+# Download & Convert Reranker Model
+optimum-cli export openvino --model BAAI/bge-reranker-large --task text-classification --weight-format fp16 ./data/models/reranker/bge-reranker-large
+```
+
+### 5. Build docker images
 This step will download all the necessary files online, please ensure you have a valid network connection.
 ```bash
-# OLLAMA GPU backend
-docker compose build --build-arg INSTALL_OPTION=2 
-
-# OpenVINO CPU backend (OpenVINO backend required Hugging Face token to be provided to download the model)
-docker compose build --build-arg INSTALL_OPTION=1 \
-  --build-arg HF_TOKEN=<your-huggingface-token>
+docker compose build
 ```
 
-### 7. Start docker container
+### 6. Start docker container
 ```bash
+export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
 docker compose up -d
 ```
+</details>
 
-## Development
-On host installation can be done by following the steps below:
-### 1. Run the setup script
-This step will download all the dependencies needed to run the application.
-```bash
-./install.sh
-```
+<details><summary>Windows 11</summary>
 
-### 2. Start all the services
-Run the script to start all the services. During the first time running, the script will download some assets required to run the services, please ensure you have internet connection.
-```bash
-./run.sh
-```
+### 1. Install prerequisite
+- [Python 3.11.9 (64-bit)](https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe)
+- [Intel® oneAPI Base Toolkit version 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html)
+- [Node.js v22.12.0](https://nodejs.org/en/download/package-manager)
+
+### 2. Install GPU driver
+- [Intel® Arc™ & Iris® Xe Graphics - Windows](https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html) 
+- [Intel® Data Center GPU Flex Series - Windows](https://www.intel.com/content/www/us/en/download/780185/intel-data-center-gpu-flex-series-windows.html)
+
+### 3. Follow the document and install the following services in the microservices folder.
+- Ollama: [doc](../microservices/ollama/windows/README.md)
+- Text to speech: [doc](../microservices/speech-to-text/windows/README.md)
+- Speech to text: [doc](../microservices/text-to-speech/windows/README.md)
+
+### 4. Install RAG Toolkit 
+#### 4.1 Install backend
+Double click on the `install-backend.bat`
+
+#### 4.2 Install UI
+Double click on the `install-ui.bat`
+
+### 5. Run application
+#### 5.1 Start Ollama by following the [doc](../microservices/ollama/windows/README.md)
+
+#### 5.2 Start Text to speech by following the [doc](../microservices/speech-to-text/windows/README.md)
+
+#### 5.3 Start Speech to text by following the [doc](../microservices/text-to-speech/windows/README.md)
+
+#### 5.4 Start RAG Toolkit
+Double click on the `run.bat`
+
+</details>
+
 
 ## FAQ
-### Uninstall the app
+1. Changing the inference device for embedding model. Supported device: ["CPU", "GPU"]
 ```bash
-./uninstall.sh
+# Example: Loading embedding model on GPU device
+export EMBEDDING_DEVICE=GPU
 ```
-
-### Utilize NPU in AI PC
-The Speech to Text model inference can be offloaded on the NPU device on an AI PC. Edit the `ENCODER_DEVICE` to *NPU* in `backend/config.yaml` to run the encoder model on NPU. *Currently only encoder model is supported to run on NPU device*
+2. Changing the inference device for reranker model. Supported device: ["CPU", "GPU"]
+```bash
+# Example: Loading reranker model on GPU device
+export RERANKER_DEVICE=GPU
 ```
-# Example:
-STT:
-  MODEL_ID: base
-  ENCODER_DEVICE: NPU # <- Edit this line to NPU
-  DECODER_DEVICE: CPU
-```
-
-### Environmental variables
-You can change the port of the backend server api to route to specific OpenAI compatible server running as well as the serving port.
-| Environmental variable |       Default Value      |
-|------------------------|--------------------------|
-| OPENAI_BASE_URL        | http://localhost:8012/v1 |
-| SERVER_HOST            |          0.0.0.0         |
-| SERVER_PORT            |           8011           |
 
 ## Limitations
 1. Current speech-to-text feature only work with localhost.

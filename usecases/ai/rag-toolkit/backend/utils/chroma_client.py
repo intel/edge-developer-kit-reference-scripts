@@ -35,12 +35,12 @@ class ChromaClient:
         self.db_dir = db_dir
 
         self.text_embedding_model_id = "BAAI/bge-large-en-v1.5"
-        self.text_embedding_model_dir = "../data/model/embeddings/bge-large-en-v1.5"
+        self.text_embedding_model_dir = "./data/models/embeddings/bge-large-en-v1.5"
         self.vector_search_top_k = 4
         self.text_embedding = self._verify_text_embedding_model_exists(embedding_device)
 
         self.reranker_model_id = "BAAI/bge-reranker-large"
-        self.reranker_model_dir = "../data/model/reranker/bge-reranker-large"
+        self.reranker_model_dir = "./data/models/reranker/bge-reranker-large"
         self.vector_rerank_top_n = 3
         self.reranker = self._verify_reranker_model_exists(reranker_device)
 
@@ -91,7 +91,7 @@ class ChromaClient:
             "batch_size": 1 if device == "NPU" else 4
         }
         self.logger.info(
-            f"Loading text embedding: {self.text_embedding_model_id} in OV format")
+            f"Loading text embedding: {self.text_embedding_model_id} in OV format on device: {device}")
         text_embedding = OpenVINOBgeEmbeddings(
             model_name_or_path=self.text_embedding_model_id if isDownloaded else self.text_embedding_model_dir,
             model_kwargs=embedding_model_kwargs,
@@ -109,7 +109,7 @@ class ChromaClient:
             self.reranker_model_id, self.reranker_model_dir)
         rerank_model_kwargs = {"device": device}
         self.logger.info(
-            f"Loading reranker: {self.reranker_model_id} in OV format")
+            f"Loading reranker: {self.reranker_model_id} in OV format on device: {device}")
         reranker = OpenVINOReranker(
             model_name_or_path=self.reranker_model_id if isDownloaded else self.reranker_model_dir,
             model_kwargs=rerank_model_kwargs,

@@ -18,6 +18,13 @@ export const paths = {
       icon: 'article',
       matcher: { type: 'equals', href: '/documents' }, // Type equals/startsWith/include/
     },
+    {
+      key: 'settings',
+      title: 'Settings',
+      href: 'settings',
+      icon: 'settings',
+      matcher: { type: 'equals', href: '/settings' }, // Type equals/startsWith/include/
+    },
   ],
   errors: { notFound: '/errors/not-found' },
 } as const;
