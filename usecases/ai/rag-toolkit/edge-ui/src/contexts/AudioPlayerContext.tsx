@@ -1,8 +1,10 @@
 // Copyright (C) 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-import { API } from '@/utils/api';
+import { FetchAPI } from '@/utils/api';
 import React, { useState, useEffect, createContext, type ReactNode, useCallback } from 'react';
+
+const STTAPI = new FetchAPI(`http://${process.env.NEXT_PUBLIC_STT_API_URL ?? "localhost"}:${process.env.NEXT_PUBLIC_STT_API_PORT ?? "8013"}`);
 
 export interface AudioClipProps {
     audioUrl: string;
@@ -92,7 +94,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }): Reac
     const textToSpeech = useCallback(
         async (text: string) => {
             try {
-                const blobData = await API.file('audio/speech', { input: text, speed: 1.25 });
+                const response = await STTAPI.file('audio/speech', { input: text, voice: "EN-US", model: "-", speed: 1.25 });
+                const blobData = await response.blob();
                 const objectURL = URL.createObjectURL(blobData);
                 addToAudioQueue({ text, audio: objectURL });
             } catch (err) {

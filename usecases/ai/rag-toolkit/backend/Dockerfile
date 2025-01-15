@@ -7,8 +7,7 @@ USER root
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get install -y ffmpeg \
-        wget \
+    && apt-get install -y wget \
         gnupg2 \
         libtbb12 \
         python3.11 \
@@ -38,9 +37,7 @@ RUN mkdir /tmp/npu-driver \
 RUN mkdir -p /usr/src \
     && chown -R openvino:openvino /usr/src \
     && mkdir -p /usr/src/app/data \
-    && chown -R openvino:openvino /usr/src/app/data \
-    && mkdir -p /usr/src/app/tmp_audio \
-    && chown -R openvino:openvino /usr/src/app/tmp_audio
+    && chown -R openvino:openvino /usr/src/app/data
 
 USER openvino
 WORKDIR /usr/src/app
@@ -48,13 +45,13 @@ RUN python3 -m venv /usr/src/.venv
 ENV PATH="/usr/src/.venv/bin:$PATH"
 
 # Install python dependencies
-COPY --chown=openvino:openvino requirements.txt .
+COPY --chown=openvino:openvino backend/requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
-COPY --chown=openvino:openvino main.py .
-COPY --chown=openvino:openvino utils.py .
+COPY --chown=openvino:openvino backend .
 
+EXPOSE 8011
 HEALTHCHECK --interval=60s --timeout=180s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --no-proxy -O /dev/null --tries=1 http://stt_service:5996/healthcheck || exit 1
+    CMD curl -f http://localhost:8011/healthcheck || exit 1
 
-CMD ["python3", "-m", "uvicorn", "main:app", "--host", "stt_service", "--port", "5996"]
+CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8011"]

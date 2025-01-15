@@ -5,9 +5,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- client imported module*/
 /* eslint-disable @typescript-eslint/no-unsafe-argument -- client imported module*/
 "use client"
-import { API } from '@/utils/api';
+import { FetchAPI } from '@/utils/api';
 
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const TTSAPI = new FetchAPI(`http://${process.env.NEXT_PUBLIC_TTS_API_URL ?? "localhost"}:${process.env.NEXT_PUBLIC_TTS_API_PORT ?? "8014"}`);
 
 export interface LanguageProps {
   value: string,
@@ -61,10 +63,9 @@ export const useRecordAudio = (): {
   const getText = useCallback(
     async (audioBlob: Blob, mimeType: string, selectedLanguage: LanguageProps) => {
       const form = new FormData();
-      console.log(selectedLanguage)
       form.append('file', new File([audioBlob], 'test.wav', { type: mimeType }));
       form.append('language', selectedLanguage.value);
-      const response = await API.post(`audio/${selectedLanguage.type}`, form, {
+      const response = await TTSAPI.post(`audio/${selectedLanguage.type}`, form, {
         headers: {}
       });
 
@@ -109,7 +110,7 @@ export const useRecordAudio = (): {
   const initialMediaRecorder = useCallback(
     (stream: MediaStream, MediaRecorder: any) => {
       const wavRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/wav'
+        mimeType: 'audio/webm'
       });
 
       // Event handler when recording starts

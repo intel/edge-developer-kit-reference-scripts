@@ -7,8 +7,8 @@ import { type NextRequest } from 'next/server';
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- disable for route handler
 export async function POST(req: NextRequest) {
-    const { messages, modelID, max_tokens: maxTokens, temperature, conversationCount, rag }: { messages: CoreMessage[], modelID: string, max_tokens: number, temperature: number, conversationCount: number, rag: boolean } = await req.json();
-    const url = `http://${process.env.NEXT_PUBLIC_API_URL ?? "localhost"}:${process.env.NEXT_PUBLIC_API_PORT ?? "8011"}`
+    const { messages, modelID, max_tokens: maxTokens, temperature, conversationCount, rag, systemPrompt }: { messages: CoreMessage[], modelID: string, max_tokens: number, temperature: number, conversationCount: number, rag: boolean, systemPrompt: string } = await req.json();
+    const url = `http://${process.env.NEXT_PUBLIC_LLM_API_URL ?? "localhost"}:${process.env.NEXT_PUBLIC_LLM_API_PORT ?? "8011"}`
     const apiVersion = process.env.NEXT_PUBLIC_API_VERSION ?? "v1"
     const baseURL = new URL(`${apiVersion}/`, url).toString()
     const openai = createOpenAI({
@@ -18,8 +18,15 @@ export async function POST(req: NextRequest) {
     })
 
     let conversationMessages = messages
+
     if (conversationCount >= 0 && conversationCount * 2 < messages.length) {
         conversationMessages = messages.slice(-(conversationCount * 2 + 1))
+    }
+
+    if (!messages.some((message) => message.role === 'system')) {
+        if (systemPrompt) {
+            conversationMessages = [{ role: 'system', content: systemPrompt }, ...messages];
+        }
     }
 
     let message = '';
@@ -48,10 +55,8 @@ export async function POST(req: NextRequest) {
                 data.append({ message, processed: false });
                 message = '';
             }
-
             void data.close();
         }
     });
-
     return result.toDataStreamResponse({ data });
 }
