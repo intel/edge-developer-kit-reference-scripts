@@ -27,9 +27,26 @@ export default function ChatContainer(): React.JSX.Element {
     const { data: modelID, isError, isLoading: isModelLoading } = useGetModelID();
     const { recording, speechProcessing, text, startRecording, stopRecording, clearText, languages, updateLanguage, language } = useRecordAudio();
     const { addQueue, clearAudioQueue, isPlaying } = useAudioPlayer();
+    const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
+    const [functionTools, setFunctionTools] = useState<string | null>(null);
+
+    useEffect(() => {
+        const storedPrompt = localStorage.getItem('systemPrompt');
+        if (storedPrompt) {
+            setSystemPrompt(storedPrompt);
+        }
+    }, []);
+
+    useEffect(() => {
+        const storedTools = localStorage.getItem('functionTools');
+        if (storedTools) {
+            setFunctionTools(storedTools);
+        }
+    }, []);
+
     const { messages, input, setInput, append, isLoading: isGettingResponse, setMessages, data, stop } = useChat({
         body: {
-            modelID, max_tokens: maxTokens, temperature, conversationCount, rag
+            modelID, max_tokens: maxTokens, temperature, conversationCount, rag, systemPrompt, functionTools
         }
     });
 

@@ -16,6 +16,8 @@ import {
   MenuOutlined,
   Message,
   MessageOutlined,
+  Settings,
+  SettingsOutlined,
   Storage,
   StorageOutlined,
   type SvgIconComponent,
@@ -24,6 +26,7 @@ import {
 const icons = {
   message: { normal: MessageOutlined, active: Message },
   article: { normal: ArticleOutlined, active: Article },
+  settings: { normal: Settings, active: SettingsOutlined },
   storage: { normal: StorageOutlined, active: Storage },
   build: { normal: BuildOutlined, active: Build },
   cloudUpload: { normal: CloudUploadOutlined, active: CloudUpload },

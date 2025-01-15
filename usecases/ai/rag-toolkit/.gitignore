@@ -4,3 +4,7 @@ __pycache__
 data
 logs
 thirdparty
+
+# Windows
+./backend-env
+./backend/data
