@@ -2,11 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-os.environ['HF_HOME'] = "../data/huggingface"
-os.environ['NLTK_DATA'] = "../data/nltk_data"
-
-import sys
-sys.path.append("../thirdparty/MeloTTS")
+os.environ['HF_HOME'] = "./data/huggingface"
 
 import io
 import time
@@ -30,33 +26,19 @@ from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from starlette.background import BackgroundTasks
 
-from utils.common import read_config_file
 from utils.prompt import RAG_PROMPT, NO_CONTEXT_FOUND_PROMPT, QUERY_REWRITE_PROMPT
 from utils.chroma_client import ChromaClient
-from utils.stt import load_stt_model, inference_transcribe, inference_translate
-from utils.tts import load_tts_model
 
 logger = logging.getLogger('uvicorn.error')
 
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:8012/v1")
-ASR_MODEL = None
-TTS_MODEL = None
-TTS_SPEAKER_IDS = None
 CHROMA_CLIENT = None
-VECTORDB_DIR = "../data/embeddings"
-DOCSTORE_DIR = "../data/embeddings/documents"
+VECTORDB_DIR = "./data/embeddings"
+DOCSTORE_DIR = "./data/embeddings/documents"
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY", "-"),
     base_url=OPENAI_BASE_URL
 )
-
-class TTSData(BaseModel):
-    input: str
-    model: str = '-'
-    voice: str = 'EN-US'
-    response_format: Optional[str] = 'wav'  # [mp3, opus, aac, flac, wav, pcm]
-    speed: Optional[float] = 1.0  # [0.25 - 4.0]
-
 
 class ICreateChatCompletions(TypedDict, total=False):
     messages: Required[List]
@@ -86,17 +68,11 @@ class ICreateChatCompletions(TypedDict, total=False):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global CHROMA_CLIENT, ASR_MODEL, TTS_MODEL, TTS_SPEAKER_IDS
+    global CHROMA_CLIENT
     logger.info("Initializing server services ...")
-    configs = read_config_file("./config.yaml")
-
-    CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, configs["EMBEDDINGS"]["DEVICE"], configs["RERANKER"]["DEVICE"])
-    ASR_MODEL = load_stt_model(
-        model_id=configs["STT"]["MODEL_ID"], 
-        encoder_device=configs["STT"]["ENCODER_DEVICE"],
-        decoder_device=configs["STT"]["DECODER_DEVICE"]
-    )
-    TTS_MODEL, TTS_SPEAKER_IDS = load_tts_model(language='EN', device="cpu")
+    embedding_device = os.environ.get('EMBEDDING_DEVICE', "CPU")
+    reranker_device = os.environ.get('RERANKER_DEVICE', "CPU")
+    CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, embedding_device, reranker_device)
     yield
     logger.info("Stopping server services ...")
 
@@ -120,85 +96,6 @@ def get_healthcheck():
 async def get_available_model():
     model_list = client.models.list()
     return model_list
-
-
-# TTS Routes
-@app.post("/v1/audio/speech")
-async def speech_to_text(data: TTSData, bg_task: BackgroundTasks):
-    global TTS_MODEL, TTS_SPEAKER_IDS
-
-    async def remove_file(file_name):
-        if os.path.exists(file_name):
-            try:
-                os.remove(file_name)
-            except:
-                logger.error(f"File: {file_name} not available")
-
-    if TTS_MODEL == None or TTS_SPEAKER_IDS == None:
-        raise HTTPException(
-            status_code=403, detail="Model is not loaded.")
-
-    output_path = f"../data/temp/tts/{str(uuid.uuid4())}.wav"
-
-    try:
-        loop = asyncio.get_event_loop()
-        start_time = time.time()
-        await loop.run_in_executor(
-            None, 
-            lambda: TTS_MODEL.tts_to_file(
-                data.input, TTS_SPEAKER_IDS[data.voice], output_path, 
-                speed=data.speed, quiet=True
-            )
-        )
-        elapsed_time = time.time() - start_time
-        logger.info(f"TTS Inference time: {elapsed_time:.2f} secs")
-        
-        if os.path.isfile(output_path):
-            return FileResponse(output_path, media_type="audio/wav", background=bg_task.add_task(remove_file, output_path))
-
-    except Exception as error:
-        logger.error(f"Error in TTS generation: {str(error)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-    
-# STT Routes
-@app.post("/v1/audio/transcriptions")
-async def stt_transcription(file: UploadFile = File(...), language: Optional[str] = Form(None)):
-    global ASR_MODEL
-    try:
-        _audio_byte = file.file.read()
-        audio_byte = io.BytesIO(_audio_byte)
-        text = inference_transcribe(
-            model=ASR_MODEL,
-            audio=audio_byte,
-            language=language
-        )
-
-    except Exception as error:
-        logger.error(f"Error in STT transcriptions: {str(error)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to transcribe the voice input. Error: {error}")
-
-    return {"text": text, 'status': True}
-
-
-@app.post("/v1/audio/translations")
-async def stt_translation(file: UploadFile = File(...), language: Optional[str] = Form(None)):
-    global ASR_MODEL
-    try:
-        _audio_byte = file.file.read()
-        audio_byte = io.BytesIO(_audio_byte)
-        text = inference_translate(
-            model=ASR_MODEL,
-            audio=audio_byte,
-            language=language
-        )
-
-    except Exception as error:
-        logger.error(f"Error in STT translations: {str(error)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to translate the voice input. Error: {error}")
-
-    return {"text": text, 'status': True}
 
 
 # RAG Routes
