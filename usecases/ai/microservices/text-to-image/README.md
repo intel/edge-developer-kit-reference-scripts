@@ -18,14 +18,50 @@ It provides endpoints for managing the pipeline, checking the pipeline status, r
 ## Quick Start
 
 ### 1. Install Operating System
-Install the latest [Ubuntu 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to the [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
+- Install the latest [Ubuntu 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to the [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
 ### 2. Install GPU Driver (Optional)
-If you plan to use a GPU for inference, install the appropriate GPU driver:
-- **Intel® Arc™ A-Series Graphics:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
-- **Intel® Data Center GPU Flex Series:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
+- If you plan to use a GPU for inference, install the appropriate GPU driver:
+  - **Intel® Arc™ A-Series Graphics:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
+  - **Intel® Data Center GPU Flex Series:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
 
-### 3. Setup text-to-image generation server  
+### 3. Install Docker Engine
+- Follow the official [Docker installation guide](https://docs.docker.com/engine/install/) to set up Docker Engine on your system.
+
+### 4. Build and Run the Docker Container
+- Build the text-to-image generation docker image.
+  ```bash
+  docker build --network=host -t text2image .
+  ```
+- Export the required environment variables and run the container:
+  ```bash
+  # Select your text-to-image model.
+  # Eg. stable-diffusion-xl, stable-diffusion-v3.5 or stable-diffusion-v3.
+  export TEXT2IMAGE_MODEL=stable-diffusion-xl
+  
+  # Insert huggingface login token
+  export HF_TOKEN=<your_huggingface_token>
+  
+  # Run the container  
+  export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
+  
+  docker run -it --rm \
+      --name text2image-container \
+      --group-add $RENDER_GROUP_ID \
+      --device /dev/dri:/dev/dri \
+      -p 8100:8100 \
+      -e MODEL=$TEXT2IMAGE_MODEL \
+      -e HF_TOKEN=$HF_TOKEN \
+      -v $(pwd)/data:/usr/src/app/data \
+      text2image 
+  ```
+
+
+## Development
+
+---
+
+### 1. Setup text-to-image generation server  
 
 - Change the current directory to the selected model. For example:
   ```bash
@@ -37,11 +73,12 @@ If you plan to use a GPU for inference, install the appropriate GPU driver:
   ./setup.sh
   ```
 
-### 4. Verify the server by running the example (optional)
+### 2. Verify the server by running the example (optional)
 ```bash
 ./run.sh
 ```
 
+___
 
 ## Routes
 
