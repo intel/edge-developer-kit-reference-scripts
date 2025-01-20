@@ -1,0 +1,118 @@
+####################################################################################
+# Copyright (C) <2025> Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+# OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+# OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+###################################################################################
+version: "3.3"
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - stats
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    cpuset: "1"
+
+  influxdb:
+    image: influxdb:1.8-alpine
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    container_name: influxdb
+    restart: always
+    ports:
+      - "8086:8086"
+    networks:
+      - stats
+    volumes:
+      - ./influxdb-storage:/var/lib/influxdb
+      - ./influxdb.conf:/etc/influxdb/influxdb.conf:ro
+    environment:
+      - INFLUXDB_DB="tcc_tutorial_data"
+    security_opt:
+      - no-new-privileges:true
+    cpuset: "1"
+
+  telegraf:
+    image: telegraf
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    container_name: telegraf
+    restart: always
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - mosquitto
+      - influxdb
+    networks:
+      - stats
+    cpuset: "1"
+
+  grafana:
+    image: grafana/grafana
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin  
+      - GF_SECURITY_ADMIN_PASSWORD=admin1 
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    restart: always
+    user: "1000"
+    ports:
+      - "3000:3000"
+    networks:
+      - stats
+    volumes:
+      - ./grafana-provisioning:/etc/grafana/provisioning
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      - influxdb
+    cpuset: "1"
+
+networks:
+  stats:
+
+volumes:
+  grafana-data:
+  influxdb-data:
+  influxdb-config:
