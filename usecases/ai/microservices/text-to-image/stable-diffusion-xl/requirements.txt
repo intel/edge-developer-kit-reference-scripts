@@ -11,6 +11,7 @@ peft==0.14.0
 
 git+https://github.com/huggingface/optimum-intel.git
 
+openvino==2024.6.0
 gradio==5.11.0
 nncf==2.14.1
 IPython==8.31.0
