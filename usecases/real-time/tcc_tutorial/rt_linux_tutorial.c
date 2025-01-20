@@ -65,7 +65,8 @@ SPDX-License-Identifier: BSD-3-Clause
 #define STATS_THREAD_CORE 2
 
 // MQTT Settings
-#define ADDRESS     "tcp://localhost:1883"
+//#define ADDRESS     "tcp://localhost:1883" // use localhost if app does not run in container
+#define ADDRESS     "tcp://mosquitto:1883"
 #define CLIENTID    "TCC_ClientPub"
 #define TOPIC       "sensor/data"
 #define QOS         1

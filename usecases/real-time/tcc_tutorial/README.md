@@ -15,13 +15,14 @@
 
 This application is used to demonstrate the possible optimization steps to increase temporal isolaten between best effort and real time workloads on Linux systems. It includes a control task that performs random pointer chasing to simulate a workload and measures wake up jitter, execution time and cache misses. The application also features a statistics handler thread that processes and logs timing information.
 
+<span style="color:red"> Note: The pointer chasing buffer size should exceed the L2 cache size of your processor to see an improvment by cache partitioning described in step 2 below. You can change the buffer size in `rt_linux_tutorial.c` using `WORKLOAD_BUFFER_SIZE` define.</span>
 
 ## High-level Design of the test application
 
 <p align="center">
   <img src="images/rt_app.png" alt="High-level design of rt app" style="width: 50%;" />
 </p>
-
+Developer: Toggle developer tools
 ## 1. Step: Default Configuration
 
 <p align="center">
@@ -194,6 +195,66 @@ pro attach <token>
 pro enable realtime-kernel
 ```
 Refer to [A CTO's guide to real-time Linux](https://ubuntu.com/engage/cto-guide-real-time-kernel) for more details. 
+
+##
+<span style="color:red"> Note: This sections describes the steps to setup the system using docker. Please go to next section if you  don't want to use docker.</span>
+
+### Install Docker and Docker Compose 
+Please follow the steps described in [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/) to install docker.
+
+Please follow the steps described in [Install the Docker Compose standalone](https://docs.docker.com/compose/install/standalone/) for instance to install docker-compose.
+
+### Start the Grafana Statistics Infrastructure
+```bash
+git clone https://github.com/intel/edge-developer-kit-reference-scripts.git .
+
+cd edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial/docker/docker-compose
+
+docker-compose up -d 
+
+### Verify the services - you should see telegraf, grafana, influxdb and mosquitto container up and running
+docker ps
+```
+Once the containers are up and running, you can connect to Grafana by following these steps:
+- Open Your Web Browser: Open your preferred web browser.
+- Navigate to Grafana: Enter the following URL in the address bar:
+
+```bash
+http://localhost:3000
+```
+If you are running Docker on a remote server, replace localhost with the server's IP address or domain name.
+
+- Log In to Grafana: You will be prompted to log in. Use the following credentials:
+
+```bash
+    Username: admin
+    Password: admin1
+```
+You should see a similar dashboard like the screenshot above. If the dashboard is not visible per default you should find `rt_linux_tutorial` dashboard under the `Provisioned Dashboards`in the Dashboards menu.
+
+### Build the docker image for the RT Linux Tutorial
+To build the Docker image, run the following command in the directory containing your Dockerfile:
+
+```bash
+cd edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial/docker
+docker build -t rt_linux_tutorial_image .
+```
+
+To verify that the image was built successfully, list all Docker images:
+```bash
+docker images
+```
+You should see `rt_linux_tutorial_image` listed among the images.
+
+Run the Docker container in interactive mode, to start the rt_linux_tutorial app:
+```bash
+ docker run -it --privileged --rm --network docker-compose_stats rt_linux_tutorial_image
+
+./rt_linux_tutorial -i 250 -s 1
+
+ ```
+##
+<span style="color:red">  Note: This section describes the necessary steps to set up the system without using Docker as an alternative to the Docker section above.</span>
 
 ### Install MSR Tools
 ```bash
