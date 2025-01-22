@@ -1,0 +1,29 @@
+# Intel® Core™ Ultra Processors (Series 2) (Products formerly known as Lunar Lake)
+
+## Requirements
+
+#### Validated Hardware
+ASUSTeK COMPUTER INC. NUC14LNK
+
+## Quick Start
+
+### 1. Install operating system
+
+Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble/). Refer to the [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop) if needed.
+
+
+### 2. Run setup script
+
+This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceeding to the next step.
+
+```bash
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/refs/heads/main/platforms/coreultra/lnl/setup.sh)"
+```
+After finished installation, it may ask you to reboot your system. Reboot the system. 
+Installation is completed when you see this message:
+> ✓ Platform configured
+
+> System reboot is required.
+
+## Next Step
+1. [Intel® Distribution of OpenVINO™ Toolkit](./usecases/openvino/README.md)
