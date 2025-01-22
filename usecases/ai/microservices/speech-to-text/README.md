@@ -37,7 +37,7 @@ docker run -it --rm \
     -p 5996:5996 \
     -e DEFAULT_MODEL_ID=openai/whisper-tiny \
     -e STT_DEVICE=CPU \
-    -v ./data:/usr/src/app/data \
+    -v app-data:/usr/src/app/data \
     automatic-speech-recognition
 ```
 
@@ -50,6 +50,6 @@ docker run -it --rm \
     -p 5996:5996 \
     -e DEFAULT_MODEL_ID=openai/whisper-tiny \
     -e STT_DEVICE=GPU \
-    -v ./data:/usr/src/app/data \
+    -v app-data:/usr/src/app/data \
     automatic-speech-recognition
 ```
