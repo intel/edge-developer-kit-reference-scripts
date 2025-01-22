@@ -7,31 +7,33 @@ services:
       context: ../microservices/text-to-speech
       dockerfile: Dockerfile
     image: tts_service
-    hostname: tts_service
     container_name: tts_service
-    privileged: true
+    hostname: tts_service
+    group_add:
+      - ${RENDER_GROUP_ID:-110}
     restart: always
     networks:
       - app-network
     environment:
-      - TTS_DEVICE=CPU
+      - TTS_DEVICE=${TTS_DEVICE:-CPU}
+      - BERT_DEVICE=${BERT_DEVICE:-CPU}
+      - ALLOWED_CORS=["*"]
+      - no_proxy=localhost,tts_service,stt_service,ollama
     devices:
-      - /dev:/dev:rw
-      - /lib/modules:/lib/modules:rw
+      - /dev/dri:/dev/dri
     volumes:
-      - ./data/huggingface:/root/.cache/huggingface
-      - ./data/nltk_data:/usr/src/app/data/nltk_data
+      - tts-data:/usr/src/app/data
 
   stt_service:
     build:
       context: ../microservices/speech-to-text
       dockerfile: Dockerfile
     image: stt_service
-    hostname: stt_service
     container_name: stt_service
-    privileged: true
+    hostname: stt_service
     group_add:
       - ${RENDER_GROUP_ID:-110}
+    restart: always
     networks:
       - app-network
     ports:
@@ -40,12 +42,11 @@ services:
       - DEFAULT_MODEL_ID=openai/whisper-tiny 
       - STT_DEVICE=CPU
       - ALLOWED_CORS=["http://localhost"]
-    restart: always
+      - no_proxy=localhost,tts_service,stt_service,ollama
+    devices:
+      - /dev/dri:/dev/dri
     volumes:
       - ./data:/usr/src/app/data:rw
-    devices:
-      - /dev:/dev
-      - /lib/modules:/lib/modules
 
   open-webui:
     hostname: open-webui
@@ -73,6 +74,7 @@ services:
       - AUDIO_TTS_OPENAI_API_KEY=-
       - AUDIO_TTS_MODEL=
       - AUDIO_TTS_VOICE=
+      - no_proxy=localhost,tts_service,stt_service,ollama
     volumes:
       - open-webui:/app/backend/data
 
@@ -93,9 +95,9 @@ services:
       - ZES_ENABLE_SYSMAN=1
       - SYCL_CACHE_PERSISTENT=1
       - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
+      - no_proxy=localhost,tts_service,stt_service,ollama
     devices:
       - /dev:/dev:rw
-      - /lib/modules:/lib/modules:rw
     volumes:
       - ollama:/root/.ollama
 
@@ -105,3 +107,4 @@ networks:
 volumes:
   ollama:
   open-webui:
+  tts-data:

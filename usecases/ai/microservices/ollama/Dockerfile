@@ -1,7 +1,7 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-FROM intel/oneapi-basekit:2024.0.1-devel-ubuntu22.04
+FROM intel/oneapi-basekit:2024.2.1-0-devel-ubuntu22.04
 
 WORKDIR /opt/intel/llm-app
 RUN rm -rf /etc/apt/sources.list.d/intel-graphics.list \

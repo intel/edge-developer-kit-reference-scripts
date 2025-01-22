@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 services:
   ui:
     build:
@@ -85,15 +88,15 @@ services:
     networks:
       - app-network
     environment:
-      - TTS_DEVICE=CPU
+      - TTS_DEVICE=${TTS_DEVICE:-CPU}
+      - BERT_DEVICE=${BERT_DEVICE:-CPU}
       - ALLOWED_CORS=["*"]
     ports:
       - 8013:5995
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ./data/huggingface:/root/.cache/huggingface
-      - ./data/nltk_data:/usr/src/app/data/nltk_data
+      - tts-data:/usr/src/app/data
 
   stt_service:
     build:
@@ -119,3 +122,6 @@ services:
 
 networks:
   app-network:
+
+volumes:
+  tts-data:
