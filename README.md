@@ -12,8 +12,9 @@ Based on the platform you are using, select the following to get started:
 3. [Intel® Core™ Processors (13th gen) (Product formerly Raptor Lake-P)](platforms/core/rpl/rplp#intel-core-processors-products-formerly-raptor-lake-p)
 4. [Intel® Core™ Processors (14th gen) (Product formerly Raptor Lake-S Refresh)](platforms/core/rpl/rpls#intel-core-processors-products-formerly-raptor-lake-s)
 5. [Intel® Core™ Ultra Processor (Products formerly Meteor Lake-UH)](platforms/coreultra/mtluh#intel-core-ultra-processors-products-formerly-meteor-lake)
-6. [4th Generation Intel® Xeon® Scalable Processors (Products formerly Sapphire Rapids)](platforms/xeon/sprsp#4th-generation-intel-xeon-scalable-processors-products-formerly-sapphire-rapids)
-7. [4th Generation Intel® Xeon® Scalable Processors (Products formerly Sapphire Rapids Edge Enhanced)](platforms/xeon/spree#4th-generation-intel-xeon-scalable-processors-products-formerly-sapphire-rapids-edge-enhanced)
+6. [Intel® Core™ Ultra Processors (Series 2) (Products formerly known as Arrow Lake)](platforms/coreultra/arluh/README.md#intel-core-ultra-processors-products-formerly-known-as-arrowlake-uh)
+7. [4th Generation Intel® Xeon® Scalable Processors (Products formerly Sapphire Rapids)](platforms/xeon/sprsp#4th-generation-intel-xeon-scalable-processors-products-formerly-sapphire-rapids)
+8. [4th Generation Intel® Xeon® Scalable Processors (Products formerly Sapphire Rapids Edge Enhanced)](platforms/xeon/spree#4th-generation-intel-xeon-scalable-processors-products-formerly-sapphire-rapids-edge-enhanced)
   
 ## GPU
 1. [Intel® Arc™ A-Series Graphics](gpu/arc/dg2#intel-arc-a-series-graphics-products-formerly-alchemist)
