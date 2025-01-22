@@ -87,18 +87,20 @@ services:
     hostname: tts_service
     container_name: tts_service
     privileged: true
+    group_add:
+      - ${RENDER_GROUP_ID:-110}
     restart: always
     networks:
       - app-network
     environment:
-      - TTS_DEVICE=CPU
+      - TTS_DEVICE=${TTS_DEVICE:-CPU}
+      - BERT_DEVICE=${BERT_DEVICE:-CPU}
       - ALLOWED_CORS=["http://localhost"] # frontend url
     ports:
       - 8013:5995
     devices:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
-    command: "python3 -m uvicorn main:app --host tts_service --port 5995"
 
   stt_service:
     build:
