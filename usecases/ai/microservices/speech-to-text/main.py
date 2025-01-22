@@ -24,7 +24,6 @@ ASR_PIPELINE = None
 DEFAULT_MODEL_ID = os.getenv("DEFAULT_MODEL_ID", "openai/whisper-tiny")
 DEVICE = os.getenv("STT_DEVICE", "CPU")
 TEMP_AUDIO_DIR = "./tmp_audio"
-MODEL_DIR = "./data/models/ov_asr"
 
 
 def clean_up():
@@ -38,11 +37,14 @@ async def lifespan(app: FastAPI):
     if not os.path.exists(TEMP_AUDIO_DIR):
         os.makedirs(TEMP_AUDIO_DIR, exist_ok=True)
 
-    if not os.path.exists(MODEL_DIR):
-        logger.info("Model not found. Downloading default model ...")
-        download_default_model(DEFAULT_MODEL_ID, MODEL_DIR)
+    model_name = DEFAULT_MODEL_ID.split("/")[-1]
+    model_dir = f"./data/models/{model_name}"
 
-    ASR_PIPELINE = load_model_pipeline(MODEL_DIR, device=DEVICE)
+    if not os.path.exists(model_dir):
+        logger.info("Model not found. Downloading default model ...")
+        download_default_model(DEFAULT_MODEL_ID, model_dir)
+
+    ASR_PIPELINE = load_model_pipeline(model_dir, device=DEVICE)
     yield
     clean_up()
 
