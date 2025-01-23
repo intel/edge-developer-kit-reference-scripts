@@ -50,7 +50,7 @@ export default function ChatTextField({
     }
 
     const handleEnter = async (event: React.KeyboardEvent<HTMLDivElement> | undefined): Promise<void> => {
-        if (event?.key !== 'Enter' || isGettingResponse) {
+        if (event?.key !== 'Enter' || isGettingResponse || !input.trim()) {
             return;
         }
         await handleOnSend();
@@ -135,7 +135,7 @@ export default function ChatTextField({
                                 <IconButton
                                     type="submit"
                                     onClick={handleOnSend}
-                                    disabled={isPlaying || isGettingResponse || isError || isModelLoading || recording || speechProcessing}
+                                    disabled={!input.trim()||isPlaying || isGettingResponse || isError || isModelLoading || recording || speechProcessing}
                                     color="primary"
                                 >
                                     <Send />
