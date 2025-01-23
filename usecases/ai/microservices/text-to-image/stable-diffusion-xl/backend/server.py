@@ -75,7 +75,7 @@ class StableDiffusionXL:
         self.quantize = quantize
         self.model_name = "stabilityai/stable-diffusion-xl-base-1.0"
         self.model_dir = Path("openvino-sd-xl-base-1.0")
-        self.random_generator = Generator(42).generator
+        self.random_generator = Generator(903512).generator
 
         # Automatically convert models during initialization
         print("Converting models during initialization...")
