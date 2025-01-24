@@ -83,11 +83,11 @@ opencv-python | 4.10.0.84
 - Start the container
 
   ```
-  docker run -d -u $(id -u) --rm -v ${PWD}/<model_directory>:<model_directory> -p 9000:9000 openvino/model_server:latest --model_name <model_name> --model_path <model_path> --port 9000
+  docker run -d -u $(id -u) --rm --name="ovms" -v ${PWD}/<model_directory>:<model_directory> -p 9000:9000 -p 8000:8000 openvino/model_server:latest --model_name <model_name> --model_path <model_path> --port 9000 --rest_port 8000
 
   Example:
 
-  docker run -d -u $(id -u) --rm -v ${PWD}/models:/models -p 9000:9000 openvino/model_server:latest --model_name resnet --model_path /models/resnet-50-pytorch --port 9000
+  docker run -d -u $(id -u) --rm --name="ovms" -v ${PWD}/models:/models -p 9000:9000 -p 8000:8000 openvino/model_server:latest --model_name resnet --model_path /models/resnet-50-pytorch --port 9000 --rest_port 8000
   ```
 
 ## Testing on CPU
@@ -121,11 +121,11 @@ opencv-python | 4.10.0.84
 - Start container
 
   ```
-  docker run -d --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm -v ${PWD}/<model_directory>:<model_directory> -p 9000:9000 openvino/model_server:latest-gpu --model_name <model_name> --model_path <model_path> --port 9000 --target_device <GPU or AUTO>
+  docker run -d --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm --name="ovms" -v ${PWD}/<model_directory>:<model_directory> -p 9000:9000 -p 8000:8000 openvino/model_server:latest-gpu --model_name <model_name> --model_path <model_path> --port 9000 --rest_port 8000 --target_device <GPU or AUTO>
 
   Example:
 
-  docker run -d --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm -v ${PWD}/models:/models -p 9000:9000 openvino/model_server:latest-gpu --model_name resnet --model_path /models/resnet-50-pytorch --port 9000 --target_device GPU
+  docker run -d --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm --name="ovms" -v ${PWD}/models:/models -p 9000:9000 -p 8000:8000 openvino/model_server:latest-gpu --model_name resnet --model_path /models/resnet-50-pytorch --port 9000 --rest_port 8000 --target_device GPU
   ```
 
 - Run inference
@@ -144,17 +144,17 @@ opencv-python | 4.10.0.84
 
   ```
   cd model_server
-  make release_image NPU=1
+  make release_image NPU=1 OVMS_CPP_IMAGE_TAG=latest-npu
   ```
 
 - Start container
 
   ```
-  docker run -d --device=/dev/accel --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm -v ${PWD}/<model_directory>:<model_directory> -p 9000:9000 openvino/model_server:latest --model_name <model_name> --model_path <model_path> --port 9000 --target_device NPU
+  docker run -d --device=/dev/accel --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm --name="ovms" -v ${PWD}/<model_directory>:<model_directory> -p 9000:9000 -p 8000:8000 openvino/model_server:latest-npu --model_name <model_name> --model_path <model_path> --port 9000 --rest_port 8000 --target_device NPU
 
   Example:
 
-  docker run -d --device=/dev/accel --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm -v ${PWD}/models:/models -p 9000:9000 openvino/model_server:latest --model_name resnet --model_path /models/resnet-50-pytorch --port 9000 --target_device NPU
+  docker run -d --device=/dev/accel --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u) --rm --name="ovms" -v ${PWD}/models:/models -p 9000:9000 -p 8000:8000 openvino/model_server:latest-npu --model_name resnet --model_path /models/resnet-50-pytorch --port 9000 --rest_port 8000 --target_device NPU
   ```
 
 - Run inference
