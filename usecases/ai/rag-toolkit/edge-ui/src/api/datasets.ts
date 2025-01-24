@@ -4,9 +4,11 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import { API } from "../utils/api";
+import { FetchAPI } from "../utils/api";
 import { constructURL } from "../utils/common";
 import { type APIResponse } from "../types/api";
+
+const API = new FetchAPI(`http://${process.env.NEXT_PUBLIC_LLM_API_URL ?? "localhost"}:${process.env.NEXT_PUBLIC_LLM_API_PORT ?? "8011"}`);
 
 export const createTextEmbeddingsAPI = async (
   chunkSize: number,

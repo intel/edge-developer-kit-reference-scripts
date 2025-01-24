@@ -30,12 +30,12 @@ export default function AddDocumentDialog({
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadError, setIsUploadError] = useState<boolean>(false);
   const [selectedFiles, setSelectedFiles] = useState<CustomFile[]>([]);
-  const [chunkSize, setChunkSize] = useState<number>(1024);
+  const [chunkSize, setChunkSize] = useState<number>(512);
   const [chunkOverlap, setChunkOverlap] = useState<number>(0);
   const createTextEmbeddings = useCreateTextEmbeddings();
 
   const resetState = (): void => {
-    setChunkSize(1024);
+    setChunkSize(512);
     setChunkOverlap(0);
     setIsUploading(false);
     setIsUploadError(false);
