@@ -19,6 +19,7 @@ Based on the platform you are using, select the following to get started:
   
 ## GPU
 1. [Intel® Arc™ A-Series Graphics](gpu/arc/dg2#intel-arc-a-series-graphics-products-formerly-alchemist)
+1. [Intel® Arc™ B-Series Graphics](gpu/arc/bmg#intel-arc-b-series-graphics-products-formerly-battlemage)
 2. [Intel® Data Center GPU Flex Series](gpu/flex/ats#intel-data-center-gpu-flex-series-products-formerly-arctic-sound)
 
 ## Use Cases
