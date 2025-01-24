@@ -27,3 +27,9 @@ Installation is completed when you see this message:
 
 ## Next Step
 1. [Intel® Distribution of OpenVINO™ Toolkit](./usecases/openvino/README.md)
+
+## Known Issues
+1. When swap/turn off the monitor display, the screen may become unresponsive and fail to wake up,necessitating a hard reboot of the system.
+
+    
+2. When screen blank time is set in the power-saving options and screen blank happened, the screen may become unresponsive and fail to wake up,necessitating a hard reboot of the system.
