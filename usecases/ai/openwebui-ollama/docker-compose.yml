@@ -18,7 +18,6 @@ services:
       - TTS_DEVICE=${TTS_DEVICE:-CPU}
       - BERT_DEVICE=${BERT_DEVICE:-CPU}
       - ALLOWED_CORS=["*"]
-      - no_proxy=localhost,tts_service,stt_service,ollama
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -42,7 +41,6 @@ services:
       - DEFAULT_MODEL_ID=openai/whisper-tiny 
       - STT_DEVICE=CPU
       - ALLOWED_CORS=["http://localhost"]
-      - no_proxy=localhost,tts_service,stt_service,ollama
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -74,7 +72,6 @@ services:
       - AUDIO_TTS_OPENAI_API_KEY=-
       - AUDIO_TTS_MODEL=
       - AUDIO_TTS_VOICE=
-      - no_proxy=localhost,tts_service,stt_service,ollama
     volumes:
       - open-webui:/app/backend/data
 
@@ -95,7 +92,6 @@ services:
       - ZES_ENABLE_SYSMAN=1
       - SYCL_CACHE_PERSISTENT=1
       - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
-      - no_proxy=localhost,tts_service,stt_service,ollama
     devices:
       - /dev:/dev:rw
     volumes:
