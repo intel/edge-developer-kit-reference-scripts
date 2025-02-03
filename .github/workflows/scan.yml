@@ -9,15 +9,48 @@ on:
   workflow_dispatch:
 
 jobs:
+  precheck:
+    runs-on: [self-hosted, scan]
+    continue-on-error: true
+    outputs:
+      should_run: ${{ steps.set_condition.outputs.should_run }}
+    steps:
+      - name: Set condition for PR title or commit message
+        id: set_condition
+        run: |
+          echo "Checking PR title or commit message..."
+          TYPES_TO_SKIP=("ci" "docs")
+          should_run=true
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            for type in "${TYPES_TO_SKIP[@]}"; do
+              if [[ "${{ github.event.pull_request.title }}" == "$type:"* ]]; then
+                echo "Skip because PR title starts with '$type:'"
+                should_run=false
+                break
+              fi
+            done
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            for type in "${TYPES_TO_SKIP[@]}"; do
+              if [[ "${{ github.head_commit.message }}" == "$type:"* ]]; then
+                echo "Skip because commit message starts with '$type:'"
+                should_run=false
+                break
+              fi
+            done
+          fi
+          echo "should_run=$should_run" >> $GITHUB_OUTPUT
+
   bandit:
     name: Bandit
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: Login to Harbor
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: amr-registry.caas.intel.com
           username: ${{ secrets.CI_USR }}
@@ -37,10 +70,12 @@ jobs:
 
   virus-scan:
     name: Virus Scan
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # release package must be in the directory
       - name: Prepare release package
@@ -57,92 +92,141 @@ jobs:
 
   shellcheck:
     name: ShellCheck
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     env:
       SHELLCHECK_OPTS: ""
+      # Notes:
+      # - [optional] replace SHELLCHECK_EXIT_CODE value to 1 if you are enabling ShellCheck as a static code analysis tool
+      SHELLCHECK_EXIT_CODE: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Find shell script files
+        id: find_files
+        run: |
+          find . \
+            -name .git -type d -prune -o \
+            -type f -name \*.sh \
+            -print0 > shell_files.txt
+          tr '\0' '\n' < shell_files.txt > shell_files_readable.txt
+          total_files=$(wc -l < shell_files_readable.txt)
+          echo "Total number of shell script files to be scanned: $total_files"
+          cat shell_files_readable.txt
 
       - name: Execute ShellCheck
         run: |
-          find . -name .git -type d -prune -o -type f -name \*.sh -print0 |
-          xargs -0 -r -n1 shellcheck |
-          tee shellcheck.log
+          xargs -0 -r -n1 shellcheck < shell_files.txt 2>&1 | tee shellcheck.log
           if [ -s "shellcheck.log" ]; then
-            exit 1
+            grep -oP 'In \K[^\s:]+' shellcheck.log | sort -u > shellcheck_summary.txt
+            total_issues=$(grep -c '^In ' shellcheck.log)
+            echo "::error::Found $total_issues issues!"
+            exit ${{ env.SHELLCHECK_EXIT_CODE }}
           else
             echo "No issues found by ShellCheck" > shellcheck.log
           fi
 
+      - name: Preview ShellCheck Summary
+        if: always()
+        run: |
+          {
+            echo "Total number of shell script files to be scanned: $(wc -l < shell_files_readable.txt)"
+            echo "Files scanned:"
+            cat shell_files_readable.txt
+            echo ""
+            if [ -f shellcheck_summary.txt ]; then
+              echo "Files with issues:"
+              cat shellcheck_summary.txt
+              total_files_with_issues=$(wc -l < shellcheck_summary.txt)
+              total_issues=$(grep -c '^In ' shellcheck.log)
+              echo "Total number of files with issues: $total_files_with_issues"
+              echo "Total number of issues: $total_issues"
+              echo "Issue types and their counts:"
+              grep -oP 'SC[0-9]+' shellcheck.log | sort | uniq -c | sort -nr
+            else
+              echo "No issues found by ShellCheck"
+            fi
+          } | tee shellcheck_summary.log
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: Shellcheck Reports
-          path: shellcheck.log
+          path: |
+            shellcheck.log
+            shellcheck_summary.log
 
   trivy:
     name: Trivy
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Execute Trivy - csv
-        uses: intel-innersource/frameworks.actions.trivy@main
-        with:
-          TRIVY_DEBUG: 'true'
-          TRIVY_EXIT_CODE: '1'
-          TRIVY_IGNORES: ''
-          TRIVY_LIST_ALL: 'true'
-          TRIVY_OUTPUT_FILE: 'trivy_fs_report.csv'
-          TRIVY_REPORT_FORMAT: 'template'
-          TRIVY_SCAN_TYPE: 'fs'
-          TRIVY_SCAN_PATH: '.'
-          TRIVY_SEVERITY: 'UNKNOWN,LOW,MEDIUM,CRITICAL,HIGH'
-          TRIVY_TEMPLATE: '@/templates/csv.tmpl'
-          TRIVY_VULN_TYPE: 'os,library'
+        run: |
+          trivy fs \
+            --format template --template  @/home/user/.ci/csv.tpl \
+            --exit-code  1 \
+            --vuln-type os,library \
+            --severity  UNKNOWN,LOW,MEDIUM,CRITICAL,HIGH \
+            --output  trivy_fs_report.csv \
+            --list-all-pkgs .
+
+      - name: Preview Trivy report
+        if: always()
+        run: |
+          if [ -f "trivy_fs_report.csv" ]; then
+            cat trivy_fs_report.csv
+          else
+            echo "Trivy report file not found."
+          fi
 
       - name: Upload artifact - csv
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Trivy Reports
           path: "trivy_fs_report.csv"
 
   trivy-sbom:
     name: Trivy SBOM
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Execute Trivy
-        uses: intel-innersource/frameworks.actions.trivy@main
-        with:
-          TRIVY_DEBUG: 'true'
-          TRIVY_OUTPUT_FILE: 'trivy_fs_report.spdx'
-          TRIVY_REPORT_FORMAT: 'spdx'
-          TRIVY_SCAN_TYPE: 'fs'
-          TRIVY_SCAN_PATH: '.'
-          TRIVY_SEVERITY: 'UNKNOWN,LOW,MEDIUM,CRITICAL,HIGH'
-          TRIVY_VULN_TYPE: 'os,library'
+        run: |
+          ls -l ~/.ci/csv.tpl
+          trivy fs \
+            --format spdx-json \
+            --output  trivy_fs_sbom_report.json .
 
       - name: Upload artifact 
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Trivy SBOM Reports
-          path: "trivy_fs_report.spdx"
+          path: "trivy_fs_sbom_report.json"
 
   bdba:
     name: BDBA
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     env:
       STEP_GROUP_ID: '32'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # release package must .zip file
       - name: Prepare release package
@@ -162,10 +246,12 @@ jobs:
 
   protex:
     name: Protex
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # release package must be in the directory
       - name: Prepare release package
