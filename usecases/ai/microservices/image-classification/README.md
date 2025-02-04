@@ -166,3 +166,22 @@ opencv-python | 4.10.0.84
 
   python3 image_classification.py --grpc_port 9000 --model_name resnet --input_name data --output_name prob --images_list ../input_images.txt
   ```
+
+## Testing with Benchmark Client
+
+- Build benchmark client docker image
+
+  ```
+  cd model_server/demos/benchmark/python
+  docker build . -t benchmark_client
+  ```
+
+- Run sample benchmark
+
+  ```
+  docker run --network host benchmark_client -a localhost -r 8000 -m <model_name> -p 9000 -t 60 -ps
+
+  Example:
+
+  docker run --network host benchmark_client -a localhost -r 8000 -m resnet -p 9000 -t 60 -ps
+  ```
