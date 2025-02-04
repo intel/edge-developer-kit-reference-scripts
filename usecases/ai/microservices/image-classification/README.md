@@ -19,6 +19,8 @@ Package | Version
 --- | ---
 openvino-dev | 2024.6.0
 grpcio | 1.69.0
+torch | 2.5.1
+torchvision | 0.20.1
 tensorflow-serving-api | 2.17.1
 opencv-python | 4.10.0.84
 
