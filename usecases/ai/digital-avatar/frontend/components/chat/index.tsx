@@ -1,5 +1,8 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { useChat } from 'ai/react'
-import { Send, Mic, StopCircle } from 'lucide-react'
+import { Send, Mic, StopCircle, Settings } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { Button } from "@/components/ui/button"
@@ -11,6 +14,7 @@ import { useGetTTSAudio } from '@/hooks/useTTS'
 import useVideoQueue from '@/hooks/useVideoQueue'
 
 import Markdown from './Markdown'
+import { ISettings, SettingsDialog } from './SettingsDialog'
 
 
 interface StreamData {
@@ -28,6 +32,8 @@ export default function Chat() {
     const getLipsync = useGetLipsync()
     const [taskQueue, setTaskQueue] = useState<Record<string, string | number>[]>([])
     const [isProcessing, setIsProcessing] = useState(false)
+    const [settings, setSettings] = useState<ISettings>({ gender: "female" })
+    const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
 
     // Ensure scroll to bottom when new message is added
     useEffect(() => {
@@ -56,7 +62,7 @@ export default function Chat() {
 
             console.time(`process for message ${index}`)
             // TTS
-            const speech = await getTTSAudio.mutateAsync({ text })
+            const speech = await getTTSAudio.mutateAsync({ text, speaker: settings.gender })
 
             const file = new File([speech], "speech.wav", { type: "audio/wav" })
 
@@ -79,7 +85,7 @@ export default function Chat() {
         }
 
 
-    }, [taskQueue, isProcessing, addVideo, getTTSAudio, getLipsync, updateVideo])
+    }, [taskQueue, isProcessing, addVideo, getTTSAudio, getLipsync, updateVideo, settings.gender])
 
     const formatSeconds = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -96,10 +102,22 @@ export default function Chat() {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- sttMutation.reset added to dependency will cause infinite loop
     }, [append, sttMutation.status, sttMutation.data])
 
+    const updateDialogOpen = (open: boolean) => {
+        setSettingsDialogOpen(open)
+    }
+
+    const updateSettings = (settings: ISettings) => {
+        setSettings(settings)
+    }
+
     return (
         <>
+            <SettingsDialog open={settingsDialogOpen} setOpen={updateDialogOpen} updateValue={updateSettings} settingValues={settings} />
             <div className="p-4 flex justify-between items-center border-b">
                 <h2 className="text-xl font-semibold">Chat</h2>
+                <Button variant="outline" size="icon" onClick={() => updateDialogOpen(true)}>
+                    <Settings />
+                </Button>
             </div>
             <ScrollArea className="h-72 grow p-4" >
                 {messages.map((message, index) => (

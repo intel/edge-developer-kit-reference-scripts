@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 # Ensure OLLAMA_HOST is set
 if [ -z "$OLLAMA_HOST" ]; then
   echo "Error: OLLAMA_HOST environment variable is not set."

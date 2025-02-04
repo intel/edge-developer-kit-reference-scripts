@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./backend/wav2lip/Dockerfile
       args:
-        - RENDER_GROUP_ID=110 # Please update this if you are not using Ubuntu 20.04
+        - RENDER_GROUP_ID=${RENDER_GROUP_ID:-110} 
     image: digital-avatar.backend.wav2lip
     container_name: digital-avatar.backend.wav2lip
     privileged: true
@@ -31,7 +31,7 @@ services:
       context: .
       dockerfile: ./backend/liveportrait/Dockerfile
       args:
-        - RENDER_GROUP_ID=110 # Please update this if you are not using Ubuntu 20.04
+        - RENDER_GROUP_ID=${RENDER_GROUP_ID:-110}
     image: digital-avatar.backend.liveportrait
     container_name: digital-avatar.backend.liveportrait
     privileged: true
@@ -39,6 +39,7 @@ services:
     environment:
       - SERVER_PORT=8012
       - ALLOWED_CORS=["http://localhost"] # frontend url
+      - ONEAPI_DEVICE_SELECTOR=level_zero:0
     devices:
       - /dev:/dev:rw
     volumes:
@@ -81,26 +82,22 @@ services:
 
   tts_service:
     build:
-      context: ../microservices/text-to-speech
+      context: ../microservices/piper-tts
       dockerfile: Dockerfile
     image: tts_service
     hostname: tts_service
     container_name: tts_service
-    privileged: true
-    group_add:
-      - ${RENDER_GROUP_ID:-110}
     restart: always
     networks:
       - app-network
     environment:
-      - TTS_DEVICE=${TTS_DEVICE:-CPU}
-      - BERT_DEVICE=${BERT_DEVICE:-CPU}
       - ALLOWED_CORS=["http://localhost"] # frontend url
+      - SERVER_PORT=8013
     ports:
-      - 8013:5995
-    devices:
-      - /dev:/dev:rw
-      - /lib/modules:/lib/modules:rw
+      - 8013:8013
+    volumes:
+      - ./data/piper:/models:rw
+    command: python3 main.py
 
   stt_service:
     build:
@@ -115,7 +112,7 @@ services:
     networks:
       - app-network
     environment:
-      - DEFAULT_MODEL_ID=openai/whisper-tiny 
+      - DEFAULT_MODEL_ID=openai/whisper-medium
       - STT_DEVICE=CPU
       - ALLOWED_CORS=["http://localhost"] # frontend url
     restart: always
@@ -126,7 +123,6 @@ services:
     devices:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
-    command: "python3 -m uvicorn main:app --host stt_service --port 5996"
 
   ollama:
     build:
@@ -147,6 +143,7 @@ services:
       - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
       - ONEAPI_DEVICE_SELECTOR=level_zero:0
       - LLM_MODEL=${LLM_MODEL:-qwen2.5}
+      - OLLAMA_KEEP_ALIVE=-1
     networks:
       - app-network
     devices:
