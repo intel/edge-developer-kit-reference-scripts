@@ -1,8 +1,8 @@
-# Image Detection Microservice
+# Object Detection Microservice
 
 ## Overview
 
-Image detection microservice that interacts with YOLO models using OpenVINO™ Model Server(OVMS) to perform object detection tasks.
+Object detection microservice that interacts with YOLO models using OpenVINO™ Model Server(OVMS) to perform object detection tasks.
 
 ## Model Validated
 
