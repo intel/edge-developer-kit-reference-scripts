@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 FROM debian:12-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -37,15 +40,15 @@ RUN apt-get update \
     && chown -R intel:intel /usr/src
 
 # Intel GPU Driver 
-RUN apt-get update && apt-get install -y gnupg
-
-RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
-    gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg && \
-    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | \
-    tee /etc/apt/sources.list.d/intel-gpu-jammy.list && \
-    apt update && \
-    apt-get install -y --no-install-recommends libze1 intel-level-zero-gpu intel-opencl-icd clinfo libze-dev intel-ocloc
-
+RUN mkdir neo && cd neo \
+    && wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-core-2_2.5.6+18417_amd64.deb \
+    && wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-opencl-2_2.5.6+18417_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu-dbgsym_1.6.32224.5_amd64.ddeb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu_1.6.32224.5_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd-dbgsym_24.52.32224.5_amd64.ddeb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd_24.52.32224.5_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/libigdgmm12_22.5.5_amd64.deb \
+    && dpkg -i *.deb
 
 USER intel
 WORKDIR /usr/src/app

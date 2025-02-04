@@ -46,9 +46,6 @@ Please ensure that you have these ports available before running the application
 
 ### Prerequisite
 1. **OS**: Ubuntu (Validated on 22.04)
-  
-    ***Note***: If you are using different Ubuntu version, please [update the RENDER_GROUP_ID](#1-how-to-check-render-group-id)
-
 1. **Docker and Docker Compose**: Ensure Docker and Docker Compose are installed. Refer to [Docker installation guide](https://docs.docker.com/engine/install/).
 1. **Intel GPU Drivers**:
     1. Refer to [here](../../../README.md#gpu) to install Intel GPU Drivers
@@ -105,17 +102,3 @@ stt_service:
 ## Limitations
 ### 1. Automatic Speech Recognition Compatibility
 Automatic speech recognition functionality is not supported in Firefox. Please use Chrome for validated performance.
-
-## FAQ
-### 1. Update Render Group ID
-1. Ensure the [Intel GPU driver](#prerequisite) is installed.
-2. Check the group ID from `/etc/group`:
-    ```bash
-    grep render /etc/group
-    ```
-3. The output will be something like:
-    ```
-    render:x:110:user
-    ```
-4. The group ID is the number in the third field (e.g., `110` in the example above).
-5. Ensure the `RENDER_GROUP_ID` in the [docker-compose.yml](./docker-compose.yml) file matches the render group ID.

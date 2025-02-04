@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 "use client"
 
 import { useMutation } from "@tanstack/react-query";
@@ -9,10 +12,10 @@ const TTSAPI = new FetchAPI(`${process.env.NEXT_PUBLIC_TTS_URL}`);
 export function useGetTTSAudio() {
     return useMutation({
         mutationFn: async ({
-            text
-        }: { text: string }) => {
+            text, speaker
+        }: { text: string, speaker: string }) => {
             // const response = await fetch("/api/tts", { method: "POST", body: JSON.stringify({ input: text, voice: "EN-US", model: " - " }) })
-            const response = await TTSAPI.file('audio/speech', { input: text, voice: "EN-US", model: "-", speed: 1.2 })
+            const response = await TTSAPI.file('audio/speech', { text, speaker })
             return await response.blob()
         },
     });

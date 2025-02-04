@@ -9,15 +9,19 @@ RUN rm -rf /etc/apt/sources.list.d/intel-graphics.list \
     && apt install -y python3.11 \
         python3.11-venv \
         wget \
-    && wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg \
-    && echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | tee /etc/apt/sources.list.d/intel-gpu-jammy.list \
-    && apt update \
-    && apt-get install -y libze1 \
-        intel-level-zero-gpu \
-        intel-opencl-icd \
-        clinfo \
     && rm -rf /var/lib/apt/lists/* \
     && python3.11 -m venv .venv
+
+RUN mkdir neo && cd neo \
+    && wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-core-2_2.5.6+18417_amd64.deb \
+    && wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-opencl-2_2.5.6+18417_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu-dbgsym_1.6.32224.5_amd64.ddeb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu_1.6.32224.5_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd-dbgsym_24.52.32224.5_amd64.ddeb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd_24.52.32224.5_amd64.deb \
+    && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/libigdgmm12_22.5.5_amd64.deb \
+    && dpkg -i *.deb
+
 ENV PATH="/opt/intel/llm-app/.venv/bin:$PATH"
 ENV LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH"
 RUN python3 -m pip install --upgrade pip \

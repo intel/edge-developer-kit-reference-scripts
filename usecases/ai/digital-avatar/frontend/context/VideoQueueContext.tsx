@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import React, { createContext, useState, ReactNode, useMemo, useCallback } from 'react';
 
 interface Video {
