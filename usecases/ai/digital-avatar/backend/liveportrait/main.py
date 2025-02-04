@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, APIRouter
@@ -16,9 +19,6 @@ from typing import Optional
 import torch
 import json
 
-from liveportrait.intel_xpu.xpu_override import xpu_override
-xpu_override()
-
 logger = logging.getLogger('uvicorn.error')
 LIVEPORTRAIT=None
 
@@ -31,6 +31,20 @@ async def lifespan(app: FastAPI):
     args = tyro.cli(ArgumentConfig)
     # specify configs for inference
     inference_cfg = partial_fields(InferenceConfig, args.__dict__)
+    try:
+        if not torch.xpu.is_available():
+            inference_cfg.flag_force_cpu=True
+            inference_cfg.flag_use_half_precision=False
+        else:
+            from liveportrait.intel_xpu.xpu_override import xpu_override
+            xpu_override()
+            inference_cfg.flag_force_cpu=False
+    except:
+        inference_cfg.flag_force_cpu=True
+        inference_cfg.flag_use_half_precision=False
+
+    print("Inference Device: " + ("CPU" if inference_cfg.flag_force_cpu else "XPU"))
+
     crop_cfg = partial_fields(CropConfig, args.__dict__)
     LIVEPORTRAIT = LivePortraitPipeline(
         inference_cfg=inference_cfg,

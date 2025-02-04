@@ -1,5 +1,5 @@
-# INTEL CONFIDENTIAL
-# Copyright (C) 2024, Intel Corporation
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
 FROM debian:12-slim AS base
 ARG DEBIAN_FRONTEND=noninteractive

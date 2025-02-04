@@ -1,0 +1,4 @@
+piper-tts
+piper-phonemize-cross
+onnxruntime
+numpy
