@@ -45,6 +45,9 @@ fi
 if [ ! -f "$MODEL_PATH/openvino_model.xml" ]; then
     echo -e "Model file does not exist: $MODEL_PATH/openvino_model.xml. Please export the model first and save to $MODEL_PATH"
     exit 1
+else
+    echo -e "Model file available. Setting VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS to OFF ..."
+    unset VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS
 fi
 
 echo -e "Starting OpenVINO VLLM service ..."
