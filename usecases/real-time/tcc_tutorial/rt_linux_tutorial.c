@@ -62,7 +62,7 @@ SPDX-License-Identifier: BSD-3-Clause
 #define CONTROL_THREAD_CORE 3
 #define CYCLE_TIME_US 250
 // Core ID for Statistics thread
-#define STATS_THREAD_CORE 2
+#define STATS_THREAD_CORE 1
 
 // MQTT Settings
 //#define ADDRESS     "tcp://localhost:1883" // use localhost if app does not run in container
