@@ -14,17 +14,12 @@ Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble
 > **Note**
 > Please ensure that your display cable is connected to the dgpu
 
-### 2. Download scripts
-This step will download the setup script to your current directory
+### 2. Download and run setup script
+This step will download and run the setup script to your current directory
 ```bash
-wget https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/refs/heads/main/gpu/bmg/setup.sh
+sudo bash -c "$(wget -qLO - https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/refs/heads/main/gpu/arc/bmg/setup.sh)"
 ```
 
-### 3. Run the setup script
-This step will configure the basic setup of the platform. Make sure to run the script with **privileged access** and ensure that all of the requirements have been met before proceeding to the next step.
-```bash
-sudo bash setup.sh
-```
 After completing the setup, please reboot the system in order for the setup to be completed.
 
 ## Next Steps
