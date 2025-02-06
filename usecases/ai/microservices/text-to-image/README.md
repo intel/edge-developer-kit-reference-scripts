@@ -8,6 +8,8 @@ It provides endpoints for managing the pipeline, checking the pipeline status, r
 * Stable Diffusion XL
 * Stable Diffusion v3.5 
 * Stable Diffusion v3
+* Flux.1 Schnell
+* Flux.1 Dev
 
 ### Supported Inference Device
 * CPU
