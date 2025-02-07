@@ -21,7 +21,6 @@ pip install --upgrade pip
 # Install dependencies from requirements.txt
 echo "Installing dependencies..."
 pip install -r requirements.txt
-pip install -q -U --pre --extra-index-url https://storage.openvinotoolkit.org/simple/wheels/nightly "openvino>=2024.5" "openvino-tokenizers>=2024.5" "openvino-genai>=2024.5"
 
 # Run server.py
 echo "Starting the server..."

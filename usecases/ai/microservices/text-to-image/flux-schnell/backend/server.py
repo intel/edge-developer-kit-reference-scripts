@@ -71,7 +71,7 @@ class FluxSchnell:
     def __init__(self, quantize=False):
         self.quantize = quantize
         self.model_name = "black-forest-labs/FLUX.1-schnell"
-        self.model_dir = Path("flux-schnell")
+        self.model_dir = Path("openvino-flux-schnell")
         self.random_generator = Generator(42)
 
         # Automatically convert models during initialization
@@ -98,8 +98,8 @@ class FluxSchnell:
             print(f"Downloading model: {self.model_name} to {self.model_dir}...")
             additional_args = {}
             additional_args.update({"weight-format": "int4", "group-size": "64", "ratio": "1.0"})
-            # optimum_cli(self.model_name, self.model_dir, additional_args=additional_args)
-            optimum_cli(self.model_name, self.model_dir)
+            optimum_cli(self.model_name, self.model_dir, additional_args=additional_args)
+            # optimum_cli(self.model_name, self.model_dir)
         print("Model conversion completed.")
 
     @staticmethod
