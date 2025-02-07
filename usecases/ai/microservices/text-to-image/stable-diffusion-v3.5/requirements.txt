@@ -1,7 +1,7 @@
 git+https://github.com/huggingface/optimum-intel.git
-openvino==2024.6.0
-openvino-tokenizers==2024.6.0.0
-openvino-genai==2024.6.0.0
+openvino==2025.0.0
+openvino-tokenizers==2025.0.0
+openvino-genai==2025.0.0
 Pillow==11.1.0
 diffusers==0.32.1
 gradio==5.11.0
