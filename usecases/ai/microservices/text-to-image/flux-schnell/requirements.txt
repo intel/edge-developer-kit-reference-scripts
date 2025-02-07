@@ -17,9 +17,9 @@ accelerate==1.2.1
 --extra-index-url https://download.pytorch.org/whl/cpu
 
 # OpenVINO with version specification
-openvino==2024.6.0
-openvino-tokenizers==2024.6.0
-openvino-genai==2024.6.0
+openvino==2025.0.0
+openvino-tokenizers==2025.0.0
+openvino-genai==2025.0.0
 
 # Server
 fastapi==0.115.6

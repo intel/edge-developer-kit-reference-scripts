@@ -5,7 +5,7 @@ FROM debian:12-slim
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Define the default allowed models and the default model
-ARG ALLOWED_MODELS="stable-diffusion-v3.5 stable-diffusion-xl"
+ARG ALLOWED_MODELS="stable-diffusion-v3.5 stable-diffusion-xl flux-schnell"
 ARG DEFAULT_MODEL="stable-diffusion-v3.5"
 
 # Set default model as a build argument and runtime environment variable
