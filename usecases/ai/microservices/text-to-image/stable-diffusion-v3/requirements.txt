@@ -6,7 +6,7 @@ git+https://github.com/initml/diffusers.git@clement/feature/flash_sd3
 # Dependencies with version specifications
 gradio==5.11.0
 torch==2.5.1+cpu
-transformers==4.47.1
+transformers==4.48.0
 nncf==2.14.1
 datasets==3.2.0
 opencv-python==4.10.0.84
