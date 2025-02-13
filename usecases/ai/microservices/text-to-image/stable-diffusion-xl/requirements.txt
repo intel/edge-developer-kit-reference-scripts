@@ -4,7 +4,7 @@ torch==2.5.1+cpu
 torchvision==0.20.1+cpu
 diffusers==0.32.1
 invisible-watermark==0.2.0
-transformers==4.47.1
+transformers==4.48.0
 accelerate==1.2.1
 onnx==1.17.0
 peft==0.14.0
