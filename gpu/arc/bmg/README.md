@@ -3,6 +3,7 @@
 ## Requirement
 ### Validated Hardware
 - Asrock iEPF-9030S-EY4 + Intel® Arc™ B580 Graphics
+- Asrock iEPF-10000S Series + Intel® Arc™ B580 Graphics
 
 ## Pre-requisite
 - Enable resizable bar option in BIOS settings
