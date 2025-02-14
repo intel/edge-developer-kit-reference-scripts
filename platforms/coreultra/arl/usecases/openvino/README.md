@@ -2,16 +2,17 @@
 
 ## Requirement
 ### Validated Hardware
-Innodisk Arrow Island
+- Innodisk Arrow Island
+- IEI TANK-XM813
 
 ## Pre-requisites
-- Platform ARL-UH reference setup script installed. Refer to [README.md](../../README.md) 
+- Platform ARL reference setup script installed. Refer to [README.md](../../README.md) 
 - Docker version 24 or later installed
 
 ## Quick Start
 ### 1. Go to OpenVINO™ usecase directory
 ```bash
-cd edge-developer-kit-reference-scripts/platforms/coreultra/arluh/usecases/openvino
+cd edge-developer-kit-reference-scripts/platforms/coreultra/arl/usecases/openvino
 ```
 
 ### 2. Run the setup script
