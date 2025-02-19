@@ -1,0 +1,610 @@
+<!-- 
+Copyright (C) 2024 Intel Corporation
+SPDX-License-Identifier: Apache-2.0 
+-->
+
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Vision Edge AI{% endblock %}
+
+{% block head %}
+  {{ super() }}
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@turf/turf@6.2.0-alpha.1/dist/turf.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+{% endblock %}
+
+
+{% block content %}
+
+  {% include 'ui_layout.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="https://jqwidgets.com/public/jqwidgets/jqxcore.js"></script>
+    <script src="https://jqwidgets.com/public/jqwidgets/jqxdraw.js"></script>
+    <script src="https://jqwidgets.com/public/jqwidgets/jqxgauge.js"></script>
+    <script>
+
+
+        const currentStateList = [];
+
+        function initializeGauge(selector, config = {}) {
+            const defaultColors = ['#4CAF50', '#FFC107', '#F44336'];
+            const ranges = (config.ranges || []).slice(0, 3).map(([startValue, endValue], index) => ({
+                  startValue,
+                  endValue,
+                  style: { fill: defaultColors[index], stroke: defaultColors[index] },
+                  endWidth: 5,
+                  startWidth: 5
+            }));
+
+            const min = ranges.length > 0 ? Math.min(...ranges.map(range => range.startValue)) : 0;
+            const max = ranges.length > 0 ? Math.max(...ranges.map(range => range.endValue)) : 100;
+
+            $(selector).jqxGauge({
+                  animationDuration: 500,
+                  width: config.width || 80,
+                  height: config.height || 80,
+                  colorScheme: 'scheme05',
+                  showRanges: ranges.length > 0,
+                  labels: { visible: config.hasPointer || false },
+                  ticksMinor: { visible: config.hasPointer || false, interval: 5, size: '5%' },
+                  ticksMajor: { visible: config.hasPointer || false, interval: 10, size: '9%' },
+                  pointer: { visible: config.hasPointer || false },
+                  cap: { visible: config.hasPointer || false },
+                  caption: {
+                          value: '',
+                          position: config.position || 'bottom',
+                          offset: config.offset || [0, 0],
+                          visible: true,
+                          font: { size: config.fontSize || 10, weight: 'bold' }
+                  },
+                  min,
+                  max,
+                  value: config.value || 0,
+                  ranges: ranges
+                });
+            }
+
+        function startPlayer(playerId) {
+            console.log(`Starting player: ${playerId}`);
+
+            const playerImg = $(`#source-${playerId}`);
+            const newSrc = `/video_feed?player_id=${playerId}&t=${new Date().getTime()}`; // Add timestamp to force refresh
+            playerImg.attr('src', newSrc);
+
+            $.ajax({
+                url: `/start_player`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ player_id: playerId }),
+                success: () => {
+                    console.log(`Player ${playerId} started`);
+                },
+                error: (xhr) => {
+                    if (xhr.status === 403) {
+                        const response = JSON.parse(xhr.responseText);
+                        alert(`Access denied for ${playerId}. Retry in ${response.remaining_time} seconds.`);
+                    } else {
+                        console.error(`Failed to start ${playerId}:`, xhr.responseText || xhr.statusText);
+                    }
+                }
+            });
+        }
+
+        function startPlayer(playerId, animate = {{animate | tojson}}) {
+            const playerState = currentStateList.find(state => state.player_id === playerId);
+            const playerElement = playerState.selector;
+            if (playerState.running) {
+                console.log(`Player ${playerId} is already running.`);
+                return;
+            }
+
+            console.log(`Starting player: ${playerId}`);
+
+            const playerImg = $(`#source-${playerId}`);
+            const newSrc = `/video_feed?player_id=${playerId}&t=${new Date().getTime()}`; // Add a timestamp to force refresh
+            playerImg.attr('src', newSrc);
+
+            $.ajax({
+                url: `/start_player`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(playerState),
+                success: () => {
+                    console.log(`Player ${playerId} started`);
+                    playerState.running = true;
+                    playerState.paused = false;
+
+                    const pollReady = setInterval(() => {
+                        $.get(`/player_ready?player_id=${playerId}`, (data) => {
+                            if (data.ready) {
+                                console.log(`Player ${playerId} ready`);
+                                clearInterval(pollReady); // Stop polling   
+                                currentStateList.forEach(state => {
+                                    if (!state.running) {
+                                        state.selector.hide();
+                                    }
+                                })  
+                                scaleVideo(playerId)
+                                animatePlayer(playerId, true, animate);   
+                            }
+                        });
+                    }, 200);
+                },
+                error: (xhr) => {
+                    if (xhr.status === 403) {
+                        const response = JSON.parse(xhr.responseText);
+                        alert(`Access denied for ${playerId}. Retry in ${response.remaining_time} seconds.`);
+                    } else {
+                        console.error(`Failed to start ${playerId}:`, xhr.responseText || xhr.statusText);
+                    }
+                }
+            });
+
+            ['source','model','device','precision'].forEach(item => { updateDropdownSelection(playerId, item) });
+           
+        }
+
+        function stopPlayer(playerId,  animate =  {{animate | tojson}}) {
+            const playerState = currentStateList.find(state => state.player_id === playerId);
+            const playerElement = playerState.selector;
+
+            if (!playerState.running) {
+                console.log(`Player ${playerId} is not running.`);
+                return;
+            }
+            
+            console.log(`Stopping player: ${playerId}`);
+
+            $.ajax({
+                url: `/stop_player`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ player_id: playerId }),
+                success: () => {
+                    playerState.running = false;
+                    playerState.paused = false;
+                    console.log(`${playerId} stopped successfully.`)
+                },
+                error: (xhr, status, error) => console.error(`Failed to stop ${playerId}:`, { status, error, response: xhr.responseText }),
+            });
+
+            animatePlayer(playerId, false, animate);
+        }
+
+        function updatePlayer(playerId, type, value, animate =  {{animate | tojson}}) {
+            const playerState = currentStateList.find(state => state.player_id === playerId);
+            if (!playerState.running) {
+                console.log(`Player ${playerId} is not running.`);
+                return;
+            }
+
+            console.log(`Updating player: ${playerId}`, type, value);
+
+            if (playerState[type] !== value) {
+                playerState[type] = value;
+
+                animatePlayer(playerId, false, animate);                                
+
+               $.ajax({
+                    url: `/update_player`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(playerState),
+                    success: () => {
+                        updateDropdownSelection(playerId, type)
+                        animatePlayer(playerId, true, animate);                             
+                    },
+                    error: () => console.error(`Failed to update ${playerId}`),
+                });
+            }
+        }
+
+        function animatePlayer(playerId, show = true, animate = false) {
+            const playerState = currentStateList.find(state => state.player_id === playerId);
+            if (!playerState) {
+                console.error(`Player state not found for ID: ${playerId}`);
+                return;
+            }
+
+            const playerElement = playerState.selector;
+
+            if (show) {
+                playerElement.show();
+                if (animate) {
+                    console.log(`Animating player ${playerId} to show.`);
+                    playerElement.removeClass('fade-out').addClass('fade-in'); // Apply fade-in class
+                }
+            } 
+            else {
+                if (animate) {
+                    console.log(`Animating player ${playerId} to hide.`);
+                    playerElement.removeClass('fade-in').addClass('fade-out'); // Apply fade-out class
+                }
+                else {
+                    playerElement.hide();
+                }
+            }
+        }
+
+        function initPlayers() {
+            const playerTypes = JSON.parse('{{ devices | tojson }}')
+                .map(device => device.toLowerCase().replace(/\./g, '-')); // Replace '.' with '-' for valid HTML ID
+
+            const playerTemplate = $('#player');
+
+            playerTypes.forEach(type => {
+                const clonedPlayer = playerTemplate.clone(true).attr('id', type).hide();
+                clonedPlayer.find('#video-content').attr('id', `video-content-${type}`);
+                clonedPlayer.find('#source')
+                    .attr('id', `source-${type}`)
+                    .attr('src', `/video_feed?player_id=${type.replace(/-/g, '.')}`); // Reverse replacement for backend
+                clonedPlayer.find('#fpsGauge').attr('id', `fpsGauge-${type}`);
+                clonedPlayer.find('#latencyGauge').attr('id', `latencyGauge-${type}`);
+                clonedPlayer.find('#sourceDropdown').attr('id', `sourceDropdown-${type}`);
+                clonedPlayer.find('#modelDropdown').attr('id', `modelDropdown-${type}`);
+                clonedPlayer.find('#deviceDropdown').attr('id', `deviceDropdown-${type}`);
+                clonedPlayer.find('#precisionDropdown').attr('id', `precisionDropdown-${type}`);
+                clonedPlayer.find('#youtubeSource').attr('id', `youtubeSource-${type}`);
+
+                // Append the cloned player to the players container
+                $('#players').append(clonedPlayer);
+
+                currentStateList.push({
+                    player_id: type, // Reverse replacement to restore original device ID
+                    source: '{{ default_source }}',
+                    model: '{{ default_model }}',
+                    device: type.toUpperCase().replace(/-/g, '.'), // Ensure backend gets the correct device name
+                    precision: '{{ default_precision }}',
+                    running: false,
+                    visible: false,
+                    paused: false,
+                    selector: $(`#${type}`),
+                    source_height: 0
+                });
+            });
+
+            initGauges(playerTypes);
+        }
+
+        function updateDropdownSelection(playerId, type) {
+            const playerState = currentStateList.find(state => state.player_id === playerId);
+            if (!playerState) {
+                console.error(`Player state not found for: ${playerId}`);
+                return;
+            }
+
+            const currentValue = playerState[type];
+
+            if (currentValue) {
+                let update = ($('.special-source').first().text().trim() != $(`#${type}Dropdown-${playerId}`).text().trim());
+
+                // Reset visibility for all options in the current dropdown
+                $(`#${type}Dropdown-${playerId} + .dropdown-menu .dropdown-item`).show();
+
+                // Hide the selected option for the current player
+                $(`#${type}Dropdown-${playerId} + .dropdown-menu .dropdown-item[data-${type}="${currentValue}"]`).hide();
+
+                if (update) {
+                    // Update the dropdown button text to reflect the current value
+                    $(`#${type}Dropdown-${playerId}`).text(currentValue);
+                }
+
+                // Multi-device handling: Hide the selected option across other players
+                if (type === 'device' && isMultipleDevices()) {
+                    currentStateList.forEach(state => {
+                        $(`#${type}Dropdown-${state.player_id} + .dropdown-menu .dropdown-item[data-${type}="${currentValue}"]`).hide();
+                        if (playerId === state.player_id) {
+                            currentStateList.filter(s => s.running).forEach(runningState => {
+                                $(`#${type}Dropdown-${playerId} + .dropdown-menu .dropdown-item[data-${type}="${runningState[type]}"]`).hide();
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+
+        function initialCaptionConfigs(playerId) {
+            return {
+                    cpu: $("#cpuGauge").jqxGauge('caption'),
+                    power: $("#powerGauge").jqxGauge('caption'),
+                    fps: $(`#fpsGauge-${playerId}`).jqxGauge('caption'),
+                    latency: $(`#latencyGauge-${playerId}`).jqxGauge('caption'),
+                };
+        }
+
+        function updateGaugeCaption(id, value, initialCaptionConfig) {
+            const validValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
+            const updatedCaptionConfig = {
+                ...initialCaptionConfig,
+                value: validValue ? `${validValue}` : ``
+            };
+            $(id).jqxGauge({ caption: updatedCaptionConfig });
+            $(id).jqxGauge('value', validValue);
+        }
+
+        function initGauges(playerTypes) {
+
+            initializeGauge('#cpuGauge', { width: 140, height: 140, hasPointer: true, offset: [0,5], ranges: [[0, 50], [50, 80], [80, 100]] });
+            initializeGauge('#powerGauge', { width: 140, height: 140, hasPointer: true,  offset: [0,5], ranges: [[0, 20], [20, 40], [40, 60]] });
+
+            playerTypes.forEach(type => {
+                initializeGauge(`#fpsGauge-${type}`, { width: 80, height: 80, hasPointer: false, position: "top", ranges: [] });
+                initializeGauge(`#latencyGauge-${type}`, { width: 80, height: 80, hasPointer: false, position: "top", ranges: [] });
+            });
+        }
+
+        function updateGauges() {
+            $.ajax({
+                url: "/get_metrics",
+                method: "GET",
+                success: function (data) {
+                    // Update overall CPU and Power metrics
+                    const cpuPercent = data.cpu_percent ?? 0;
+                    const powerData = data.power_data ?? 0;
+
+                    updateGaugeCaption("#cpuGauge", cpuPercent,  initialCaptionConfigs('cpu').cpu);
+                    updateGaugeCaption("#powerGauge", powerData, initialCaptionConfigs('cpu').power);
+
+                    // Update gauges for each running player
+                    if (data.players) {
+                        Object.keys(data.players).forEach(playerId => {
+                            const playerMetrics = data.players[playerId];
+                            if (playerMetrics) {
+                                const fps = Math.round(playerMetrics.fps ?? 0);
+                                const latency = Math.round(playerMetrics.latency ?? 0);
+                                updateGaugeCaption(`#fpsGauge-${playerId}`, fps, initialCaptionConfigs(playerId).fps);
+                                updateGaugeCaption(`#latencyGauge-${playerId}`, latency, initialCaptionConfigs(playerId).latency);
+                            }
+                        });
+                    }
+                },
+                error: function () {
+                    console.error("Failed to fetch metrics data");
+                }
+            });
+        }
+
+        function scaleVideo(playerId) {
+            const sourceElement = document.querySelector(`#source-${playerId}`);
+            const dashboardVisible = $('#dashboard-container').is(':visible')
+            const infoVisible = $('#info-container').is(':visible')
+
+            let currentHeight = sourceElement.offsetHeight;
+            let originalHeight = sourceElement.getAttribute("data-original-height");
+
+            if (!originalHeight) {
+                if (!currentHeight) {
+                    return
+                }
+                // Store original height if not already stored
+                currentStateList.forEach(state => {
+                    const elem = document.querySelector(`#source-${state.player_id}`);
+                    elem.setAttribute("data-original-height", currentHeight);
+                })
+                originalHeight = currentHeight
+            } else {
+                originalHeight = parseInt(originalHeight, 10); // Convert to integer
+            }
+
+            if (dashboardVisible || infoVisible) {
+                if (!sourceElement.classList.contains("scaled")) {
+                    sourceElement.style.height = `${originalHeight / 2}px`;
+                    sourceElement.classList.add("scaled");
+                }
+            } else {
+                if (sourceElement.classList.contains("scaled")) {
+                    sourceElement.style.height = `${originalHeight}px`;
+                    sourceElement.classList.remove("scaled");
+                }
+            }
+        } 
+
+        $(document).on('click', '#togglePauseResume', function () {
+            const playerId = $(this).closest('.player').attr('id');
+            const playerState = currentStateList.find(state => state.player_id === playerId);
+            const toggleImage = $(this).find('img'); 
+
+            if (!playerState) {
+                console.error(`Player state not found for ID: ${playerId}`);
+                return;
+            }
+            if (!playerState.paused) {
+                $.ajax({
+                    url: '/pause_player',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ player_id: playerId }),
+                    success: (response) => {
+                        console.log(`${playerId} paused successfully.`)
+                        playerState.paused = true;
+                        toggleImage.attr('src', '/static/images/play.png'); 
+                        
+                    },
+                    error: (xhr) => {
+                        console.error(`Failed to pause the player: ${xhr.responseText}`);
+                    }
+                });
+            }
+            else {
+                $.ajax({
+                    url: '/resume_player',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ player_id: playerId }),
+                    success: (response) => {
+                        console.log(`${playerId} resumed successfully.`)
+                        playerState.paused = false;
+                        toggleImage.attr('src', '/static/images/pause.png'); 
+                        
+                    },
+                    error: (xhr) => {
+                        console.error(`Failed to resume the player: ${xhr.responseText}`);
+                    }
+                });                    
+            }
+
+        });
+
+        function isMultipleDevices() {
+            return $('#multiDeviceToggle').hasClass('active');
+        }
+
+        $('.dropdown-menu').on('click', '.dropdown-item', function () {
+            const type = $(this).closest('.dropdown-menu').data('type'); // Dropdown type (e.g., source, model, device, precision)
+            const value = $(this).data(type); // Selected value from the dropdown
+            const playerId = $(this).closest('.player').attr('id');
+            // If YouTube Source (ID: youtubeSource) is selected, do nothing
+            if ($(this).attr('id') === `youtubeSource-${playerId}`) {
+                console.log("YouTube source selected - No action taken.");
+                return; // Prevents further execution
+            }
+
+            if (type === "device") {
+                const newPlayerId = value.toLowerCase().replace(/\./g, '-');
+                updateDropdownSelection(newPlayerId, type);
+
+                if (isMultipleDevices()) {
+                    startPlayer(newPlayerId);
+                } else {
+                    stopPlayer(playerId);
+                    startPlayer(newPlayerId);
+                }
+            } else {
+                updatePlayer(playerId, type, value);
+            }
+        });
+
+        $('#multiDeviceToggle').on('click', function () {
+            $(this).toggleClass('active');
+            if (!isMultipleDevices()) {
+                currentStateList.forEach((state, index) => {
+                    updateDropdownSelection(state.player_id, 'device', false);
+                    if (index !== 0) {
+                        stopPlayer(state.player_id, false);
+                    }
+                });
+            }
+        });
+
+        // Toggle the dashboard visibility on button click
+        $('#dashboardToggle').on('click', function () {
+            $(this).toggleClass('active'); 
+            $('#infoToggle').removeClass('active'); // Ensure infoToggle is inactive
+
+            if ($('#dashboard-container').is(':visible')) {
+                $('#dashboard-container').hide(); 
+            } else {
+                $('#dashboard-container').show(); 
+                $('#info-container').hide(); // Hide info when dashboard is active
+            }
+
+            currentStateList.forEach(state => {
+                if (state.running) {
+                    scaleVideo(state.player_id);
+                }
+            });
+        });
+
+        // Toggle the info visibility on button click
+        $('#infoToggle').on('click', function () {
+            $(this).toggleClass('active'); 
+            $('#dashboardToggle').removeClass('active'); // Ensure dashboardToggle is inactive
+
+            if ($('#info-container').is(':visible')) {
+                $('#info-container').hide();
+            } 
+            else {
+                $.get('/get_system_info', function (data) {
+                    let infoTable = `
+                        <table class="table table-bordered">
+                            <tr><th>Component</th><th>Details</th></tr>
+                            <tr><td>CPU Model</td><td>${data["CPU Model"]}</td></tr>
+                            <tr><td>GPU Model</td><td>${data["GPU Model"]}</td></tr>
+                            <tr><td>OS Distribution</td><td>${data["OS Distribution"]}</td></tr>
+                            <tr><td>Kernel Version</td><td>${data["Kernel Version"]}</td></tr>
+                            <tr><td>RAM Size</td><td>${data["RAM Size"]}</td></tr>
+                        </table>`;
+                    $('#info-container').html(infoTable).addClass('active');
+
+                });
+   
+                $('#info-container').show();
+                $('#dashboard-container').hide(); // Hide dashboard when info is active
+            }
+
+            currentStateList.forEach(state => {
+                if (state.running) {
+                    scaleVideo(state.player_id);
+                }
+            });
+        });
+
+    
+        let lastYouTubeUrl = ""; 
+        let currentPlayerId = null;
+
+
+        // Handle selection of a special source (e.g., YouTube Stream)
+        $('.dropdown-menu[data-type="source"]').on('click', '.special-source', function () {
+            currentPlayerId = $(this).closest('.player').attr('id'); // Get the current player ID
+
+            // Get the text inside the selected special source
+            let specialText = $(this).text().trim();
+            $(`#sourceDropdown-${currentPlayerId}`).text(specialText);
+
+            // Load the last selected URL into the input field
+            $('#youtubeUrl').val(lastYouTubeUrl);
+            $('#youtubeModal').fadeIn();
+        });
+
+        // Save the YouTube URL when clicking "Confirm"
+        $('#saveYouTubeUrl').on('click', function () {
+            let youtubeUrl = $('#youtubeUrl').val().trim();
+            if (youtubeUrl) {
+                lastYouTubeUrl = youtubeUrl; // Save the URL
+
+                // Update the player with the YouTube URL
+                updatePlayer(currentPlayerId, 'source', youtubeUrl);
+                $('#youtubeModal').fadeOut();
+            } else {
+                alert("Please enter a valid URL.");
+            }
+        });
+
+        // Close modal on "Cancel"
+        $('#closeYouTubeModal').on('click', function () {
+            $('#youtubeModal').fadeOut();
+        });
+
+        $(document).ready(function () {
+
+            // Clone players for each device type
+            initPlayers();
+
+            // Initialize default player
+            default_player = '{{default_device}}'.toLowerCase();
+            startPlayer(default_player);
+
+            // Periodically update gauges
+            setInterval(updateGauges, 1000);
+
+        });
+
+       
+
+    </script>
+
+{% endblock %}
+

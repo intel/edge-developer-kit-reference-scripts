@@ -1,0 +1,77 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+version: '3.8'
+
+networks:
+  vision_network:
+    driver: bridge
+
+services:
+  # 📌 Prometheus - Metrics Monitoring
+  prometheus:
+    image: prom/prometheus
+    command: 
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.enable-lifecycle"
+      - "--storage.tsdb.retention.time=1h"  # ✅ Store high-resolution data for 1 hour
+      - "--storage.tsdb.min-block-duration=1s"
+      - "--log.level=warn"
+    volumes:
+      - ./utils/grafana/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - vision_network
+
+  # 📌 Grafana - Dashboard Visualization
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - ./utils/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+      - ./utils/grafana/data:/var/lib/grafana
+      - ./utils/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./utils/grafana/dashboards:/etc/grafana/provisioning/dashboards  # ✅ Add this line
+    ports:
+      - "5000:5000"
+    environment:
+      - GF_DASHBOARDS_MIN_REFRESH_INTERVAL=1s
+      - GF_SERVER_HTTP_PORT=5000
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    depends_on:
+      - prometheus
+    networks:
+      - vision_network
+
+
+  # 📌 Vision Edge AI - Main Application
+  vision_edge_ai:
+    build:
+      context: .
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-}
+    image: ${DOCKER_IMAGE_NAME:-vision_edge_ai}
+    ports:
+      - "${PORT}:${PORT}"  # Ensure host and container ports match
+      - "8082:8082"
+    volumes:
+      - /sys/kernel/debug/:/sys/kernel/debug
+      - /dev:/dev
+      - ${CURRENT_DIR:-.}:/workspace  # Mount current directory
+    working_dir: /workspace
+    stdin_open: true  # Required for `exec -it`
+    tty: true         # Required for interactive shell
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-}
+    privileged: true  # Required for hardware access
+    command: ["python3", "./app.py", "--port", "${PORT}", "--host_address", "${HOST_ADDRESS}"]
+    depends_on:
+      - grafana
+    networks:
+      - vision_network
+
