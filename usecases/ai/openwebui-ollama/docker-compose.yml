@@ -88,9 +88,8 @@ services:
       - app-network
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
-      - OLLAMA_NUM_GPU=999
+      - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU:-999}
       - ZES_ENABLE_SYSMAN=1
-      - SYCL_CACHE_PERSISTENT=1
       - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
     devices:
       - /dev:/dev:rw

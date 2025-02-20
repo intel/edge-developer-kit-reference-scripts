@@ -117,6 +117,17 @@ Example:
 
     ![Alt Test](./assets/stt-example.gif)
 
+## FAQ
+### 1. Configure Ollama to use CPU instead of GPU
+* Linux: Export the environment variable `OLLAMA_NUM_GPU` before starting the services to offload to `CPU` device
+    ```bash
+    # Default: GPU
+    export OLLAMA_NUM_GPU=999
+
+    # Runs on CPU
+    export OLLAMA_NUM_GPU=0
+    ```
+
 ## Limitations
 ### 1. Automatic Speech Recognition Compatibility
 Automatic speech recognition functionality is not supported in Firefox. Please use Chrome for validated performance.
