@@ -18,9 +18,9 @@ cd edge-developer-kit-reference-scripts/platforms/coreultra/arl/usecases/openvin
 ### 2. Run the setup script
 This script will create 2 docker images: OpenVINO™ docker image and OpenVINO™ Notebooks docker image.
 ```bash
-./setup.sh
+bash setup.sh
 ```
-During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+During installation, it may ask you to reboot your system. Reboot the system and run `bash setup.sh` again. Installation is completed when you see this message:
 > ✓ OpenVINO™ use case Installed
 
 When you run command `docker images`, you can see the following docker images:
@@ -55,7 +55,7 @@ docker exec -it openvino_app /bin/bash
 ### OpenVINO™ Notebooks
 1. Run this command to launch OpenVINO™ Notebooks
 ```bash
-./launch_notebooks.sh
+bash launch_notebooks.sh
 ```
 2. Copy the URL printed in the terminal and open in a browser. Example output you will see in terminal:
 ```

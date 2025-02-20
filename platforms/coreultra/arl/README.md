@@ -34,9 +34,9 @@ cd edge-developer-kit-reference-scripts/platforms/coreultra/arl
 This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceeding to the next step.
 
 ```bash
-./setup.sh
+bash setup.sh
 ```
-During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+During installation, it may ask you to reboot your system. Reboot the system and run `bash setup.sh` again. Installation is completed when you see this message:
 > ✓ Platform configured
 
 ## Next Step

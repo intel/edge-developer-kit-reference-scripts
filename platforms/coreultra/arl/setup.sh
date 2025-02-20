@@ -61,7 +61,7 @@ verify_dependencies(){
 }
 
 verify_intel_gpu_package_repo(){
-    if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
+    if [ ! -e /etc/apt/sources.list.d/intel-gpu-noble.list ]; then
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
             sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
@@ -196,7 +196,7 @@ verify_igpu_driver(){
 }
 
 verify_compute_runtime(){
-    COMPUTE_RUNTIME_VER="24.13.29138.7"
+    COMPUTE_RUNTIME_VER="24.52.32224.5"
     echo -e "\n# Verifying Intel(R) Compute Runtime drivers"
 
     echo -e "Install Intel(R) Compute Runtime drivers version: $COMPUTE_RUNTIME_VER"
@@ -247,11 +247,10 @@ verify_npu_driver(){
         else
             mkdir /tmp/npu_temp
             cd /tmp/npu_temp
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.5.1/intel-driver-compiler-npu_1.5.1.20240708-9842236399_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.5.1/intel-fw-npu_1.5.1.20240708-9842236399_ubuntu22.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.5.1/intel-level-zero-npu_1.5.1.20240708-9842236399_ubuntu22.04_amd64.deb
-            wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb
-            wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero-devel_1.17.6+u22.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.13.0/intel-driver-compiler-npu_1.13.0.20250131-13074932693_ubuntu24.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.13.0/intel-fw-npu_1.13.0.20250131-13074932693_ubuntu24.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.13.0/intel-level-zero-npu_1.13.0.20250131-13074932693_ubuntu24.04_amd64.deb
+            wget https://github.com/oneapi-src/level-zero/releases/download/v1.18.5/level-zero_1.18.5+u24.04_amd64.deb
 
             sudo dpkg -i ./*.deb
                                                                                                                                                                                                  
