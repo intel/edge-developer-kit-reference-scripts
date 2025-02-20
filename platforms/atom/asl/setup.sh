@@ -142,7 +142,7 @@ install_kernel_overlay() {
     sudo apt -y install linux-libc-dev
 
     echo -e "## Update grub"
-    sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with linux 6.6.0-000"/' /etc/default/grub
+    sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.6-intel"/' /etc/default/grub
     sudo update-grub
 
     echo "System reboot is required. Re-run the script after reboot"
