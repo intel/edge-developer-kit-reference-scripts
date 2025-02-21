@@ -11,4 +11,4 @@ backend/wav2lip/wav2lip/temp
 assets/*
 weights/*
 backend/liveportrait/templates
-data/
+/data/*
