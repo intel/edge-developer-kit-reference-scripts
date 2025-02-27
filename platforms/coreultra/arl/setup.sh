@@ -196,7 +196,7 @@ verify_igpu_driver(){
 }
 
 verify_compute_runtime(){
-    COMPUTE_RUNTIME_VER="24.13.29138.7"
+    COMPUTE_RUNTIME_VER="24.52.32224.5"
     echo -e "\n# Verifying Intel(R) Compute Runtime drivers"
 
     echo -e "Install Intel(R) Compute Runtime drivers version: $COMPUTE_RUNTIME_VER"
