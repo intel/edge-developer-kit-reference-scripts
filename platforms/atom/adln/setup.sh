@@ -119,40 +119,20 @@ verify_igpu_driver(){
 }
 
 verify_kernel_package() {
-    echo -e "Checking kernel version"
-    LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
-    CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
-    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "${LATEST_KERNEL_VERSION}[^ ]*" | awk '{print $3}' | tr '-' '.')
+    CURRENT_KERNEL_VERSION=$(uname -r)
+    KERNEL_VERSION=${KERNEL_PACKAGE_NAME#linux-image-}
 
-    # extract flavour name
-    KERNEL_FLAVOUR=""
-    if [[ $KERNEL_PACKAGE_NAME == *"generic"* ]]; then
-        KERNEL_FLAVOUR="generic"
-    elif [[ $KERNEL_PACKAGE_NAME == *"oem"* ]]; then
-        KERNEL_FLAVOUR="oem"
-    elif [[ $KERNEL_PACKAGE_NAME == *"intel-iotg"* ]]; then
-        KERNEL_FLAVOUR="intel-iotg"
-    fi
-
-    if [ -z "$LATEST_KERNEL_INSTALLED" ]; then
-        echo "Installing latest '${KERNEL_PACKAGE_NAME}' kernel"
+    if [ "$CURRENT_KERNEL_VERSION" != "$KERNEL_VERSION" ]; then
+        echo -e "Current Kernel: $CURRENT_KERNEL_VERSION"
+        echo -e "To be install: $KERNEL_VERSION"
         build_kernel
-    fi
-    if [[ ! "$LATEST_KERNEL_VERSION" == *"$CURRENT_KERNEL_VERSION_REVISION"* ]]; then
-        if dpkg -l | grep -q 'linux-image.*generic$' && [ "$KERNEL_FLAVOUR" != "generic" ]; then
-            echo "Removing generic kernel"
-            sudo apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
-        elif dpkg -l | grep -q 'linux-image.*iotg$' && [ "$KERNEL_FLAVOUR" != "intel-iotg" ]; then
-            echo "Removing Intel IoT kernel"
-            sudo apt remove -y --auto-remove linux-image-intel-iotg
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
-        elif dpkg -l | grep -q 'linux-image.*oem$' && [ "$KERNEL_FLAVOUR" != "oem" ]; then
-            echo "Removing OEM kernel"
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
-        fi
-        echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
-        echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
+    elif [ "$CURRENT_KERNEL_VERSION" == "$KERNEL_VERSION" ]; then
+        echo -e "Current Kernel: $CURRENT_KERNEL_VERSION"
+        echo -e "Kernel Updated"
+    else
+        # TODO: option to install kernel via verify_custom_build_kernel
+        echo "Error: Custom build kernel not yet supported."
+        exit 1
     fi
 }
 
@@ -189,6 +169,10 @@ replace_kernel(){
     sudo dpkg -i linux-headers-6.1.80--000_6.1.80-0_amd64.deb
     sudo dpkg -i linux-image-6.1.80--000_6.1.80-0_amd64.deb
     sudo dpkg -i linux-libc-dev_6.1.80-0_amd64.deb
+
+    echo -e "## Update grub"
+    sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.1.80--000"/' /etc/default/grub
+
     sudo update-grub
     echo "System reboot is required. Re-run the script after reboot"
     exit 0
@@ -245,11 +229,7 @@ verify_os() {
 }
 
 verify_kernel() {
-    echo -e "\n# Verifying kernel version"
-    CURRENT_KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-    CURRENT_KERNEL_REVISION=$(uname -r | rev | cut -d'-' -f1 | rev)
-    CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
-    
+    echo -e "\n# Verifying kernel version"   
     if [[ -n "$KERNEL_PACKAGE_NAME" ]]; then
         verify_kernel_package
     else
