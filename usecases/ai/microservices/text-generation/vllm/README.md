@@ -39,7 +39,6 @@ docker run -it --rm \
     -e MAX_NUM_SEQS=1 \
     -e VLLM_OPENVINO_DEVICE=CPU \
     -e VLLM_OPENVINO_KVCACHE_SPACE=4 \
-    -e VLLM_OPENVINO_CPU_KV_CACHE_PRECISION=u8 \
     -v ov-vllm:/usr/src/app/data \
     ov-vllm
 ```
@@ -59,7 +58,6 @@ docker run -it --rm \
     -e GPU_MEMORY_UTILIZATION=0.9 \
     -e VLLM_OPENVINO_DEVICE=GPU \
     -e VLLM_OPENVINO_KVCACHE_SPACE=4 \
-    -e VLLM_OPENVINO_CPU_KV_CACHE_PRECISION=u8 \
     -v ov-vllm:/usr/src/app/data \
     ov-vllm
 ```
