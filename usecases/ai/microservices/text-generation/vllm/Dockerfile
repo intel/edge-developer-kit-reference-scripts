@@ -4,6 +4,7 @@
 FROM debian:12-slim
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VLLM_VERSION=v0.6.6
+ARG OPENVINO_VERSION=2024.6.0
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && apt-get upgrade -y \
@@ -28,7 +29,7 @@ RUN apt-get update \
     && adduser --system --ingroup intel --uid 1000 --home /home/intel intel \
     && echo "intel ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/intel \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /usr/src \
+    && mkdir -p /usr/src/app/data \
     && chown -R intel:intel /usr/src
 
 USER intel
@@ -46,8 +47,8 @@ RUN git checkout ${VLLM_VERSION} \
         optimum-intel[openvino,nncf]==1.21.0 \
         optimum==1.23.3 \
         transformers==4.46.3 \
-        openvino==2025.0.0 \
-        openvino_genai==2025.0.0
+        openvino==${OPENVINO_VERSION} \
+        openvino_genai==${OPENVINO_VERSION}
 
 WORKDIR /usr/src/app
 RUN opt_in_out --opt_out

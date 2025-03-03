@@ -38,10 +38,9 @@ docker run -it --rm \
     -e MAX_MODEL_LEN=2048 \
     -e MAX_NUM_SEQS=1 \
     -e VLLM_OPENVINO_DEVICE=CPU \
-    -e VLLM_OPENVINO_KVCACHE_SPACE=8 \
+    -e VLLM_OPENVINO_KVCACHE_SPACE=4 \
     -e VLLM_OPENVINO_CPU_KV_CACHE_PRECISION=u8 \
-    -e VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS=ON \
-    -v ./data:/usr/src/app/data \
+    -v ov-vllm:/usr/src/app/data \
     ov-vllm
 ```
 
@@ -59,10 +58,9 @@ docker run -it --rm \
     -e MAX_NUM_SEQS=1 \
     -e GPU_MEMORY_UTILIZATION=0.9 \
     -e VLLM_OPENVINO_DEVICE=GPU \
-    -e VLLM_OPENVINO_KVCACHE_SPACE=8 \
+    -e VLLM_OPENVINO_KVCACHE_SPACE=4 \
     -e VLLM_OPENVINO_CPU_KV_CACHE_PRECISION=u8 \
-    -e VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS=ON \
-    -v ./data:/usr/src/app/data \
+    -v ov-vllm:/usr/src/app/data \
     ov-vllm
 ```
 
@@ -111,9 +109,9 @@ curl "http://localhost:8000/v1/chat/completions" \
 ```
 
 ### 2. How can I change the default model after it has been run once?
-1. Delete the existing model located in `./data/ov_model`.
+1. Delete the volume for the container.
 ```bash
-rm -rf ./data/ov_model
+docker volume rm ov-vllm
 ```
 2. Rerun the `docker run` command to load and quantize the new model.
 
