@@ -3,19 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* Main layout styling */
 html, body {
     margin: 0;
     padding: 0;
-    width: 100%; /* Full viewport width */
-    height: 100%; /* Full viewport height */
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    background: linear-gradient(135deg, #d3d3d3, #b0b0b0); /* Soft gray gradient */
     font-family: Arial, Helvetica, sans-serif;
-    box-sizing: border-box; /* Include padding and border in dimensions */
+    box-sizing: border-box;
+    background: none; /* Remove any default background */
 }
 
 /* Container for vertical alignment */
@@ -47,17 +46,82 @@ html, body {
     padding-bottom: 5px;
 }
 
-/* Main header section layout */
-#sys-container  {
+#sys-container {
     display: flex;
-    justify-content: space-between;
+    flex-direction: row;
     align-items: center;
-    width: 100%; /* Match the width of the container */
-    margin-bottom: 5px;
-    max-width: 1280px;
-    margin-top: 40px;
+    justify-content: space-between; /* Distributes space evenly, pushing logos to edges */
+    width: 100%;
+    height: 100%;
+    height: auto;
+    margin-top: 20px;
+    padding: 20px;
+    gap: 20px; /* Optional: Add spacing between elements if needed */
 }
 
+/* Centered content wrapper to group gauges and title */
+.centered-content {
+    width: 100%;
+    max-width: 1280px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px; /* Space between gauges and title */
+}
+
+/* Header logo styling (ensure consistent sizing) */
+.header-logo {
+    height: 80px; /* Fixed height to match gauges for consistency */
+    width: auto;
+    object-fit: contain;
+    max-width: 150px; /* Limit width to prevent overflow */
+}
+
+/* Specific adjustments for Intel and OpenVINO logos */
+.left-logo {
+    margin-right: auto; /* Pushes the left logo to the far left */
+}
+
+.right-logo {
+    margin-left: auto; /* Pushes the right logo to the far right */
+}
+
+/* Gauge Containers */
+#cpuGaugeContainer, #powerGaugeContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 80px; /* Match the logo height for consistency */
+}
+
+#cpuGauge, #powerGauge {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive Design (Optional) */
+@media (max-width: 768px) {
+    #sys-container {
+        flex-direction: column; /* Stack vertically on smaller screens */
+        justify-content: center;
+        gap: 20px; /* Increase spacing between stacked elements */
+    }
+
+    .header-logo, #cpuGauge, #powerGauge {
+        max-width: 100px; /* Reduce size on mobile */
+        height: 60px; /* Adjust height for mobile */
+    }
+
+    .centered-content {
+        flex-direction: column;
+        gap: 10px; /* Reduce gap on mobile */
+    }
+}
 
 /* Wrapper for players and separators */
 .players-wrapper {
@@ -151,13 +215,6 @@ html, body {
     margin: 0 auto; /* Center the video container horizontally */
 }
 
-/* Gauge containers for CPU and Power */
-#cpuGaugeContainer, #powerGaugeContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
 /* Video content layout */
 #video-content {
     display: flex;
@@ -204,8 +261,8 @@ html, body {
     margin-top: 5px;
     background: linear-gradient(90deg, #007bff, #0056b3);
     -webkit-background-clip: text;
-    color: transparent; /* Default color for general labels */
-    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    color: transparent;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
     letter-spacing: 1px;
     font-family: 'Arial', sans-serif;
 }
@@ -231,9 +288,15 @@ html, body {
     font-weight: bold;
 }
 
+/* Ensure title and platform name fit within the centered content */
+#titleContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
 
-#platformName {
-    font-size: 32px; /* Adjust size as needed */
+.deviceName {
     font-weight: bold;
     text-align: center;
     margin-top: 5px;
@@ -250,6 +313,13 @@ html, body {
     display: inline-block; /* Keep it compact and centered */
 }
 
+#cpuName {
+    font-size: 28px; /* Adjust size as needed */
+}
+
+#gpuName {
+    font-size: 20px; /* Adjust size as needed */
+}
 
 .custom-button {
     display: flex;
@@ -618,3 +688,4 @@ table.table-borderless .cpu-model, .gpu-model {
     justify-content: space-between;
     margin-top: 10px;
 }
+
