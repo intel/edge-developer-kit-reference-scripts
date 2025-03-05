@@ -63,3 +63,38 @@ This application currently supports the following Ubuntu versions:
    http://<server-ip-address>
    ```  
    Replace `<server-ip-address>` with the IP address of the machine running the application.
+   
+## Customization
+
+Personalize VisionEdgeAI to suit your needs with the following options:
+
+### Adding a Custom Logo
+
+Enhance the web interface by incorporating your own logo:
+
+1. **Place Your Logo File**:  
+   Copy your logo (e.g., `my_logo.png`) into the `./static/images/` directory.
+
+2. **Set the Environment Variable**:  
+   Export the `CUSTOM_LOGO_IMAGE` variable to point to your logo file. Run the following command in your terminal:  
+   ```bash
+   export CUSTOM_LOGO_IMAGE="my_logo.png"
+   ```
+
+
+## Enabling and Disabling Auto Start
+
+To manage the automatic startup of the VisionEdgeAI service, use the following commands:
+
+### Enable Auto Start
+To enable the auto start feature, run:
+```sh
+	make enable_auto_start
+```
+
+### Disable Auto Start
+To disable the auto start feature, run:
+```sh
+	make disable_auto_start
+```
+These commands ensure that the service does not automatically start upon system boot (when disabled) or does start automatically (when enabled).

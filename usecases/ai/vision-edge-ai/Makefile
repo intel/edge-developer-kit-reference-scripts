@@ -30,7 +30,8 @@ DOCKER_COMPOSE_ENV = \
 	MKL_THREADING_LAYER=gnu \
 	CURRENT_DIR=$(CURRENT_DIR) \
 	PORT=${PORT} \
-	HOST_ADDRESS=$(HOST_ADDRESS)
+	HOST_ADDRESS=$(HOST_ADDRESS) \
+	CUSTOM_LOGO_IMAGE=$(CUSTOM_LOGO_IMAGE)
 
 #----------------------------------------------------------------------------------------------------------------------
 # Targets
@@ -39,28 +40,46 @@ default: run
 
 .PHONY: build app run bash
 
-build:
+build: 
 	@$(call msg, Building Docker image ${DOCKER_IMAGE_NAME} ...)
-	@$(DOCKER_COMPOSE_ENV) docker-compose build
-	@docker-compose run --rm $(SERVICE_NAME) bash -c \
-		'cd ./utils/ && python3 setup.py build_ext --quiet --inplace'
-
+	@$(DOCKER_COMPOSE_ENV) docker compose build  
+	
 run: stop
 	@$(call msg, Running the Vision Edge AI application ...)
-	@docker-compose up -d
+	@docker compose up 
 
 stop: build
 	@$(call msg, Stopping the Vision Edge AI application ...)
-	@docker-compose down --remove-orphans  # Ensure old orphaned containers are removed
+	@docker compose down 
 
 install_prerequisites:
 	@$(call msg, Installing Prerequisites ...)
 	@cd ./tools && bash ./install.sh
 
-
-bash:
+bash: build
 	@$(call msg, Opening a bash session in the container ...)
 	@docker-compose run --rm $(SERVICE_NAME) bash
+
+
+enable_auto_start: build
+	@$(call msg, Configuring Vision Edge AI to start automatically on system boot ...)
+	@if [ ! -f $(CURRENT_DIR)/utils/vision_edge_ai.service ]; then \
+		echo "Error: utils/vision_edge_ai.service file not found"; \
+		exit 1; \
+	fi
+
+	@sed 's|{{CURRENT_DIR}}|$(CURRENT_DIR)|g; s|{{DOCKER_IMAGE_NAME}}|$(DOCKER_IMAGE_NAME)|g; s|{{PORT}}|$(PORT)|g; s|{{HOST_ADDRESS}}|$(HOST_ADDRESS)|g' \
+		$(CURRENT_DIR)/utils/vision_edge_ai.service | sudo tee /etc/systemd/system/vision_edge_ai.service > /dev/null
+
+	@sudo systemctl daemon-reload
+	@sudo systemctl enable vision_edge_ai.service
+	@echo "Auto-start enabled. Use 'sudo systemctl start vision_edge_ai' to start now,"
+	@echo "or reboot the system to verify automatic startup."
+
+disable_auto_start: build
+	@$(call msg, Disabling auto start ...)
+	@sudo systemctl stop vision_edge_ai.service
+	@sudo systemctl disable vision_edge_ai.service
 
 #----------------------------------------------------------------------------------------------------------------------
 # Helper Functions

@@ -9,17 +9,16 @@ from setuptools import Extension, setup
 
 
 setup (
-    name="yolov8 processor",
-    author="Jamal EL Youssefi",
+    name="yolo processor",
 	version="1.0.0",
     description="Cython extension ",
     license="Apache 2.0",
 	ext_modules = 	[
 		Extension(
 
-			name = "yolov8_model", 
+			name = "yolo_model", 
 			sources = [
-					'yolov8_model.pyx'
+					'yolo_model.pyx'
 				], 
 			include_dirs = [ 
 					".", 

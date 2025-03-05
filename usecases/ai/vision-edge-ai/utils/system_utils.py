@@ -14,7 +14,7 @@ def get_power_consumption():
 	proc_energy = 0.0
 	power_plane_0 = 0.0
 	power_plane_1 = 0.0
-	command = ['pcm', '/csv', '0.5', '-i=1']
+	command = ['sudo', '/usr/local/sbin/pcm', '/csv', '0.5', '-i=1']
 	try:
 		result = subprocess.run(command, capture_output=True, text=True, timeout=60)
 		output = result.stdout
@@ -62,10 +62,10 @@ def get_cpu_model():
                     if "model name" in line:
                         cpu_model = line.split(":")[1].strip()
                         break
-        return cpu_model or "CPU model not available"
+        return cpu_model or ""
     except Exception as e:
         print(f"Error fetching CPU model: {e}")
-        return "CPU model not available"
+        return ""
 
 def get_gpu_model():
     try:
@@ -73,7 +73,7 @@ def get_gpu_model():
         for line in result.stdout.splitlines():
             if ("VGA" in line or "3D controller" in line) and "Intel Corporation" in line:
                 return line.split(": ")[-1].strip()
-        return "Intel GPU not found"
+        return ""
     except Exception:
         return "Unknown GPU"
 

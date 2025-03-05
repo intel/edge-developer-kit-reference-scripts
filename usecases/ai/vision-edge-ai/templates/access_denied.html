@@ -15,35 +15,8 @@ SPDX-License-Identifier: Apache-2.0
     <div class="access-denied-container">
         <h1 class="access-denied-title">Access Denied</h1>
         <p class="access-denied-message">
-            Another connection is currently active. Please retry in 
-            <span class="remaining-time" id="remainingTime">{{ remaining_time }}</span>.
+            Another connection is currently active. Please retry later
         </p>
     </div>
-    <script>
-        // Initial remaining time in seconds
-        let remainingTime = {{ remaining_time }};
-        
-        // Function to format time as MM:SS
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${minutes}m ${secs}s`;
-        }
-
-        // Function to update the remaining time dynamically
-        function updateRemainingTime() {
-            if (remainingTime > 0) {
-                remainingTime -= 1; // Decrease by 1 second
-                const formattedTime = formatTime(remainingTime);
-                document.getElementById('remainingTime').textContent = formattedTime;
-            }
-        }
-
-        // Set the initial formatted time
-        document.getElementById('remainingTime').textContent = formatTime(remainingTime);
-
-        // Update the remaining time every second
-        setInterval(updateRemainingTime, 1000);
-    </script>
 </body>
 </html>

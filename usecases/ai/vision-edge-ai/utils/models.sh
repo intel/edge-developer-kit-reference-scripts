@@ -1,13 +1,10 @@
 #!/bin/bash
 
-# Download pedestrian-detection model
-omz_downloader --name pedestrian-detection-adas-0002
-mv intel/pedestrian-detection-adas-0002 .
-mv ./pedestrian-detection-adas-0002/FP16-INT8/ ./pedestrian-detection-adas-0002/INT8
-rm -rf intel
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
 # Array of model sizes to process
-models=("yolov8n" "yolov8s" "yolov8m")
+models=("yolov8n" "yolov8s" "yolo11n" )
 
 # Loop through each model size
 for model in "${models[@]}"; do
@@ -29,8 +26,3 @@ for model in "${models[@]}"; do
     rm -f "${model}.pt"
 
 done
-
-omz_downloader --name yolof
-omz_converter --name yolof
-mv public/yolof .
-rm -rf public

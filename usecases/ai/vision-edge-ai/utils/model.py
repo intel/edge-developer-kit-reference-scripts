@@ -19,7 +19,6 @@ class Model():
 		self.scale_factor = scale_factor
 		self.request_queue_size = 2
 		self.latencies = deque(maxlen=100)
-		
 		self.core = Core()
 
 		self.ov_model = self.core.read_model(model_path)

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 # Exit on error and pipeline failure, enable error tracing
 set -euo pipefail
 trap 'echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit 1' ERR
