@@ -85,7 +85,7 @@ class Player:
 				if frame is None:
 					# Log a warning and skip processing if the frame is empty
 					print(f"Warning: Empty frame encountered in player {self.player_id}. Skipping frame.")
-					time.sleep(0.01)  # Short sleep to avoid busy-waiting
+					time.sleep(0.001)  # Short sleep to avoid busy-waiting
 					continue
 
 				# Resize frame if it doesn't match the desired resolution
@@ -104,7 +104,7 @@ class Player:
 					ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
 					if ret:
 						try:
-							self.queue.put(buffer.tobytes(), timeout=0.001)
+							self.queue.put(buffer.tobytes(), timeout=0.01)
 						except Full:
 							continue
 		finally:

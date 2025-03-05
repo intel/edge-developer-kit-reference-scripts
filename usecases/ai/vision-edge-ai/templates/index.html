@@ -10,12 +10,12 @@ SPDX-License-Identifier: Apache-2.0
 
 {% block head %}
   {{ super() }}
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@turf/turf@6.2.0-alpha.1/dist/turf.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link href="{{ url_for('static', filename='css/bootstrap-datetimepicker.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/chart.min.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='js/turf.min.js') }}"></script>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 {% endblock %}
 
 
@@ -27,17 +27,16 @@ SPDX-License-Identifier: Apache-2.0
 
 {% block scripts %}
     {{ super() }}
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
-    <script src="https://jqwidgets.com/public/jqwidgets/jqxcore.js"></script>
-    <script src="https://jqwidgets.com/public/jqwidgets/jqxdraw.js"></script>
-    <script src="https://jqwidgets.com/public/jqwidgets/jqxgauge.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap-datetimepicker.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jqxcore.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jqxdraw.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jqxgauge.js') }}"></script>
     <script>
-
 
         const currentStateList = [];
 
-        function initializeGauge(selector, config = {}) {
+        function setupGauge(selector, config = {}) {
             const defaultColors = ['#4CAF50', '#FFC107', '#F44336'];
             const ranges = (config.ranges || []).slice(0, 3).map(([startValue, endValue], index) => ({
                   startValue,
@@ -75,32 +74,6 @@ SPDX-License-Identifier: Apache-2.0
                 });
             }
 
-        function startPlayer(playerId) {
-            console.log(`Starting player: ${playerId}`);
-
-            const playerImg = $(`#source-${playerId}`);
-            const newSrc = `/video_feed?player_id=${playerId}&t=${new Date().getTime()}`; // Add timestamp to force refresh
-            playerImg.attr('src', newSrc);
-
-            $.ajax({
-                url: `/start_player`,
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ player_id: playerId }),
-                success: () => {
-                    console.log(`Player ${playerId} started`);
-                },
-                error: (xhr) => {
-                    if (xhr.status === 403) {
-                        const response = JSON.parse(xhr.responseText);
-                        alert(`Access denied for ${playerId}. Retry in ${response.remaining_time} seconds.`);
-                    } else {
-                        console.error(`Failed to start ${playerId}:`, xhr.responseText || xhr.statusText);
-                    }
-                }
-            });
-        }
-
         function startPlayer(playerId, animate = {{animate | tojson}}) {
             const playerState = currentStateList.find(state => state.player_id === playerId);
             const playerElement = playerState.selector;
@@ -108,6 +81,9 @@ SPDX-License-Identifier: Apache-2.0
                 console.log(`Player ${playerId} is already running.`);
                 return;
             }
+
+            playerState.running = true;
+            playerState.paused = false;
 
             console.log(`Starting player: ${playerId}`);
 
@@ -122,9 +98,6 @@ SPDX-License-Identifier: Apache-2.0
                 data: JSON.stringify(playerState),
                 success: () => {
                     console.log(`Player ${playerId} started`);
-                    playerState.running = true;
-                    playerState.paused = false;
-
                     const pollReady = setInterval(() => {
                         $.get(`/player_ready?player_id=${playerId}`, (data) => {
                             if (data.ready) {
@@ -142,6 +115,7 @@ SPDX-License-Identifier: Apache-2.0
                     }, 200);
                 },
                 error: (xhr) => {
+                    playerState.running = false
                     if (xhr.status === 403) {
                         const response = JSON.parse(xhr.responseText);
                         alert(`Access denied for ${playerId}. Retry in ${response.remaining_time} seconds.`);
@@ -164,6 +138,9 @@ SPDX-License-Identifier: Apache-2.0
                 return;
             }
             
+            playerState.running = false;
+            playerState.paused = false;
+
             console.log(`Stopping player: ${playerId}`);
 
             $.ajax({
@@ -172,8 +149,6 @@ SPDX-License-Identifier: Apache-2.0
                 contentType: 'application/json',
                 data: JSON.stringify({ player_id: playerId }),
                 success: () => {
-                    playerState.running = false;
-                    playerState.paused = false;
                     console.log(`${playerId} stopped successfully.`)
                 },
                 error: (xhr, status, error) => console.error(`Failed to stop ${playerId}:`, { status, error, response: xhr.responseText }),
@@ -336,12 +311,12 @@ SPDX-License-Identifier: Apache-2.0
 
         function initGauges(playerTypes) {
 
-            initializeGauge('#cpuGauge', { width: 140, height: 140, hasPointer: true, offset: [0,5], ranges: [[0, 50], [50, 80], [80, 100]] });
-            initializeGauge('#powerGauge', { width: 140, height: 140, hasPointer: true,  offset: [0,5], ranges: [[0, 20], [20, 40], [40, 60]] });
+            setupGauge('#cpuGauge', { width: 140, height: 140, hasPointer: true, offset: [0,5], ranges: [[0, 50], [50, 80], [80, 100]] });
+            setupGauge('#powerGauge', { width: 140, height: 140, hasPointer: true,  offset: [0,5], ranges: [[0, 20], [20, 40], [40, 60]] });
 
             playerTypes.forEach(type => {
-                initializeGauge(`#fpsGauge-${type}`, { width: 80, height: 80, hasPointer: false, position: "top", ranges: [] });
-                initializeGauge(`#latencyGauge-${type}`, { width: 80, height: 80, hasPointer: false, position: "top", ranges: [] });
+                setupGauge(`#fpsGauge-${type}`, { width: 80, height: 80, hasPointer: false, position: "top", ranges: [] });
+                setupGauge(`#latencyGauge-${type}`, { width: 80, height: 80, hasPointer: false, position: "top", ranges: [] });
             });
         }
 
@@ -471,30 +446,42 @@ SPDX-License-Identifier: Apache-2.0
                 return; // Prevents further execution
             }
 
-            if (type === "device") {
-                const newPlayerId = value.toLowerCase().replace(/\./g, '-');
-                updateDropdownSelection(newPlayerId, type);
-
-                if (isMultipleDevices()) {
-                    startPlayer(newPlayerId);
-                } else {
-                    stopPlayer(playerId);
-                    startPlayer(newPlayerId);
-                }
-            } else {
-                updatePlayer(playerId, type, value);
-            }
+            updatePlayer(playerId, type, value);
+            
         });
 
         $('#multiDeviceToggle').on('click', function () {
             $(this).toggleClass('active');
             if (!isMultipleDevices()) {
                 currentStateList.forEach((state, index) => {
-                    updateDropdownSelection(state.player_id, 'device', false);
-                    if (index !== 0) {
+                    if (state.running && index !== 0) {
                         stopPlayer(state.player_id, false);
                     }
+                    updateDropdownSelection(state.player_id, "device")
                 });
+            }
+            else {
+                let running_state = currentStateList[0]
+                currentStateList.forEach(state => {
+                    if (state.running) {
+                        running_state = state
+                    }
+                })
+
+                currentStateList.forEach((state, index) => {
+                    if (state.running) {
+                        updatePlayer(state.player_id, "device", state.player_id.toUpperCase().replace(/-/g, '.'))
+                    }
+                    else {
+                        const device = state.player_id.toUpperCase().replace(/-/g, '.')
+                        console.log
+                        console.log(running_state)
+                        currentStateList[index].source = running_state.source
+                        currentStateList[index].model = running_state.model
+                        currentStateList[index].precision = running_state.precision
+                        startPlayer(state.player_id, false);
+                    }
+                })
             }
         });
 
@@ -587,6 +574,20 @@ SPDX-License-Identifier: Apache-2.0
         $('#closeYouTubeModal').on('click', function () {
             $('#youtubeModal').fadeOut();
         });
+
+        window.onbeforeunload = function() {
+            currentStateList.forEach(state => {
+                if (state.running) {
+                    stopPlayer(state.player_id)
+                }
+            })
+            fetch('/disconnect', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+        };
 
         $(document).ready(function () {
 

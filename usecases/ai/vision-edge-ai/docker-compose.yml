@@ -1,8 +1,6 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-version: '3.8'
-
 networks:
   vision_network:
     driver: bridge
@@ -18,7 +16,7 @@ services:
       - "--storage.tsdb.min-block-duration=1s"
       - "--log.level=warn"
     volumes:
-      - ./utils/grafana/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./grafana/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     networks:
@@ -28,10 +26,9 @@ services:
   grafana:
     image: grafana/grafana
     volumes:
-      - ./utils/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
-      - ./utils/grafana/data:/var/lib/grafana
-      - ./utils/grafana/grafana.ini:/etc/grafana/grafana.ini
-      - ./utils/grafana/dashboards:/etc/grafana/provisioning/dashboards  # ✅ Add this line
+      - ./grafana/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards  # ✅ Add this line
     ports:
       - "5000:5000"
     environment:
@@ -60,7 +57,7 @@ services:
     volumes:
       - /sys/kernel/debug/:/sys/kernel/debug
       - /dev:/dev
-      - ${CURRENT_DIR:-.}:/workspace  # Mount current directory
+      - ${CURRENT_DIR:-.}/videos:/workspace/videos 
     working_dir: /workspace
     stdin_open: true  # Required for `exec -it`
     tty: true         # Required for interactive shell
@@ -68,6 +65,7 @@ services:
       - HTTP_PROXY=${HTTP_PROXY:-}
       - HTTPS_PROXY=${HTTPS_PROXY:-}
       - NO_PROXY=${NO_PROXY:-}
+      - CUSTOM_LOGO_IMAGE=${CUSTOM_LOGO_IMAGE:-}
     privileged: true  # Required for hardware access
     command: ["python3", "./app.py", "--port", "${PORT}", "--host_address", "${HOST_ADDRESS}"]
     depends_on:

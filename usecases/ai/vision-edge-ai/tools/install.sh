@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 # Exit on error and pipeline failure, enable error tracing
 set -euo pipefail
 trap 'echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit 1' ERR
@@ -16,7 +19,7 @@ NC="\e[0m"  # No color
 cat << "EOF"
 ╔══════════════════════════════════════════════════════════╗
 ║                                                          ║
-║             V I S I O N   E D G E   A I                 ║
+║             V I S I O N   E D G E   A I                  ║
 ║                                                          ║
 ║----------------------------------------------------------║
 ║                                                          ║
@@ -27,7 +30,7 @@ EOF
 
 echo -e "\n${CYAN}This installation process requires multiple steps and may need several reboots.${NC}"
 echo -e "${CYAN}After each reboot, please run this script again:${NC}\n"
-echo -e "    ${YELLOW}$ install_prerequisites ${NC}\n"
+echo -e "    ${YELLOW}$ make install_prerequisites ${NC}\n"
 echo -e "${CYAN}The script will automatically track progress and continue from where it left off.${NC}"
 echo -e "${CYAN}Installation will be complete when all components are marked with a ${GREEN}✓${CYAN}.${NC}\n"
 echo -e "${MAGENTA}Press Enter to begin installation...${NC}"
@@ -56,7 +59,7 @@ fi
 # Function to check if a step is completed
 is_step_completed() {
     local step="$1"
-    grep -q "^${step}\$" "${PROGRESS_FILE}"
+    grep -q "^${step}$" "${PROGRESS_FILE}"
 }
 
 # Function to mark a step as completed
@@ -72,7 +75,7 @@ is_reboot_pending() {
 
 # Function to set up auto-resume after reboot
 setup_auto_resume() {
-    local RESUME_CMD="cd ${SCRIPT_DIR} && ./install.sh"
+    local RESUME_CMD="cd \"${SCRIPT_DIR}\" && ./install.sh"
     if ! crontab -l 2>/dev/null | grep -q "${RESUME_CMD}"; then
         (crontab -l 2>/dev/null; echo "@reboot ${RESUME_CMD}") | crontab -
     fi
@@ -94,7 +97,6 @@ for step in "${INSTALL_STEPS[@]}"; do
         echo -e "${RED}○ ${step}${NC}"
     fi
 done
-echo -e "${YELLOW}==========================${NC}\n"
 
 # Execute remaining installation steps
 for script in "${INSTALL_STEPS[@]}"; do
@@ -116,7 +118,7 @@ for script in "${INSTALL_STEPS[@]}"; do
         setup_auto_resume
         
         # Run the script with error handling
-        if ! ./"${script}"; then
+        if ! "./${script}"; then
             echo -e "${RED}Error: ${script} failed with exit code $?${NC}"
             exit 1
         fi
@@ -140,7 +142,7 @@ if [[ -f "${PROGRESS_FILE}" ]]; then
     COMPLETED_STEPS=$(wc -l < "${PROGRESS_FILE}")
     TOTAL_STEPS=${#INSTALL_STEPS[@]}
     
-    if [[ ${COMPLETED_STEPS} -eq ${TOTAL_STEPS} ]]; then
+    if [[ "${COMPLETED_STEPS}" -eq "${TOTAL_STEPS}" ]]; then
         echo -e "\n${GREEN}All installations completed successfully!${NC}"
         
         # Clean up
@@ -151,7 +153,7 @@ if [[ -f "${PROGRESS_FILE}" ]]; then
         echo -e "\n${YELLOW}It is recommended to perform a final system reboot.${NC}"
         read -rp "Would you like to reboot now? (y/N) " -n 1 REPLY
         echo
-        if [[ ${REPLY} =~ ^[Yy]$ ]]; then
+        if [[ "${REPLY}" =~ ^[Yy]$ ]]; then
             sudo reboot
         fi
     fi
