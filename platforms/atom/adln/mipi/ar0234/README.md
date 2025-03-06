@@ -96,6 +96,6 @@ The images below shows the output for 2 AR0234 camera streams.
 
 Refer to the available use cases and examples below
 
-1. [Intel® Distribution of OpenVINO™ Toolkit](../../../usecases/openvino/README.md)
+1. [Intel® Distribution of OpenVINO™ Toolkit](../../../../../usecases/ai/openvino/README.md)
 2. [Intel® Edge Software Hub](https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/edge-solutions/overview.html) 
 
