@@ -9,7 +9,6 @@ A digital avatar that utilizes Image to Video, Text To Speech, Speech To Text, a
 - [Architecture Diagram](#requirements)
 - [Requirements](#requirements)
   - [Minimum](#minimum)
-  - [Recommended](#recommended)
 - [Application Ports](#application-ports)
 - [Setup](#setup)
   - [Prerequisite](#prerequisite)
@@ -17,7 +16,7 @@ A digital avatar that utilizes Image to Video, Text To Speech, Speech To Text, a
   - [Build Docker Container](#build-docker-container)
   - [Start Docker Container](#start-docker-container)
   - [Access the App](#access-the-app)
-- [FAQ](#faq)
+- [Notes](#notes)
 
 ## Architecture DIagram
 ![Archictecture Diagram](./docs/architecture.png)

@@ -46,7 +46,7 @@ During installation, it may ask you to reboot your system. Reboot the system and
 
 Refer to the available use cases and examples below
 
-1. [Intel® Distribution of OpenVINO™ Toolkit](../../../usecases/openvino/README.md)
+1. [Intel® Distribution of OpenVINO™ Toolkit](../../../usecases/ai/openvino/README.md)
 2. [Intel® Edge Software Hub](https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/edge-solutions/overview.html) 
 3. [Run D3 AR0234 MIPI on ADL-N Board](./mipi/ar0234/README.md) 
 4. [Run LEOPARD IMX415 MIPI on ADL-N Board](./mipi/imx415/README.md) 
