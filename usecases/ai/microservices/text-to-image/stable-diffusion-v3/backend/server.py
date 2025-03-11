@@ -8,7 +8,7 @@ from functools import wraps
 from pydantic import BaseModel
 
 import torch
-import openvino.runtime as ov_runtime
+import openvino as ov
 
 from sd3_helper import (
     get_pipeline_options,
@@ -106,7 +106,7 @@ class StableDiffusionV3:
     @staticmethod
     def get_device(user_device=None):
         try:
-            ov_core = ov_runtime.Core()
+            ov_core = ov.Core()
             available_devices = [device.upper() for device in ov_core.available_devices]  # Normalize device names
             print(f"Available devices: {available_devices}")
 

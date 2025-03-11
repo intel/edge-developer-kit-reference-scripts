@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import time
-import openvino.runtime as ov_runtime
+import openvino as ov
 import random
 import torch
 import gc
@@ -105,7 +105,7 @@ class StableDiffusionXL:
     @staticmethod
     def get_device(user_device=None):
         try:
-            ov_core = ov_runtime.Core()
+            ov_core = ov.Core()
             available_devices = [device.upper() for device in ov_core.available_devices]  # Normalize device names
             print(f"Available devices: {available_devices}")
 
