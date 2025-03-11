@@ -98,9 +98,9 @@ def main():
         "/pipeline/run",
         {
             "prompt": "A raccoon trapped inside a glass jar full of colorful candies, the background is steamy with vivid colors",
-            "width": 512,  # Additional parameter: width
-            "height": 512,  # Additional parameter: height
-            "num_inference_steps": 5  # Additional parameter: num_inference_steps
+            "width": 256,  # Additional parameter: width
+            "height": 256,  # Additional parameter: height
+            "num_inference_steps": 1  # Additional parameter: num_inference_steps
         },
     )
     if not response:

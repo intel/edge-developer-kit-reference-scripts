@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import time
-import openvino.runtime as ov_runtime
 import openvino_genai as ov_genai
 import openvino as ov
 import torch
@@ -97,7 +96,7 @@ class FluxSchnell:
         if not self.model_dir.exists():
             print(f"Downloading model: {self.model_name} to {self.model_dir}...")
             additional_args = {}
-            additional_args.update({"weight-format": "int4", "group-size": "64", "ratio": "1.0"})
+            additional_args.update({"weight-format": "int8", "group-size": "64", "ratio": "1.0"})
             optimum_cli(self.model_name, self.model_dir, additional_args=additional_args)
             # optimum_cli(self.model_name, self.model_dir)
         print("Model conversion completed.")
@@ -105,7 +104,7 @@ class FluxSchnell:
     @staticmethod
     def get_device(user_device=None):
         try:
-            ov_core = ov_runtime.Core()
+            ov_core = ov.Core()
             available_devices = [device.upper() for device in ov_core.available_devices]  # Normalize device names
             print(f"Available devices: {available_devices}")
 
