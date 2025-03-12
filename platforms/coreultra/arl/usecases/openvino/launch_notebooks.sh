@@ -9,7 +9,7 @@ echo "${CURRENT_DIRECTORY}"
 if docker ps | grep notebooks; then
     echo -e "# Remove existing notebook container"
     docker stop notebooks
-    sleep 5 # For removal in progress
+    sleep 5 # Removal for in progress
     if docker ps -a | grep notebooks; then
         docker rm notebooks
     fi
