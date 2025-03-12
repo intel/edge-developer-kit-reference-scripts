@@ -8,7 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="24.04"
-KERNEL_PACKAGE_NAME="linux-image-6.11.0-1011-oem"
+KERNEL_PACKAGE_NAME="linux-image-6.11-intel"
 RELEASE_VERSION=${KERNEL_PACKAGE_NAME//linux-image-/}
 
 # symbol
@@ -67,7 +67,7 @@ verify_intel_gpu_package_repo(){
             sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
         echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | \
             sudo tee /etc/apt/sources.list.d/intel-gpu-noble.list
-        sudo apt update
+        sudo -E apt update
     fi
 
 }
@@ -121,16 +121,19 @@ verify_os() {
 }
 
 verify_kernel_package() {
+    echo -e "## Install User Space Components"
+    sudo apt -y update
+    sudo apt -y upgrade
 
     # Download Kernel
     sudo touch /etc/apt/sources.list.d/intel-arl.list
     echo -e "deb https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels\n\
     deb-src https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels" | sudo tee /etc/apt/sources.list.d/intel-arl.list
 
-    echo -e "### Download GPG key to /etc/apt/trusted.gpg.d/asladln.gpg"
+    echo -e "### Download GPG key to /etc/apt/trusted.gpg.d/arl.gpg"
     sudo wget https://download.01.org/intel-linux-overlay/ubuntu/E6FA98203588250569758E97D176E3162086EE4C.gpg -O /etc/apt/trusted.gpg.d/arl.gpg
 
-    echo -e "### Set the preferred list in /etc/apt/preferences.d/intel-asl"
+    echo -e "### Set the preferred list in /etc/apt/preferences.d/intel-arl"
     sudo touch /etc/apt/preferences.d/intel-arl
     echo -e "Package: *\n\
     Pin: release o=intel-iot-linux-overlay-noble\n\
@@ -139,11 +142,12 @@ verify_kernel_package() {
     # Install kernel
     echo -e "## Install Kernel"
     sudo apt -y update
-    sudo apt -y install $KERNEL_PACKAGE_NAME
+    sudo apt -y install linux-image-6.11-intel
+    sudo apt -y install linux-headers-6.11-intel
 
     echo -e "## Update grub"
-    sudo sed -i 's|^GRUB_​CMDLINE_​LINUX_​DEFAULT=.*$|GRUB_​CMDLINE_​LINUX_​DEFAULT="quiet splash i915.enable_​guc=3 i915.max_​vfs=7 i915.force_​probe=* udmabuf.list_​limit=8192"|' /etc/default/grub
-    sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.11.0-1011-oem"/' /etc/default/grub
+    sudo sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT=.*$|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash i915.enable_guc=3 i915.max_vfs=7 i915.force_probe=* udmabuf.list_limit=8192"|' /etc/default/grub
+    sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.11-intel"/' /etc/default/grub
     sudo update-grub
 
     CURRENT_KERNEL_VERSION_INSTALLED=$(uname -r)
@@ -171,12 +175,12 @@ verify_igpu_driver(){
         verify_intel_gpu_package_repo
         IGPU_PACKAGES=(
         libze1
-        intel-level-zero-gpu
         intel-opencl-icd
         intel-gsc
         clinfo
 	    vainfo
 	    hwinfo
+        intel-level-zero-gpu
         )
         install_packages "${IGPU_PACKAGES[@]}"
         FIRMWARE=(linux-firmware)
@@ -261,8 +265,8 @@ verify_npu_driver(){
         sudo chown root:render /dev/accel/accel0
         sudo chmod g+rw /dev/accel/accel0
 	sudo bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
-	sudo udevadm control --reload-rules
-	sudo udevadm trigger --subsystem-match=accel
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger --subsystem-match=accel
     fi
 }
 
