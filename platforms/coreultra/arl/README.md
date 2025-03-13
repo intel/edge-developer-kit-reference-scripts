@@ -3,8 +3,10 @@
 ## Requirements
 
 #### Validated Hardware
-- Innodisk Arrow Island
-- IEI TANK-XM813
+- [Innodisk AXMB-D150 Arrow Island](https://www.innodisk.com/en/blog/intel-core-ultra-series2-reference-kit)
+- [IEI TANK-XM813](https://www.ieiworld.com/tw/product/model.php?II=1099)
+- [AAEON UP Xtreme ARL](https://up-board.org/up-xtreme-arl/)
+- [ASRock Industrial* NUC BOX-255H](https://www.asrockind.com/en-gb/NUC%20BOX-255H)
 
 ## Quick Start
 
