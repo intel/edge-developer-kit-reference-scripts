@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 FROM intel/oneapi-basekit:2025.0.2-0-devel-ubuntu24.04
-ARG IPEX_LLM_VERSION=2.2.0b20250219
+ARG IPEX_LLM_VERSION=2.2.0b20250319
 
 WORKDIR /opt/intel/llm-app
 RUN apt update \
