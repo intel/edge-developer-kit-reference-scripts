@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import time
+import base64
 import requests
 
 
@@ -31,21 +32,7 @@ class PipelineClient:
             print(f"Error while accessing {url}: {e}")
             return None
 
-    @staticmethod
-    def save_image(content, filename):
-        """
-        Save the content as an image file.
-        :param content: Binary content of the image.
-        :param filename: Filename to save the image.
-        """
-        try:
-            with open(filename, "wb") as file:
-                file.write(content)
-            print(f"Image saved as {filename}")
-        except IOError as e:
-            print(f"Failed to save image: {e}")
-
-    def wait_for_completion(self, timeout=300, poll_interval=2):
+    def wait_for_completion(self, timeout=60, poll_interval=2):
         """
         Wait for the pipeline to complete.
         :param timeout: Maximum time to wait in seconds.
@@ -55,11 +42,8 @@ class PipelineClient:
         start_time = time.time()
         while time.time() - start_time < timeout:
             response = self.make_request("GET", "/pipeline/status", timeout=10)
-            if response:
-                status = response.json()
-                print(f"Pipeline status: Running={status['running']}, Completed={status['completed']}")
-                if status["completed"]:
-                    return True
+            if response and response.json() is True:
+                return True
             time.sleep(poll_interval)
         print("Timeout reached. Pipeline execution did not complete.")
         return False
@@ -78,6 +62,29 @@ class PipelineClient:
             print("Failed to perform health check.")
             return False
 
+    def trigger_pipeline(self, data):
+        """
+        Trigger the pipeline with the given image data.
+        :param image_data: The image data to send to the pipeline.
+        :return: True if the pipeline was triggered successfully, False otherwise.
+        """
+        response = self.make_request("POST", "/pipeline/run", data)
+        if not response:
+            print("Failed to trigger the pipeline.")
+            return False
+        print(response.json())
+        return True
+
+    def retrieve_answer(self):
+        """
+        Retrieve the answer from the pipeline.
+        """
+        if self.wait_for_completion():
+            response = self.make_request("GET", "/pipeline/answer")
+            if response:
+                print("Answer: ", response.json())
+            else:
+                print("Failed to retrieve the answer.")
 
 
 def main():
@@ -93,34 +100,33 @@ def main():
     if response:
         print(response.json())
 
-    # Step 3: Trigger the pipeline with additional parameters
-    response = client.make_request(
-        "POST",
-        "/pipeline/run",
-        {
-            "prompt": "A raccoon trapped inside a glass jar full of colorful candies, the background is steamy with vivid colors",
-            "width": 1024,  # Additional parameter: width
-            "height": 1024,  # Additional parameter: height
-            "num_inference_steps": 50  # Additional parameter: num_inference_steps
-        },
-    )
-    if not response:
-        print("Failed to trigger the pipeline.")
-        return
-    print(response.json())
+    # Step 4: Trigger the pipeline with base64-encoded image
+    with open("backend/sample.jpg", "rb") as image_file:
+        image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
 
-    # Step 4: Wait for completion
-    if not client.wait_for_completion():
+    if not client.trigger_pipeline({
+        "image_base64": image_base64,
+        "question": "Is there a cat in the picture? Tell me the number of cats.",
+        "max_tokens": 100
+    }):
         return
 
-    # Step 5: Retrieve the generated image
-    response = client.make_request("GET", "/pipeline/image")
-    if response:
-        client.save_image(response.content, "output_image.png")
-    else:
-        print("Failed to retrieve the generated image.")
+    # Step 5: Retrieve the answer for base64-encoded image
+    client.retrieve_answer()
+
+    # Step 6: Trigger the pipeline with base64-encoded image, without question
+    with open("backend/sample.jpg", "rb") as image_file:
+        image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+
+    if not client.trigger_pipeline({
+        "image_base64": image_base64,
+        "max_tokens": 100
+    }):
+        return
+
+    # Step 7: Retrieve the answer for base64-encoded image
+    client.retrieve_answer()
 
 
 if __name__ == "__main__":
     main()
-
