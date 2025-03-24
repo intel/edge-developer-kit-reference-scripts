@@ -7,7 +7,6 @@ git+https://github.com/huggingface/optimum-intel.git
 transformers==4.48.0
 Pillow==11.1.0
 diffusers==0.32.1
-gradio==5.11.0
 typing_extensions==4.12.2
 IPython==8.31.0
 nncf==2.14.1
