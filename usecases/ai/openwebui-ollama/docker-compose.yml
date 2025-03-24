@@ -12,6 +12,8 @@ services:
     group_add:
       - ${RENDER_GROUP_ID:-110}
     restart: always
+    ports:
+      - 5995:5995
     networks:
       - app-network
     environment:
@@ -39,12 +41,12 @@ services:
       - 5996:5996
     environment:
       - DEFAULT_MODEL_ID=openai/whisper-tiny 
-      - STT_DEVICE=CPU
+      - STT_DEVICE=${STT_DEVICE:-CPU}
       - ALLOWED_CORS=["http://localhost"]
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ./data:/usr/src/app/data:rw
+      - stt-data:/usr/src/app/data:rw
 
   open-webui:
     hostname: open-webui
@@ -83,6 +85,8 @@ services:
     container_name: ollama
     image: intel-ipex-ollama
     restart: always
+    ports:
+      - 11434:11434
     privileged: true
     networks:
       - app-network
@@ -103,3 +107,4 @@ volumes:
   ollama:
   open-webui:
   tts-data:
+  stt-data:
