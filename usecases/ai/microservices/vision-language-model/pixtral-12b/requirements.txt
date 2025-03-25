@@ -17,7 +17,6 @@ transformers==4.48.0 --extra-index-url https://download.pytorch.org/whl/cpu
 # Web frameworks
 fastapi==0.115.6
 uvicorn==0.34.0
-gradio==5.11.0 --extra-index-url https://download.pytorch.org/whl/cpu
 streamlit
 
 # Other tools
