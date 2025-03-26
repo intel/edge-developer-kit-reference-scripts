@@ -249,6 +249,9 @@ def main():
         copy_script_to_remote(sut_ssh, f"{thm_script_folder}", 
                               f"{sut_script_folder}")
 
+        run_command(sut_ssh,f"sed -i '/install_openvino_notebook_docker/s/^/# /' {setup_script_path}")
+        run_command(sut_ssh,f"sed -i '/^# install_openvino_notebook_docker/s/^# //g' {setup_script_path}")
+
         if args.platform == "coreultra":
             logger.info("Running Script for Core Ultra Platform")
             setup_npu_script_path = sut_script_folder + "npu_container.sh"
