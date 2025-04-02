@@ -28,11 +28,12 @@ import argparse
 import subprocess
 import logging
 import paramiko
+import re
 
 
 THM_SCRIPT_PATH = "/home/devkit_auto"
 SUT_SCRIPT_PATH = "/home/user"
-REBOOT_MSG = "System reboot is required. Re-run the script after reboot"
+REBOOT_MSG = "System reboot is required"
 SETUP_DONE_MSG = "Platform configured"
 
 # Enable logging
@@ -175,7 +176,9 @@ def cleanup(ssh, script_path):
         logger.info("Successfully removed %s%s on SUT.", SUT_SCRIPT_PATH, script_path)
     except Exception as e:
         logger.error("Failed to remove %s%s on SUT: %s", SUT_SCRIPT_PATH, script_path, e)
-        
+
+def remove_redundant_slashes(input):
+    return re.sub(r'/{2,}','/',input)     
 
 def main():
     """
@@ -221,6 +224,10 @@ def main():
         copy_script_to_remote(sut_ssh, f"{THM_SCRIPT_PATH}{args.script_path}{args.script}", 
                               f"{SUT_SCRIPT_PATH}{args.script_path}{args.script}")
         run_command(sut_ssh, f"chmod +x {SUT_SCRIPT_PATH}{args.script_path}{args.script}")
+
+        sut_script_folder = SUT_SCRIPT_PATH + args.script_path
+        remove_redundant_slashes(sut_script_folder)
+        setup_script_path = sut_script_folder + args.script
      
         while True:
             # Run BKC installation script on SUT

@@ -221,13 +221,12 @@ verify_kernel() {
     CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
     CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
     
-    if [[ -n "$KERNEL_PACKAGE_NAME" ]]; then
+    if [[ "$KERNEL_PACKAGE_NAME" != $(uname -r) ]]; then
         verify_kernel_package
     else
-        echo "Error: Custom build kernel not yet supported."
-        exit 1
+        echo "$S_VALID Kernel version: $(uname -r)"
     fi
-    echo "$S_VALID Kernel version: $(uname -r)"
+    
 }
 verify_kernel_package() {
     echo -e "Verifying kernel package"
@@ -273,6 +272,8 @@ verify_kernel_package() {
         echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
         echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
     fi
+    echo "System reboot is required."
+    exit 0
 }
 verify_platform() {
     echo -e "\n# Verifying platform"
@@ -308,7 +309,6 @@ setup(){
 
     echo -e "\n# Status"
     echo "$S_VALID Platform configured"
-    echo "System reboot is required."
 
 }
 
