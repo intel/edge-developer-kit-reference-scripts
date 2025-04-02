@@ -7,7 +7,8 @@ import { useMutation, UseMutationResult } from "@tanstack/react-query";
 
 import { FetchAPI } from "@/lib/api";
 
-const STTAPI = new FetchAPI(`${process.env.NEXT_PUBLIC_STT_URL}`);
+const STTAPI = new FetchAPI(`/api/stt`);
+// const STTAPI = new FetchAPI(`${process.env.NEXT_PUBLIC_STT_URL}`);
 
 export function useGetSTT(): UseMutationResult<Record<string, any>, Error, { data: FormData }> {
     return useMutation({

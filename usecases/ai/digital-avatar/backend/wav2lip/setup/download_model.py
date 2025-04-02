@@ -1,3 +1,6 @@
+# Copyright(C) 2024 Intel Corporation
+# SPDX - License - Identifier: Apache - 2.0
+
 import os
 import sys
 
@@ -31,7 +34,7 @@ def load_model(path):
 
     return model.eval()
 
-if __name__ == "__main__":
+def setup():
     models_urls = {
             's3fd': 'https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth'}
     path_to_detector = "wav2lip/checkpoints/face_detection.pth"
@@ -41,7 +44,6 @@ if __name__ == "__main__":
     OV_WAV2LIP_MODEL_PATH = Path("wav2lip/checkpoints/wav2lip_gan.xml")
 
     # Convert Face Detection Model
-    print("Convert Face Detection Model ...")
     if not os.path.isfile(path_to_detector):
         model_weights = load_url(models_urls['s3fd'])
     else:
@@ -50,21 +52,25 @@ if __name__ == "__main__":
     face_detector.load_state_dict(model_weights)
 
     if not OV_FACE_DETECTION_MODEL_PATH.exists():
+        print("Convert Face Detection Model ...")
         face_detection_dummy_inputs = torch.FloatTensor(np.random.rand(1, 3, 768, 576))
         face_detection_ov_model = ov.convert_model(face_detector, example_input=face_detection_dummy_inputs)
         ov.save_model(face_detection_ov_model, OV_FACE_DETECTION_MODEL_PATH)
-    print("Converted face detection OpenVINO model: ", OV_FACE_DETECTION_MODEL_PATH)
+        print("Converted face detection OpenVINO model: ", OV_FACE_DETECTION_MODEL_PATH)
 
-    print("Convert Wav2Lip Model ...")
     if not OV_WAV2LIP_MODEL_PATH.exists():
         if not os.path.isfile(path_to_wav2lip):
             raise Exception("Wav2Lip model not found")
-    wav2lip = load_model(path_to_wav2lip)
-    img_batch = torch.FloatTensor(np.random.rand(123, 6, 96, 96))
-    mel_batch = torch.FloatTensor(np.random.rand(123, 1, 80, 16))
-
+    
     if not OV_WAV2LIP_MODEL_PATH.exists():
+        print("Convert Wav2Lip Model ...")
+        wav2lip = load_model(path_to_wav2lip)
+        img_batch = torch.FloatTensor(np.random.rand(123, 6, 96, 96))
+        mel_batch = torch.FloatTensor(np.random.rand(123, 1, 80, 16))
         example_inputs = {"audio_sequences": mel_batch, "face_sequences": img_batch}
         wav2lip_ov_model = ov.convert_model(wav2lip, example_input=example_inputs)
         ov.save_model(wav2lip_ov_model, OV_WAV2LIP_MODEL_PATH)
-    print("Converted face detection OpenVINO model: ", OV_FACE_DETECTION_MODEL_PATH)
+        print("Converted wav2lip OpenVINO model: ", OV_FACE_DETECTION_MODEL_PATH)
+
+if __name__ == "__main__":
+    setup()

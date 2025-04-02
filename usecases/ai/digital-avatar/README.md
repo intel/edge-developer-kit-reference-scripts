@@ -27,7 +27,7 @@ A digital avatar that utilizes Image to Video, Text To Speech, Speech To Text, a
 - CPU: 13th generations of Intel Core i5 and above
 - GPU: Intel® Arc™ A770 graphics (16GB)
 - RAM: 32GB
-- DISK: 128GB
+- DISK: 256GB
 
 ## Application Ports
 Please ensure that you have these ports available before running the applications.
@@ -35,7 +35,7 @@ Please ensure that you have these ports available before running the application
 | Apps         | Port |
 |--------------|------|
 | Lipsync      | 8011 |
-| LivePortrait | 8012 |
+| RAG          | 8012 |
 | TTS          | 8013 |
 | STT          | 8014 |
 | OLLAMA       | 8015 |
@@ -50,15 +50,15 @@ Please ensure that you have these ports available before running the application
     1. Refer to [here](../../../README.md#gpu) to install Intel GPU Drivers
 1. **Download Wav2Lip Model**: Download the [Wav2Lip model](https://iiitaphyd-my.sharepoint.com/:u:/g/personal/radrabha_m_research_iiit_ac_in/EdjI7bZlgApMqsVoEUUXpLsBxqXbn5z8VTmoxp55YNDcIA?e=n9ljGW) and place the file in the `weights` folder.
 1. **Create Avatar**:
-    1. Place an `image.png` file containing an image of a person (preferably showing at least the upper half of the body) in the assets folder.
-    2. Place an `idle.mp4` file of a person with some movement such as eye blinking (to be used as a reference) in the assets folder.
+    1. Place a `video.mp4` file in the `assets` folder. The video should feature an idle person (preferably showing at least the upper half of the body) with subtle movements like blinking or slight body motion, and **no speaking**. Ensure the file is named **`video.mp4`**.
 
 ### Setup ENV
 1. Create a `.env` file and copy the contents from `.env.template`:
     ```bash
     cp .env.template .env
     ```
-2. Modify the `LLM_MODEL` in the `.env` file. Refer to [Ollama library](https://ollama.com/library) for available models. (Default is `QWEN2.5`).
+* Note: Modify the `LLM_MODEL` in the `.env` file in order to change the LLM used by ollama. Refer to [Ollama library](https://ollama.com/library) for available models. (Default is `QWEN2.5`).
+
 
 ### Build Docker Container
 ```bash
@@ -78,12 +78,14 @@ docker compose up -d
 ### Device Workload Configurations
 You can offload model inference to specific device by modifying the environment variable setting in the docker-compose.yml file.
 
-| Workload             | Environment Variable |Supported Device         | 
-|----------------------|----------------------|-------------------------|
-| LLM                  |            -         |        GPU              |
-| STT                  | STT_DEVICE           | CPU,GPU,NPU             | 
-| TTS                  | TTS_DEVICE           | CPU                     |
-| Lipsync (Wav2lip)    | DEVICE               | CPU, GPU                |
+| Workload                       | Environment Variable |Supported Device         | 
+|--------------------------------|----------------------|-------------------------|
+| LLM                            |            -         |        GPU(D)              |
+| STT                            | STT_DEVICE           | CPU(D) ,GPU, NPU             | 
+| TTS                            | TTS_DEVICE           | CPU(D)                     |
+| Lipsync (Wav2lip/Sadtalker)    | DEVICE               | CPU(D-wav2lip), GPU(D-sadtalker)                |
+
+* Note: (D) = default device
 
 Example Configuration:
 
@@ -94,7 +96,7 @@ stt_service:
   ...
   environment:
     ...
-    STT_DEVICE=CPU
+    STT_DEVICE=NPU
     ...
 ```
 

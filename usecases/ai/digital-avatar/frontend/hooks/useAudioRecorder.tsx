@@ -15,6 +15,7 @@ export default function useAudioRecorder() {
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [recording, setRecording] = useState(false);
     const chunks = useRef<Blob[]>([]);
+    const saveAudio = useRef<boolean>(true)
     const [analyser, setAnalyser] = useState<AnalyserNode | null>(null)
     const [durationCounter, setDurationCounter] = useState<NodeJS.Timeout | null>(null)
     const [durationSeconds, setDurationSeconds] = useState(0);
@@ -127,10 +128,15 @@ export default function useAudioRecorder() {
 
             // Event handler when recording stops
             wavRecorder.onstop = () => {
-                const mimeType = wavRecorder.mimeType;
-                const audioBlob = new Blob(chunks.current, { type: mimeType });
-                const file = blobToFile(audioBlob, 'recording.wav');
-                transcribe(file)
+                if (saveAudio.current) {
+                    const mimeType = wavRecorder.mimeType;
+                    const audioBlob = new Blob(chunks.current, { type: mimeType });
+                    if (chunks.current.length > 0) {
+                        const file = blobToFile(audioBlob, 'recording.wav');
+                        transcribe(file);
+                    }
+                }
+                saveAudio.current = true
                 setRecording(false);
             };
 
@@ -159,9 +165,12 @@ export default function useAudioRecorder() {
             setRecording(true);
             mediaRecorder.start();
         }
+
+        setVisualizerData(Array(VISUALIZER_BUFFER_LENGTH).fill(0))
     }, [mediaRecorder])
 
-    const stopRecording = useCallback(() => {
+    const stopRecording = useCallback((save: boolean = true) => {
+        saveAudio.current = save
         const stopDurationCounter = () => {
             if (durationCounter !== null) {
                 clearInterval(durationCounter);

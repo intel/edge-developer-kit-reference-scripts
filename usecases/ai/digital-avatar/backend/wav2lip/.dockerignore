@@ -2,3 +2,6 @@ __pycache__
 *env
 cache
 checkpoints
+/assets/
+/wav2lip
+/setup/*.pth

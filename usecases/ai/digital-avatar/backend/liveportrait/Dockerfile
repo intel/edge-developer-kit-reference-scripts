@@ -76,6 +76,7 @@ RUN python3 -m venv /usr/src/.venv
 ENV PATH="/usr/src/.venv/bin:$PATH"
 
 COPY --chown=intel ./backend/liveportrait .
+RUN ./setup.sh
 RUN python3 -m pip install -r requirements.txt \
     && huggingface-cli download KwaiVGI/LivePortrait --local-dir liveportrait/pretrained_weights --exclude "*.git*" "README.md" "docs"
 
