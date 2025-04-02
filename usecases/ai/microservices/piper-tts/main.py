@@ -87,10 +87,15 @@ async def synthesize(data: ISynthesize):
             PIPERTTS[data.speaker].synthesize(data.text, wav_file, length_scale=data.length_scale)
         wav_io.seek(0)
         if data.keep_file:
+            with wave.open(wav_io, "rb") as wav_file:
+                frames = wav_file.getnframes()
+                rate = wav_file.getframerate()
+                duration = frames / float(rate)
+                wav_io.seek(0)
             filename =f"{uuid4()}.wav"
             with open(f"{DATA_DIRECTORY}/{filename}", "wb") as f:
                 f.write(wav_io.read())
-            return JSONResponse(content={"filename": filename})
+            return JSONResponse(content={"filename": filename, "duration": duration})
         else:
             return StreamingResponse(wav_io, media_type="audio/wav")
     except Exception as e:

@@ -1,3 +1,6 @@
+/* // Copyright(C) 2024 Intel Corporation
+// SPDX - License - Identifier: Apache - 2.0 */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -40,6 +43,7 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -72,6 +76,19 @@ body {
   * {
     @apply border-border;
   }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
