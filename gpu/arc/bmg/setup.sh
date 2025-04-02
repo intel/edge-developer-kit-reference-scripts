@@ -8,8 +8,6 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="24.04"
-KERNEL_PACKAGE_NAME="linux-image-6.11.0-1007-oem"
-
 # symbol
 S_VALID="✓"
 #S_INVALID="✗"
@@ -38,52 +36,15 @@ install_packages(){
     fi
 }
 
-verify_kernel_package() {
-    echo -e "Verifying kernel package"
-    LATEST_KERNEL_VERSION=$(apt-cache madison $KERNEL_PACKAGE_NAME | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
-    CURRENT_KERNEL_VERSION_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | awk '{print $3}' | sort -V | tail -n 1 | tr '-' '.')
-    LATEST_KERNEL_INSTALLED=$(dpkg -l | grep "^ii.*$KERNEL_PACKAGE_NAME" | grep -E "${LATEST_KERNEL_VERSION}[^ ]*" | awk '{print $3}' | tr '-' '.')
-
-    # extract flavour name
-    KERNEL_FLAVOUR=""
-    if [[ $KERNEL_PACKAGE_NAME == *"generic"* ]]; then
-        KERNEL_FLAVOUR="generic"
-    elif [[ $KERNEL_PACKAGE_NAME == *"oem"* ]]; then
-        KERNEL_FLAVOUR="oem"
-    elif [[ $KERNEL_PACKAGE_NAME == *"intel-iotg"* ]]; then
-        KERNEL_FLAVOUR="intel-iotg"
-    fi
-
-    if [ -z "$LATEST_KERNEL_INSTALLED" ]; then
-        echo "Installing latest '${KERNEL_PACKAGE_NAME}' kernel"
-        KERNEL_PACKAGES=("${KERNEL_PACKAGE_NAME}")
-        install_packages "${KERNEL_PACKAGES[@]}"
-    fi
-    if [[ ! "$LATEST_KERNEL_VERSION" == *"$CURRENT_KERNEL_VERSION_REVISION"* ]]; then
-        if dpkg -l | grep -q 'linux-image.*generic$' && [ "$KERNEL_FLAVOUR" != "generic" ]; then
-            echo "Removing generic kernel"
-            apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
-            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
-        elif dpkg -l | grep -q 'linux-image.*iotg$' && [ "$KERNEL_FLAVOUR" != "intel-iotg" ]; then
-            echo "Removing Intel IoT kernel"
-            apt remove -y --auto-remove linux-image-intel-iotg
-            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
-        elif dpkg -l | grep -q 'linux-image.*oem$' && [ "$KERNEL_FLAVOUR" != "oem" ]; then
-            echo "Removing OEM kernel"
-            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
-        fi
-        echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
-        echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
-    fi
-}
-
 verify_intel_gpu_package_repo(){
     if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
             gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
-        echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | \
+
+        echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble unified" | \
             tee /etc/apt/sources.list.d/intel-gpu-noble.list
+
         apt update
     fi
 }
@@ -159,44 +120,31 @@ verify_os() {
     echo "$S_VALID OS version: $CURRENT_OS_ID $CURRENT_OS_VERSION"
 }
 
-# verify kernel
-verify_kernel() {
-    echo -e "\n# Verifying kernel version"
-    CURRENT_KERNEL_VERSION=$(uname -r | cut -d'-' -f1)
-    CURRENT_KERNEL_REVISION=$(uname -r | cut -d'-' -f2)
-    CURRENT_KERNEL_VERSION_REVISION="$CURRENT_KERNEL_VERSION.$CURRENT_KERNEL_REVISION"
-    
-    if [[ -n "$KERNEL_PACKAGE_NAME" ]]; then
-        verify_kernel_package
-    else
-        echo "Error: Custom build kernel not yet supported."
-        exit 1
-    fi
-    echo "$S_VALID Kernel version: $(uname -r)"
-}
-
 # verify drivers
 verify_drivers() {
     echo -e "\n# Verifying drivers"
     verify_dgpu_driver
 
-    if [ -z "$(clinfo | grep 'Driver Version' | awk '{print $NF}')" ]; then
-        echo "Error: Failed to configure GPU driver"
-        exit 1
-    fi
-
     echo -e "Upgrading packages"
     apt dist-upgrade -y
 }
 
+verify_dependencies(){
+      PACKAGES=(
+         wget
+         curl
+         gpg-agent
+    )
+    install_packages "${PACKAGES[@]}"
+}
+
 setup() {
-    # verify_dependencies
+    verify_dependencies
     verify_platform
     verify_gpu
 
     verify_os
     verify_drivers
-    verify_kernel
 
     GPU_DRIVER_VERSION="$(clinfo | grep 'Device Name\|Driver Version' | head -n4)"
     echo -e "$S_VALID Intel GPU Drivers:\n$GPU_DRIVER_VERSION"
