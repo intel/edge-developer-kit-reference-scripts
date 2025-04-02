@@ -7,16 +7,16 @@ import { useMutation } from "@tanstack/react-query";
 
 import { FetchAPI } from "@/lib/api";
 
-const TTSAPI = new FetchAPI(`${process.env.NEXT_PUBLIC_TTS_URL}`);
+const TTSAPI = new FetchAPI(`/api/tts`);
+// const TTSAPI = new FetchAPI(`${process.env.NEXT_PUBLIC_TTS_URL}`);
 
 export function useGetTTSAudio() {
     return useMutation({
         mutationFn: async ({
             text, speaker
         }: { text: string, speaker: string }) => {
-            // const response = await fetch("/api/tts", { method: "POST", body: JSON.stringify({ input: text, voice: "EN-US", model: " - " }) })
-            const response = await TTSAPI.file('audio/speech', { text, speaker })
-            return await response.blob()
+            const response = await TTSAPI.post('audio/speech', { text, speaker, keep_file: true })
+            return response
         },
     });
 }

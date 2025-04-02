@@ -30,6 +30,7 @@ RUN apt-get update \
     libxmlsec1-dev \
     libffi-dev \
     liblzma-dev \
+    gnupg \
     && addgroup --system intel --gid 1000 \
     && adduser --system --ingroup intel --uid 1000 --home /home/intel intel \
     && echo "intel ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/intel \
@@ -40,6 +41,12 @@ RUN apt-get update \
     && chown -R intel:intel /usr/src
 
 # Intel GPU Driver 
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+        gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg \
+    && echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy unified" | \
+        tee /etc/apt/sources.list.d/intel-gpu-jammy.list \
+    && apt update && apt-get install -y libze-intel-gpu1 libze1 intel-opencl-icd clinfo
+
 RUN mkdir neo && cd neo \
     && wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-core-2_2.5.6+18417_amd64.deb \
     && wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-opencl-2_2.5.6+18417_amd64.deb \
@@ -48,7 +55,9 @@ RUN mkdir neo && cd neo \
     && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd-dbgsym_24.52.32224.5_amd64.ddeb \
     && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd_24.52.32224.5_amd64.deb \
     && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/libigdgmm12_22.5.5_amd64.deb \
+    && apt purge -y libze-intel-gpu1 \
     && dpkg -i *.deb
+
 
 USER intel
 WORKDIR /usr/src/app
@@ -73,8 +82,13 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=intel ./backend/wav2lip .
 COPY --chown=intel ./weights/wav2lip_gan.pth ./setup/
-COPY --chown=intel ./assets/*.png ./assets/*.mp4 ./wav2lip/assets/
+RUN mkdir -p data && mkdir -p assets
+RUN ./setup.sh
 RUN python3 setup/download_model.py
+
+RUN mkdir -p /usr/src/RealESRGan
+COPY --chown=intel ./backend/RealESRGan /usr/src/RealESRGan
+RUN bash /usr/src/RealESRGan/setup.sh
 
 HEALTHCHECK --interval=30s --timeout=180s --start-period=60s --retries=5 \
     CMD sh -c 'PORT=${SERVER_PORT:-8011} && wget --no-verbose -O /dev/null --tries=1 http://localhost:$PORT/healthcheck || exit 1'

@@ -3,8 +3,12 @@
 
 "use client"
 
-import { VideoQueueProvider } from "@/context/VideoQueueContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+import { ConfirmationProvider } from "@/context/ConfirmationContext";
+import { VideoQueueProvider } from "@/context/VideoQueueContextInstant";
+
+// import { VideoQueueProvider } from "@/context/VideoQueueContext";
 
 export default function Providers({
     children,
@@ -14,9 +18,11 @@ export default function Providers({
     const queryClient = new QueryClient()
     return (
         <QueryClientProvider client={queryClient}>
-            <VideoQueueProvider>
-                {children}
-            </VideoQueueProvider>
+            <ConfirmationProvider>
+                <VideoQueueProvider>
+                    {children}
+                </VideoQueueProvider>
+            </ConfirmationProvider>
         </QueryClientProvider>
     )
 }

@@ -1,0 +1,7 @@
+/weights
+/checkpoints
+/results/*
+/!results/.gitkeep
+/gfpgan/
+/Sadtalker
+/.env/

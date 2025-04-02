@@ -1,5 +1,6 @@
 __pycache__
 .env
+.venv
 
 ffmpeg*/
 checkpoints
@@ -9,6 +10,23 @@ backend/musetalk/data/avatars
 backend/wav2lip/wav2lip/results
 backend/wav2lip/wav2lip/temp
 assets/*
+!assets/.gitkeep
 weights/*
+!weights/.gitkeep
+!/weights/checkpoints
+/weights/checkpoints/*
+!/weights/checkpoints/.gitkeep
 backend/liveportrait/templates
 /data/*
+!/data/audio
+/data/audio/*
+!/data/audio/.gitkeep
+!/data/wav2lip
+/data/wav2lip/*
+!/data/wav2lip/.gitkeep
+!/data/sadtalker
+/data/sadtalker/*
+!/data/sadtalker/.gitkeep
+!/data/piper
+/data/piper/*
+!/data/piper/.gitkeep

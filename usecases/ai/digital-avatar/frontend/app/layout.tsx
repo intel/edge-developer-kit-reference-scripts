@@ -4,6 +4,7 @@
 import localFont from "next/font/local";
 
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/providers";
 
 import type { Metadata } from "next";
@@ -36,6 +37,7 @@ export default function RootLayout({
       >
         <Providers>
           {children}
+          <Toaster richColors />
         </Providers>
       </body>
     </html>

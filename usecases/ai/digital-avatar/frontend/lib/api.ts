@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+import path from 'path';
+
 import { type APIResponse } from '@/types/api';
 
 interface RequestConfig {
@@ -18,16 +20,25 @@ export class FetchAPI {
     private baseURL: string;
 
     constructor(baseURL: string) {
-        if (!baseURL.match(/^https?:\/\//)) {
-            baseURL = 'http://' + baseURL;
+        if (!baseURL.startsWith('/')) {
+            if (!baseURL.match(/^https?:\/\//)) {
+                baseURL = 'http://' + baseURL;
+            }
+            this.baseURL = new URL(`${apiVersion}/path`, baseURL).toString();
+        } else {
+            this.baseURL = `${baseURL}/${apiVersion}`;
         }
-        this.baseURL = new URL(`${apiVersion}/path`, baseURL).toString();
     }
 
     private async request(method: HttpMethod, url: string, config: RequestConfig = {}): Promise<APIResponse | Response> {
         try {
             const { data, tags, revalidate, headers, raw_response } = config;
-            const fullURL = new URL(url, this.baseURL).toString();
+            let fullURL = this.baseURL
+            if (!this.baseURL.startsWith('/')) {
+                fullURL = new URL(url, this.baseURL).toString();
+            } else {
+                fullURL = path.join(this.baseURL, url);
+            }
             const options: RequestInit = {
                 method,
                 headers: headers ?? { 'Content-Type': 'application/json' },
