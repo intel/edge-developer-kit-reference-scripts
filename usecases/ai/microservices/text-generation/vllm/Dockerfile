@@ -44,6 +44,7 @@ RUN git checkout ${VLLM_VERSION} \
     && PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" python3 -m pip install --no-cache-dir -r requirements-build.txt \
     && PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" VLLM_TARGET_DEVICE="openvino" python3 -m pip install --no-cache-dir . \
     && PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" python3 -m pip install --no-cache-dir torch==2.5.1 \
+        torchvision==0.20.1 \
         optimum-intel[openvino,nncf]==1.21.0 \
         optimum==1.23.3 \
         transformers==4.46.3 \
