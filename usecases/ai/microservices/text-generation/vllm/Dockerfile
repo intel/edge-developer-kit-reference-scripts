@@ -41,10 +41,12 @@ ENV PATH="/usr/src/.venv/bin:$PATH"
 WORKDIR /usr/src/app/vllm
 RUN git checkout ${VLLM_VERSION} \
     && python3 -m pip install --no-cache-dir --upgrade pip \
-    && PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" python3 -m pip install --no-cache-dir -r requirements-build.txt \
-    && PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" VLLM_TARGET_DEVICE="openvino" python3 -m pip install --no-cache-dir . \
-    && PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" python3 -m pip install --no-cache-dir torch==2.5.1 \
-        torchvision==0.20.1 \
+    && python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu optimum-intel[openvino,nncf]==1.21.0 \
+        optimum==1.23.3 \
+    && python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements-build.txt \
+    && VLLM_TARGET_DEVICE="openvino" python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu . \
+    && python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch==2.6.0 \
+        torchvision==0.21.0 \
         optimum-intel[openvino,nncf]==1.21.0 \
         optimum==1.23.3 \
         transformers==4.46.3 \
