@@ -223,7 +223,7 @@ jobs:
     if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     env:
-      STEP_GROUP_ID: '32'
+      STEP_GROUP_ID: '246'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
