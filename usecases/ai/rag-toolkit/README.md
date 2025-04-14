@@ -25,7 +25,7 @@ Please ensure that you have these ports available before running the application
 | Speech to Text Service | 8014 |
 
 ## Quick Start
-<details open><summary>Ubuntu 22.04 LTS</summary>
+<details open><summary>Ubuntu 22.04 LTS / Ubuntu 24.04 LTS</summary>
 
 ### 1. Install prerequisite
 - [Docker](https://docs.docker.com/engine/install/)
@@ -34,36 +34,9 @@ Please ensure that you have these ports available before running the application
 - [Intel® Arc™ A-Series Graphics](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
 - [Intel® Data Center GPU Flex Series](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
 
-### 3. Download LLM model (Skip if you already have a LLM model in data folder)
-```bash
-# Install OpenVINO library
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install openvino==2024.6 optimum-intel[openvino,nncf]==1.21.0 --extra-index-url https://download.pytorch.org/whl/cpu
-
-# Download & Convert LLM Model
-optimum-cli export openvino --model Qwen/Qwen2.5-7B-Instruct --weight-format int4 --sym --ratio 1.0 --group-size -1 ./data/models/llm
+### 3. Run Script to Setup and Install Docker
 ```
-
-### 4. Download embedding model and reranker model
-```bash
-# Download & Convert Embedding Model
-optimum-cli export openvino --model BAAI/bge-large-en-v1.5 --task feature-extraction --weight-format fp16 ./data/models/embeddings/bge-large-en-v1.5
-
-# Download & Convert Reranker Model
-optimum-cli export openvino --model BAAI/bge-reranker-large --task text-classification --weight-format fp16 ./data/models/reranker/bge-reranker-large
-```
-
-### 5. Build docker images
-This step will download all the necessary files online, please ensure you have a valid network connection.
-```bash
-docker compose build
-```
-
-### 6. Start docker container
-```bash
-export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
-docker compose up -d
+./setup.sh
 ```
 </details>
 
