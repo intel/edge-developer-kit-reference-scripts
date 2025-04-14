@@ -73,7 +73,6 @@ services:
       - VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS=ON
     volumes:
       - ./data:/usr/src/app/data
-      - ./data/huggingface:/home/intel/.cache/huggingface
 
   tts_service:
     build:
@@ -118,10 +117,11 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ./data:/usr/src/app/data:rw
+      - stt-data:/usr/src/app/data:rw
 
 networks:
   app-network:
 
 volumes:
   tts-data:
+  stt-data:
