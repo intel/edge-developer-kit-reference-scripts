@@ -24,6 +24,8 @@ Storage: 128GB
 
 2. Configure `autoinstall_24.04.yaml` file according to your needs.
     > Reference link: https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html 
+    
+    > *NOTE: All the installation are run as root. 'user' account creation only happen after system reboot. Hence you not able to use 'user' account to do installation/configuration.
 
 3. To generate image, run following command. Replace the ISO link if needed.
     ```bash

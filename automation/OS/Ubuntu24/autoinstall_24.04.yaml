@@ -74,7 +74,7 @@ autoinstall:
     - vim
   late-commands:
     # Add proxy in /etc/environment
-    - curtin in-target --target=/target -- bash -c "echo -e '\nhttp_proxy=http://proxy-dmz.intel.com:912\nhttps_proxy=http://proxy-dmz.intel.com:912\nno_proxy=127.0.0.1,localhost,172.0.0.0/8,10.0.0.0/8' >> /etc/environment"
+    - curtin in-target --target=/target -- bash -c "echo -e '\nhttp_proxy=http://proxy-dmz.intel.com:912\nhttps_proxy=http://proxy-dmz.intel.com:912\nno_proxy=127.0.0.1,localhost,172.0.0.0/8,10.0.0.0/8,*.intel.com,.intel.com' >> /etc/environment"
     - curtin in-target --target=/target -- bash -c "apt-get -y update"
     # Update time
     - curtin in-target --target=/target -- bash -c "apt-get -y install ntpdate"
@@ -86,7 +86,7 @@ autoinstall:
       [Service]
       Environment=\"HTTP_PROXY=http://proxy-dmz.intel.com:912\"
       Environment=\"HTTPS_PROXY=http://proxy-dmz.intel.com:912\"
-      Environment=\"NO_PROXY=localhost,127.0.0.0/8,10.0.0.0/8\"
+      Environment=\"NO_PROXY=localhost,127.0.0.0/8,10.0.0.0/8,*.intel.com,.intel.com\"
       EOF"
     - curtin in-target --target=/target -- bash -c "systemctl daemon-reload && systemctl restart docker"
     # Add Docker's official GPG key
