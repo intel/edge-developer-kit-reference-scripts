@@ -61,7 +61,7 @@ jobs:
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github
+          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation
 
       - name: Execute bandit scan
         uses: intel-innersource/frameworks.devops.github.actions.bandit@main
@@ -82,7 +82,7 @@ jobs:
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github
+          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation
 
       - name: Execute virus scan
         uses: intel-innersource/frameworks.devops.github.actions.mcafee@main
@@ -233,7 +233,7 @@ jobs:
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          zip -r ${RLDIR}.zip . -x "*.git*" "*.github*"
+          zip -r ${RLDIR}.zip . -x "*.git*" "*.github*" "automation"
 
       - name: Execute BDBA
         uses: intel-innersource/frameworks.devops.github.actions.bdba@main
@@ -258,7 +258,7 @@ jobs:
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github
+          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation
 
       - name: Execute Protex
         uses: intel-innersource/frameworks.actions.protex@main
