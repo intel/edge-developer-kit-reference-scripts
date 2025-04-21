@@ -269,3 +269,154 @@ jobs:
           user: ${{ secrets.CI_USR }}
           password: ${{ secrets.CI_PWD }}
           path: '${{ env.STEP_PACKAGE_NAME }}'
+
+  coverity:
+      name: Coverity
+      needs: precheck
+      if: needs.precheck.outputs.should_run == 'true'
+      runs-on: [self-hosted, scan]
+      env:
+        # Notes:
+        # - [required] please REPLACE with your own Coverity server URL
+        COV_SERVER_URL: https://coverityent.devtools.intel.com/prod1
+        # Notes:
+        # - [required] please REPLACE with your own Coverity Project name
+        COV_PROJECT_NAME: Edge Developer Kit Reference Script
+        # Notes:
+        # - [required] please REPLACE with your own Coverity Stream name
+        COV_STREAM_NAME: devkit-main-stream
+        COV_ANALYSIS_VERSION: 2024.6.1
+        COV_REPORT_VERSION: 2024.6.1
+        COV_AUTH_KEY_NAME: "coverity_auth_key"
+        COV_REPORT_NAME: "coverity_report"
+        COV_SECURITY_REPORT_NAME: "coverity_security_report"
+        COV_CVSS_REPORT_NAME: "coverity_cvss_report"
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Extract branch or commit ID
+          id: extract_version
+          run: |
+            # Extract the branch name
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            # Check if the branch name is empty or not
+            echo "BRANCH_NAME: ${BRANCH_NAME}"
+            echo "GITHUB_SHA: ${GITHUB_SHA}"
+            if [ -z "$BRANCH_NAME" ]; then
+              # Use the commit ID if the branch name is not defined
+              BRANCH_VERSION=${GITHUB_SHA}
+            else
+              # Use the branch name as the version
+              BRANCH_VERSION=$BRANCH_NAME
+            fi
+            echo "Extracted version: $BRANCH_VERSION"
+            echo "BRANCH_VERSION=$BRANCH_VERSION" >> $GITHUB_ENV
+        # Notes:
+        # - [info] release package must be in the directory
+        # - [optional] customize this step for your own release package
+        - name: Prepare release package
+          run: |
+            RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
+            echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
+            mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ \
+              --exclude .git \
+              --exclude .github \
+              --exclude automation
+        
+        - name: Setup Coverity
+          uses: intel-innersource/frameworks.actions.setup-coverity@v4
+          with:
+            analysis-version: ${{ env.COV_ANALYSIS_VERSION }}
+            reports-version: ${{ env.COV_REPORT_VERSION }}
+
+        - name: Execute Coverity Analysis
+          uses: intel-innersource/frameworks.actions.coverity-analysis@v4
+          id: cov-analysis
+          with:
+            compiler-type: |
+              python
+            source: '${{ env.STEP_PACKAGE_NAME }}'
+            url: ${{ env.COV_SERVER_URL }}
+            project: ${{ env.COV_PROJECT_NAME }}
+            stream: ${{ env.COV_STREAM_NAME }}
+            user: ${{ secrets.CI_USR }}
+            password: ${{ secrets.CI_PWD }}
+
+        - name: Generate Coverity Report
+          if: always()
+          uses: intel-innersource/frameworks.actions.coverity-analysis/sdl-reports@v4
+          with:
+            snapshot: ${{steps.cov-analysis.outputs.snapshot}}
+            url: ${{ env.COV_SERVER_URL }}
+            project: ${{ env.COV_PROJECT_NAME }}
+            project-version: ${{ env.BRANCH_VERSION }}
+            cvss-report-name: CT39_${{ env.COV_CVSS_REPORT_NAME }}.pdf
+            security-report-name: CT39_${{ env.COV_SECURITY_REPORT_NAME }}.pdf
+            user: ${{ secrets.CI_USR }}
+            password: ${{ secrets.CI_PWD }}
+
+        - name: Generate Coverity Report Summary
+          id: cov-report-summary
+          if: always()
+          run: |
+            export TEMP_COV_PASSWORD=${{ secrets.CI_PWD }}
+            echo -e "\033[35mGenerating authentication key file - coverity_auth_key.txt\033[0m"
+            EXPIRATION_TIME=$(date -u -d "30 minutes" +"%Y-%m-%dT%H:%M:%SZ")
+            cov-manage-im \
+              --mode auth-key \
+              --create \
+              --output-file ${{ env.COV_AUTH_KEY_NAME }}.txt \
+              --set description:"ci_auth_key - ${{ env.BRANCH_VERSION }}" \
+              --url ${{ env.COV_SERVER_URL }} \
+              --user ${{ secrets.CI_USR }} \
+              --password ${{ secrets.CI_PWD }} \
+              --set expiration:"${EXPIRATION_TIME}"
+            cat ${{ env.COV_AUTH_KEY_NAME }}.txt
+            echo -e "\n\033[35mGenerating Coverity Security JSON Report - ${{ env.COV_SECURITY_REPORT_NAME }}.json\033[0m"
+            export WRITE_ISSUES_JSON=${{ env.COV_SECURITY_REPORT_NAME }}.json
+            cov-generate-security-report \
+              ../../_actions/intel-innersource/frameworks.actions.coverity-analysis/v4/templates/report_template.yml \
+              --output ${{ env.COV_SECURITY_REPORT_NAME }}.pdf \
+              --user ${{ secrets.CI_USR }} \
+              --password env:TEMP_COV_PASSWORD
+            echo -e "\033[35mGenerating Coverity CVSS JSON Report ${{ env.COV_CVSS_REPORT_NAME }}_summary.json\033[0m"
+            export WRITE_ISSUES_JSON=${{ env.COV_CVSS_REPORT_NAME }}.json
+            cov-generate-cvss-report \
+              --report ../../_actions/intel-innersource/frameworks.actions.coverity-analysis/v4/templates/report_template.yml \
+              --output ${{ env.COV_CVSS_REPORT_NAME }}.pdf \
+              --user ${{ secrets.CI_USR }} \
+              --password env:TEMP_COV_PASSWORD
+            echo -e "\033[35mGenerating IPAS Security Report Summary - IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.html\033[0m"
+            python3 ~/.ci/IPAS_Report.py \
+              -i ${{ env.COV_SECURITY_REPORT_NAME }}.json \
+              -t SECURITY \
+              --details True \
+              --version ${{ env.COV_ANALYSIS_VERSION }} \
+              --output IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.html \
+              --csv-file IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.csv \
+              --auth-key-file ${{ env.COV_AUTH_KEY_NAME }}.txt
+            echo -e "\033[35mGenerating IPAS CVSS Report Summary - IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.html\033[0m"
+            python3 ~/.ci/IPAS_Report.py \
+              -i ${{ env.COV_CVSS_REPORT_NAME }}.json \
+              -t CVSS \
+              --details True \
+              --version ${{ env.COV_ANALYSIS_VERSION }} \
+              --output IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.html \
+              --csv-file IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.csv \
+              --auth-key-file ${{ env.COV_AUTH_KEY_NAME }}.txt
+            ls -l
+        - name: Upload artifacts
+          if: ${{ always() && steps.cov-report-summary.outcome == 'success' }}
+          uses: actions/upload-artifact@v4
+          with:
+            name: Coverity Report Summary
+            path: |
+              ${{ env.COV_SECURITY_REPORT_NAME }}.json
+              ${{ env.COV_CVSS_REPORT_NAME }}.json
+              ${{ env.COV_SECURITY_REPORT_NAME }}.pdf
+              ${{ env.COV_CVSS_REPORT_NAME }}.pdf
+              IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.html
+              IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.csv
+              IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.html
+              IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.csv
