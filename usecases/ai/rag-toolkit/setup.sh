@@ -20,8 +20,9 @@ install_dependencies(){
 # Create env and download model file
 install_python_dependencies(){
     echo -e "Installing Python dependencies ..."
-    python3 -m pip install openvino==2024.6 \
-        "optimum-intel[openvino,nncf]==1.21.0" --extra-index-url https://download.pytorch.org/whl/cpu
+    python3 -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
+        openvino==2025.1 \
+        "optimum-intel[openvino,nncf]==1.22.0" 
 }
 
 # Validate docker installation
