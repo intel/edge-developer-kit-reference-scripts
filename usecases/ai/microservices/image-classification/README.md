@@ -19,8 +19,8 @@ Package | Version
 --- | ---
 openvino-dev | 2024.6.0
 grpcio | 1.69.0
-torch | 2.5.1
-torchvision | 0.20.1
+torch | 2.6.0
+torchvision | 0.21.0
 tensorflow-serving-api | 2.17.1
 opencv-python | 4.10.0.84
 
@@ -39,7 +39,15 @@ opencv-python | 4.10.0.84
   source env/bin/activate
   
   pip install -U pip
-  pip install -r requiremenets.txt
+  pip install -r requirements.txt
+  ```
+
+- Install Open Model Zoo
+
+  ```
+  rm -rf /tmp/open_model_zoo
+  git clone https://github.com/openvinotoolkit/open_model_zoo.git /tmp/open_model_zoo
+  pip install /tmp/open_model_zoo/tools/model_tools
   ```
 
 - Download model from Open Model Zoo
