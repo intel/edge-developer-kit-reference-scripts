@@ -1,0 +1,78 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+networks:
+  app-network:
+    name: smart-parking-network
+
+volumes:
+  influxdb_data:
+    name: influxdb_data
+  grafana_data:
+    name: grafana_data
+
+services:
+  smart-parking-proxy:
+    image: nginx:1.22.0-alpine
+    container_name: smart-parking-proxy
+    networks:
+      - app-network
+    ports:
+      - 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./data/certs:/etc/smart-parking/certs
+
+  smart-parking-server:
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile.server
+      args:
+        - RENDER_GROUP_ID=${RENDER_GROUP_ID:-992} 
+    image: smart-parking-server:latest
+    container_name: smart-parking-server
+    networks:
+      - app-network
+    environment:
+      - no_proxy=influxdb
+      - DISPLAY=${DISPLAY:?err}
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./server:/dev/app
+    # command: sleep infinity # Dev Mode
+    command: python3 main.py # Production Mode
+
+  influxdb:
+    image: influxdb:1.8-alpine
+    container_name: influxdb
+    restart: always
+    networks:
+      - app-network
+    ports:
+      - 8086:8086
+    environment:
+      - INFLUXDB_DB=influx
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:9.4.1
+    container_name: grafana
+    restart: always
+    user: root
+    networks:
+      - app-network
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=innius-video-panel
+      - NO_PROXY=influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/config.ini:/etc/grafana/grafana.ini

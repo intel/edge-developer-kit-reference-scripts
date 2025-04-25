@@ -31,6 +31,7 @@ Based on the platform you are using, select the following to get started:
 5. [AI Video Analytics](usecases/ai/ai-video-analytics/README.md)
 6. [Digital Avatar](usecases/ai/digital-avatar/README.md)
 7. [Time Coordinated Computing (TCC)](usecases/real-time/tcc_tutorial/README.md)
+8. [Smart Parking](usecases/ai/smart-parking/README.md)
 
 ## Disclaimer
 GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.

@@ -1,0 +1,18 @@
+{
+  "cameras": [
+    {
+      "address": "Building1_Lot1_Row1",
+      "analytics": "pedestrian vehicle detection",
+      "device": "CPU",
+      "path": "./resources/carpark_video_1.mp4",
+      "bboxes": "./resources/carpark_video_1.xml"
+    },
+    {
+      "address": "Building1_Lot1_Row2",
+      "analytics": "pedestrian vehicle detection",
+      "device": "CPU",
+      "path": "./resources/carpark_video_1.mp4",
+      "bboxes": "./resources/carpark_video_2.xml"
+    }
+  ]
+}
