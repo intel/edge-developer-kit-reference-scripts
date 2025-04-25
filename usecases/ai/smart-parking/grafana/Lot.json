@@ -1,0 +1,1073 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Select",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "DsgkYTpNz"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "summary_level.Total"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Total"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "summary_level.Occupied"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Occupied"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "summary_level.Unoccupied"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Unoccupied"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false
+      },
+      "pluginVersion": "9.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "DsgkYTpNz"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "summary_level",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "Total"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              },
+              {
+                "params": [
+                  "Total"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "Occupied"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              },
+              {
+                "params": [
+                  "Occupied"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "Unoccupied"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              },
+              {
+                "params": [
+                  "Unoccupied"
+                ],
+                "type": "alias"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "Level",
+              "operator": "=",
+              "value": "Lot1"
+            }
+          ]
+        }
+      ],
+      "title": "Summary of Lot 1",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "DsgkYTpNz"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_1"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_1"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_2"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_2"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_3"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_4"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_4"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_5"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_5"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_6"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_6"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_7"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_7"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_8"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_8"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_9"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_9"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_10"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_10"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_11"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_11"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_12"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_12"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_13"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_13"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_14"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_14"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_15"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_15"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_16"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_16"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_17"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_17"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_18"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_18"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row1_19"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "vertical",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "DsgkYTpNz"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "detail",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT max(\"C1\") AS \"1\", max(\"C2\") AS \"2\", max(\"C3\") AS \"3\", max(\"C4\") AS \"4\", max(\"C5\") AS \"5\", max(\"C6\") AS \"6\", max(\"C7\") AS \"7\", max(\"C8\") AS \"8\", max(\"C9\") AS \"9\", max(\"C10\") AS \"10\", max(\"C11\") AS \"11\" FROM \"detail\" WHERE (\"Site\" = 'PG15' AND \"Level\" = 'Outdoor' AND \"Row\" = 'Row1') AND $timeFilter GROUP BY time($__interval), \"Row\" fill(null)",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "C1"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C2"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C3"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C4"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C5"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C6"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "Site",
+              "operator": "=",
+              "value": "Building1"
+            },
+            {
+              "condition": "AND",
+              "key": "Level",
+              "operator": "=",
+              "value": "Lot1"
+            },
+            {
+              "condition": "AND",
+              "key": "Row",
+              "operator": "=",
+              "value": "Row1"
+            }
+          ]
+        }
+      ],
+      "title": "Row 1 ",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "DsgkYTpNz"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_1"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_1"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_2"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_2"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_3"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_4"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_4"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_5"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_5"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_6"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_6"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_7"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_7"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_8"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_8"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row_9"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_9"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_10"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_10"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_11"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_11"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_12"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_12"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_13"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_13"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_14"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_14"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_15"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_15"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Row2_16"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "vertical",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "DsgkYTpNz"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "detail",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT max(\"C1\") AS \"1\", max(\"C2\") AS \"2\", max(\"C3\") AS \"3\", max(\"C4\") AS \"4\", max(\"C5\") AS \"5\", max(\"C6\") AS \"6\", max(\"C7\") AS \"7\", max(\"C8\") AS \"8\", max(\"C9\") AS \"9\", max(\"C10\") AS \"10\", max(\"C11\") AS \"11\" FROM \"detail\" WHERE (\"Site\" = 'PG15' AND \"Level\" = 'Outdoor' AND \"Row\" = 'Row1') AND $timeFilter GROUP BY time($__interval), \"Row\" fill(null)",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "C1"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C2"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C3"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C4"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C5"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C6"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "C7"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "Site",
+              "operator": "=",
+              "value": "Building1"
+            },
+            {
+              "condition": "AND",
+              "key": "Level",
+              "operator": "=",
+              "value": "Lot1"
+            },
+            {
+              "condition": "AND",
+              "key": "Row",
+              "operator": "=",
+              "value": "Row2"
+            }
+          ]
+        }
+      ],
+      "title": "Row 2",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 10,
+        "x": 1,
+        "y": 11
+      },
+      "id": 4,
+      "options": {
+        "autoPlay": true,
+        "customBackground": false,
+        "geolocate": false,
+        "iframeURL": "https://localhost/camera/0",
+        "loop": true,
+        "videoId": "eQpyJQ2womo",
+        "videoType": "iframe"
+      },
+      "type": "innius-video-panel"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 10,
+        "x": 13,
+        "y": 11
+      },
+      "id": 5,
+      "options": {
+        "autoPlay": true,
+        "customBackground": false,
+        "geolocate": false,
+        "iframeURL": "https://localhost/camera/1",
+        "loop": true,
+        "videoId": "eQpyJQ2womo",
+        "videoType": "iframe"
+      },
+      "type": "innius-video-panel"
+    }
+  ],
+  "refresh": "5s",
+  "revision": 1,
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-5s",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Lot1",
+  "uid": "fY1mfkPVz",
+  "version": 6,
+  "weekStart": ""
+}

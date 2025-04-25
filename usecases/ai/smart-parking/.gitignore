@@ -1,0 +1,6 @@
+# Build file
+server/utils/__pycache__
+
+# Generated
+data
+model
