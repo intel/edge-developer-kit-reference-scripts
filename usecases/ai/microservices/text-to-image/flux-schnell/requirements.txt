@@ -11,6 +11,7 @@ typing_extensions==4.12.2
 IPython==8.31.0
 nncf==2.14.1
 accelerate==1.2.1
+sentencepiece==0.2.0
 
 # Additional index URL for PyTorch dependencies
 --extra-index-url https://download.pytorch.org/whl/cpu
