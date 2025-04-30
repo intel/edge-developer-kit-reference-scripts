@@ -114,11 +114,11 @@ def main():
         return
 
     # Step 5: Retrieve the generated image
-    response = client.make_request("GET", "/pipeline/image")
-    if response:
-        client.save_image(response.content, "output_image.png")
-    else:
-        print("Failed to retrieve the generated image.")
+    # response = client.make_request("GET", "/pipeline/image")
+    # if response:
+    #     client.save_image(response.content, "output_image.png")
+    # else:
+    #     print("Failed to retrieve the generated image.")
 
 
 if __name__ == "__main__":

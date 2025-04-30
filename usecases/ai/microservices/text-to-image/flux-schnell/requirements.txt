@@ -4,7 +4,7 @@
 git+https://github.com/huggingface/optimum-intel.git
 
 # Dependencies with version specifications
-transformers==4.48.0
+transformers==4.50.0
 Pillow==11.1.0
 diffusers==0.32.1
 typing_extensions==4.12.2
