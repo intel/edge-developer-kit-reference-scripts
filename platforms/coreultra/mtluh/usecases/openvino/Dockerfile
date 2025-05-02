@@ -8,7 +8,7 @@ USER root
 ENV NPU_SETUP=false
 RUN apt-get update \
     && apt-get install -y wget gnupg curl libtbbmalloc2 libtbb12 kmod
-RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+RUN set -o pipefail && wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
     gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg && \
     echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | \
     tee /etc/apt/sources.list.d/intel-gpu-jammy.list
