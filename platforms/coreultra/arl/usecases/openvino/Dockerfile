@@ -8,7 +8,7 @@ USER root
 ENV NPU_SETUP=false
 RUN apt-get update \
     && apt-get install -y wget gnupg curl libtbbmalloc2 libtbb12 kmod
-RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+RUN set -o pipefail && wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
     gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg && \
     echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | \
     tee /etc/apt/sources.list.d/intel-gpu-noble.list
@@ -30,7 +30,7 @@ RUN wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5
     && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/libigdgmm12_22.5.5_amd64.deb
 
 RUN echo -e "Verify sha256 sums for packages"
-RUN wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/ww52.sum \
+RUN set -o pipefail && wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/ww52.sum \
     && sha256sum -c ww52.sum
 
 RUN echo -e "\nInstalling compute runtime"
@@ -40,4 +40,4 @@ USER openvino
 CMD ["/tmp/npu_container.sh"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-    CMD sh -c "clinfo | grep 'Driver Version' | awk '{print $NF}' || exit 1"
+    CMD sh -c "set -o pipefail && clinfo | grep 'Driver Version' | awk '{print \$NF}' || exit 1"
