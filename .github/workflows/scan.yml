@@ -217,6 +217,39 @@ jobs:
           name: Trivy SBOM Reports
           path: "trivy_fs_sbom_report.json"
 
+  trivy-config-dockerfile:
+    name: Trivy Dockerfile
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
+    runs-on: [self-hosted, scan]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Execute Trivy
+        run: |
+          trivy config \
+            --exit-code  1 \
+            --file-patterns "dockerfile:.*dockerfile" \
+            --skip-dirs "**/node_modules" \
+            --format json --output ct222-report.json .
+
+      - name: Preview Trivy report
+        if: always()
+        run: |
+          if [ -f "ct222-report.json" ]; then
+            cat ct222-report.json
+          else
+            echo "Trivy report file not found."
+          fi
+
+      - name: Upload artifact 
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Trivy Dockerfile Linting Reports
+          path: "ct222-report.json"
+
   bdba:
     name: BDBA
     needs: precheck
