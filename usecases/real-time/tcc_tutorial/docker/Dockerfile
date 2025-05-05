@@ -1,40 +1,10 @@
-####################################################################################
-# Copyright (C) <2025> Intel Corporation
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
-# 3. Neither the name of the copyright holder nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
-# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-# OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
-# OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# SPDX-License-Identifier: BSD-3-Clause
-###################################################################################
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 FROM ubuntu:24.04
 
-# Update
-RUN apt update
-RUN apt upgrade -y
-
 # Update package list and install dependencies
-RUN apt update && apt install -y \
+RUN apt update && apt upgrade -y && apt install -y \
     build-essential \
     cmake \
     git \
@@ -42,34 +12,78 @@ RUN apt update && apt install -y \
     vim \
     sudo
 
-# Clone the cJOSN repository and build and install the library
-RUN git clone https://github.com/DaveGamble/cJSON.git && \
-    cd cJSON && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make && \
-    make install && \
-    ldconfig
+# Create a non-root user and group
+RUN groupadd -r rtuser && useradd -r -g rtuser rtuser
+RUN usermod -aG sudo rtuser
 
-# Clone the paho.mqqt.c repository and build and install the library
-RUN git clone https://github.com/eclipse/paho.mqtt.c.git && \
-    cd paho.mqtt.c && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make && \
-    make install && \
-    ldconfig
+# Set the working directory
+WORKDIR /home/rtuser
 
-# Install and build 
-WORKDIR /root
+# Change ownership of the working directory to the non-root user
+RUN chown -R rtuser:rtuser /home/rtuser
+
+# Switch to the non-root user
+USER rtuser
+
+# Clone the cJSON repository
+RUN git clone https://github.com/DaveGamble/cJSON.git
+
+# Set the working directory to cJSON
+WORKDIR /home/rtuser/cJSON
+
+# Build the cJSON library
+RUN mkdir build
+WORKDIR /home/rtuser/cJSON/build
+RUN cmake ..
+RUN make
+
+# Switch back to root to install the library system-wide
+USER root
+RUN make install && ldconfig
+
+# Switch back to the non-root user
+USER rtuser
+
+# Clone the paho.mqtt.c repository
+WORKDIR /home/rtuser
+RUN git clone https://github.com/eclipse/paho.mqtt.c.git
+
+# Set the working directory to paho.mqtt.c
+WORKDIR /home/rtuser/paho.mqtt.c
+
+# Build the paho.mqtt.c library
+RUN mkdir build
+WORKDIR /home/rtuser/paho.mqtt.c/build
+RUN cmake ..
+RUN make
+
+# Switch back to root to install the library system-wide
+USER root
+RUN make install && ldconfig
+
+# Switch back to the non-root user
+USER rtuser
+
+# Clone the edge-developer-kit-reference-scripts repository
+WORKDIR /home/rtuser
 RUN git clone https://github.com/intel/edge-developer-kit-reference-scripts.git
-WORKDIR /root/edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial
-RUN make 
-RUN ls -l /root/edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial
-# Give execute permissions to the file
-RUN chmod +x /root/edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial/rt_linux_tutorial
 
+# Set the working directory for the non-root user
+WORKDIR /home/rtuser/edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial
+
+# Build the project
+RUN make
+
+# Give execute permissions to the file
+RUN chmod +x rt_linux_tutorial
+
+# Allow root privilige to app and scripts
+USER root
+RUN echo "rtuser ALL=(ALL) NOPASSWD: /home/rtuser/edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial/rt_linux_tutorial" >> /etc/sudoers
+RUN echo "rtuser ALL=(ALL) NOPASSWD: /home/rtuser/edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial/setCacheAllocation.sh" >> /etc/sudoers
+RUN echo "rtuser ALL=(ALL) NOPASSWD: /home/rtuser/edge-developer-kit-reference-scripts/usecases/real-time/tcc_tutorial/setCoreFrequency.sh" >> /etc/sudoers
+USER rtuser
+
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD npm --version || exit 1
