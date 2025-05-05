@@ -3,7 +3,7 @@
 torch
 torchvision
 torchaudio
-transformers==4.48.0
+transformers==4.51.3
 
 tyro==0.8.14
 opencv-python==4.10.*
