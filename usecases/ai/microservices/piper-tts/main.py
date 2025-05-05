@@ -19,9 +19,17 @@ from uuid import uuid4
 
 PIPERTTS={
 }
-DOWNLOAD_URL=f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
-MODEL_DIRECTORY="models"
-DATA_DIRECTORY="data"
+HF_DEFAULT_URL = "https://huggingface.co"
+HF_MIRROR_URL = "https://hf-mirror.com"
+hf_endpoint = os.getenv("HF_ENDPOINT", HF_DEFAULT_URL).strip()
+allowed_endpoints = {
+    HF_DEFAULT_URL: HF_DEFAULT_URL,
+    HF_MIRROR_URL: HF_MIRROR_URL
+}
+huggingface_endpoint = allowed_endpoints.get(hf_endpoint, HF_DEFAULT_URL)
+DOWNLOAD_URL = f"{huggingface_endpoint.rstrip('/')}/rhasspy/piper-voices/resolve/v1.0.0"
+MODEL_DIRECTORY = "models"
+DATA_DIRECTORY = "data"
 
 class ISynthesize(BaseModel):
     text: str
