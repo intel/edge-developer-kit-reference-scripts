@@ -356,7 +356,9 @@ jobs:
           mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ \
             --exclude .git \
             --exclude .github \
-            --exclude automation
+            --exclude automation \
+            --exclude Dockerfile \
+            --exclude 'docker-compose*.yml'
       
       - name: Setup Coverity
         uses: intel-innersource/frameworks.actions.setup-coverity@v4
