@@ -67,16 +67,16 @@ class Generator(ov_genai.Generator):
 # Main Class for Flux.1 Schnell
 # -------------------------------------------------------------------------
 class FluxSchnell:
-    def __init__(self, quantize=False):
-        self.quantize = quantize
+    def __init__(self):
+        self.weight_format = os.getenv("WEIGHT_FORMAT", "int8")
+        self.model_dir = Path(os.getenv("MODEL_DIR", "openvino-flux-schnell"))
         self.model_name = "black-forest-labs/FLUX.1-schnell"
-        self.model_dir = Path("openvino-flux-schnell")
         self.random_generator = Generator(42)
 
         # Automatically convert models during initialization
         print("Converting models during initialization...")
         try:
-            self.convert_models()
+            self.convert_models(self.weight_format)
             print("Model conversion completed successfully.")
         except Exception as e:
             print(f"Model conversion failed: {e}")
@@ -91,14 +91,17 @@ class FluxSchnell:
             raise
 
     @log_elapsed_time
-    def convert_models(self):
+    def convert_models(self, weight_format="int8"):
         """Convert PyTorch models to OpenVINO IR (if not already done)."""
         if not self.model_dir.exists():
-            print(f"Downloading model: {self.model_name} to {self.model_dir}...")
+            print(f"Downloading model: {self.model_name} ({weight_format}) to {self.model_dir}...")
             additional_args = {}
-            additional_args.update({"weight-format": "int8", "group-size": "64", "ratio": "1.0"})
+            additional_args.update({
+                "weight-format": weight_format, 
+                "group-size": "64", 
+                "ratio": "1.0"
+            })
             optimum_cli(self.model_name, self.model_dir, additional_args=additional_args)
-            # optimum_cli(self.model_name, self.model_dir)
         print("Model conversion completed.")
 
     @staticmethod
@@ -212,7 +215,7 @@ class PromptRequest(BaseModel):
 
 class Sdv3API:
     def __init__(self):
-        self.installer = FluxSchnell(quantize=True)
+        self.installer = FluxSchnell()
         self.image_path = "tmp_output_image.png"
         self.pipeline_status = {"running": False, "completed": False}
 
