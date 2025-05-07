@@ -1,12 +1,12 @@
 # Copyright (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-import time
-import openvino_genai as ov_genai
-import openvino as ov
-import torch
-import gc
 import os
+import gc
+import time
+import torch
+import openvino as ov
+import openvino_genai as ov_genai
 
 from pathlib import Path
 from functools import wraps
@@ -70,7 +70,7 @@ class FluxSchnell:
     def __init__(self):
         self.weight_format = os.getenv("WEIGHT_FORMAT", "int8")
         self.model_dir = Path(os.getenv("MODEL_DIR", "openvino-flux-schnell"))
-        self.model_name = "black-forest-labs/FLUX.1-schnell"
+        self.model_name = os.getenv("MODEL_NAME_OR_PATH", "black-forest-labs/FLUX.1-schnell")
         self.random_generator = Generator(42)
 
         # Automatically convert models during initialization
@@ -202,8 +202,6 @@ class FluxSchnell:
 # -------------------------------------------------------------------------
 # FastAPI - REST API
 # -------------------------------------------------------------------------
-
-
 class DeviceRequest(BaseModel):
     device: str
 
@@ -317,4 +315,3 @@ class Sdv3API:
 if __name__ == "__main__":
     api = Sdv3API()
     uvicorn.run(api.app, host="0.0.0.0", port=8100, reload=False)
-
