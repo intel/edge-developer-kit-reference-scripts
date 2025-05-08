@@ -5,6 +5,7 @@ import os
 import gc
 import time
 import torch
+import uvicorn
 import openvino as ov
 import openvino_genai as ov_genai
 
@@ -16,7 +17,6 @@ from PIL import Image
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Response, BackgroundTasks
 from contextlib import asynccontextmanager
-import uvicorn
 
 # -------------------------------------------------------------------------
 # Utility Decorator
@@ -67,10 +67,10 @@ class Generator(ov_genai.Generator):
 # Main Class for Flux.1 Schnell
 # -------------------------------------------------------------------------
 class FluxSchnell:
-    def __init__(self):
+    def __init__(self, model_name_or_path, device=None):
+        self.device = device
         self.weight_format = os.getenv("WEIGHT_FORMAT", "int8")
         self.model_dir = Path(os.getenv("MODEL_DIR", "openvino-flux-schnell"))
-        self.model_name = os.getenv("MODEL_NAME_OR_PATH", "black-forest-labs/FLUX.1-schnell")
         self.random_generator = Generator(42)
 
         # Automatically convert models during initialization
@@ -85,7 +85,7 @@ class FluxSchnell:
         # Automatically prepare the pipeline during initialization
         self.ov_pipe = None
         try:
-            self.prepare_pipeline()
+            self.prepare_pipeline(self.device)
         except Exception as e:
             print(f"Pipeline preparation failed: {e}")
             raise
@@ -105,84 +105,53 @@ class FluxSchnell:
         print("Model conversion completed.")
 
     @staticmethod
-    def get_device(user_device=None):
-        try:
-            ov_core = ov.Core()
-            available_devices = [device.upper() for device in ov_core.available_devices]  # Normalize device names
-            print(f"Available devices: {available_devices}")
-
-            # Normalize user input and validate it
-            if user_device:
-                user_device = user_device.upper()
-                if user_device in ["CPU", "GPU"]:
-                    if user_device in available_devices:
-                        print(f"User-specified device '{user_device}' is available. Using it.")
-                        return "success", user_device
-                    else:
-                        error_message = f"User-specified device '{user_device}' is not available."
-                        print(error_message)
-                        return "error", error_message
-                else:
-                    error_message = f"Invalid device specified: '{user_device}'. Supported devices are 'CPU' and 'GPU'."
-                    print(error_message)
-                    return "error", error_message
-
-            # Auto-select the best available device
-            if "GPU" in available_devices:
-                print("Automatically selecting GPU as the best available device.")
-                return "success", "GPU"
-            elif "CPU" in available_devices:
-                print("Automatically selecting CPU as the fallback device.")
-                return "success", "CPU"
-            else:
-                error_message = "Neither GPU nor CPU is available. Check your OpenVINO installation and device support."
-                print(error_message)
-                return "error", error_message
-        except Exception as e:
-            error_message = f"Unexpected error occurred: {str(e)}"
-            print(error_message)
-            return "error", error_message
-
+    def validate_device_available(user_device: str):
+        """Check if the specified device is available."""
+        ov_core = ov.Core()
+        available_devices = [device.upper() for device in ov_core.available_devices]  # Normalize device names
+        print(f"Available devices: {available_devices}")
+        if user_device in available_devices:
+            print(f"Device {user_device} is available.")
+            return True, user_device
+        else:
+            print(f"Device {user_device} is not available.")
+            return False, f"Device {user_device} is not available. Available devices: {available_devices}"
+                
     @log_elapsed_time
-    def prepare_pipeline(self, device=None):
-        # Determine the device to use
-        status, selected_device_or_message = self.get_device(user_device=device)
-        if status == "error":
-            # Log and return the error response
-            print(f"Error while selecting device: {selected_device_or_message}")
-            return {"status": "error", "message": selected_device_or_message}
-
-
+    def prepare_pipeline(self, device: str):
+        """Prepare the OpenVINO pipeline for inference."""
+        # Validate the device
+        if device is None:
+            return {"status": "error", "message": "Device not specified."}
+        
         # Clear previous pipeline and perform garbage collection
         if hasattr(self, 'ov_pipe') and self.ov_pipe is not None:
             print("Releasing resources from the previous pipeline...")
             del self.ov_pipe
             gc.collect()
 
-        print(f"Preparing OpenVINO pipeline on {selected_device_or_message}...")
+        # Validate device availability
+        status, selected_device_or_message = self.validate_device_available(user_device=device)
+        if status == "error":
+            print(f"Error while selecting device: {selected_device_or_message}")
+            return {"status": "error", "message": selected_device_or_message}
+
         try:
+            print(f"Preparing OpenVINO pipeline on {selected_device_or_message}...")
             self.ov_pipe = ov_genai.Text2ImagePipeline(self.model_dir, selected_device_or_message)
             success_message = f"Pipeline prepared successfully on {selected_device_or_message}."
             print(success_message)
             return {"status": "success", "message": success_message}
         except Exception as e:
-            # Log initialization errors and return an error response
             error_message = f"Error while preparing the pipeline: {e}"
             print(error_message)
             return {"status": "error", "message": error_message}
 
     @log_elapsed_time
     def run_pipeline(self, prompt, width, height, num_inference_steps):
-        # if not self.ov_pipe:
-        #     raise RuntimeError("Pipeline is not initialized. Please call `prepare_pipeline` first.")
-
         """Run inference on the pipeline with a specific prompt."""
-        print("Running inference...")
         print(f"Generating image with prompt: '{prompt}'")
-
         ov_pipe = self.ov_pipe
-
-        # try:
         image_tensor = ov_pipe.generate(
             prompt,
             width=width,
@@ -194,9 +163,6 @@ class FluxSchnell:
         image = Image.fromarray(image_tensor.data[0])
         print("Inference completed.")
         return image
-        # except Exception as e:
-        #     print(f"Image generation failed: {e}")
-        #     raise
 
 
 # -------------------------------------------------------------------------
@@ -213,7 +179,10 @@ class PromptRequest(BaseModel):
 
 class Sdv3API:
     def __init__(self):
-        self.installer = FluxSchnell()
+        self.installer = FluxSchnell(
+            model_name_or_path=os.getenv("MODEL_NAME_OR_PATH", "black-forest-labs/FLUX.1-schnell"),
+            device=os.getenv("DEVICE", "CPU")
+        )
         self.image_path = "tmp_output_image.png"
         self.pipeline_status = {"running": False, "completed": False}
 
@@ -241,25 +210,16 @@ class Sdv3API:
         gc.collect()
         print("Resources cleaned up successfully.")
 
-    def prepare_pipeline(self, device: str):
-        # Validate and select the device
-        status, device_or_message = self.installer.get_device(user_device=device)
-
-        if status == "error":
-            # Return an error response with the message from _get_device
-            return {"status": "error", "message": device_or_message}
-
+    @lock_api
+    def select_device_and_compile(self, request: DeviceRequest):
+        device = request.device
         try:
             # Prepare the pipeline on the validated device
-            self.installer.prepare_pipeline(device=device_or_message)
-            return {"status": "success", "message": f"Pipeline prepared on {device_or_message}."}
+            self.installer.prepare_pipeline(device)
+            return {"status": "success", "message": f"Pipeline prepared on {device}."}
         except Exception as e:
             # Return a structured error response in case of an exception
             return {"status": "error", "message": f"Pipeline preparation failed: {str(e)}"}
-
-    @lock_api
-    def select_device_and_compile(self, request: DeviceRequest):
-        return self.prepare_pipeline(device=request.device)
 
     @staticmethod
     def pipeline_task(installer, prompt, image_path, pipeline_status, width, height, num_inference_steps):
