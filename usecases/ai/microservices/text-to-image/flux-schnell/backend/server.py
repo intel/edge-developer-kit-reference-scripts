@@ -67,10 +67,11 @@ class Generator(ov_genai.Generator):
 # Main Class for Flux.1 Schnell
 # -------------------------------------------------------------------------
 class FluxSchnell:
-    def __init__(self, model_name_or_path, device=None):
+    def __init__(self, model_name_or_path, device="CPU", weight_format="int8", model_dir=None):
+        self.model_name = model_name_or_path
         self.device = device
-        self.weight_format = os.getenv("WEIGHT_FORMAT", "int8")
-        self.model_dir = Path(os.getenv("MODEL_DIR", "openvino-flux-schnell"))
+        self.weight_format = weight_format
+        self.model_dir = model_dir
         self.random_generator = Generator(42)
 
         # Automatically convert models during initialization
@@ -181,7 +182,9 @@ class Sdv3API:
     def __init__(self):
         self.installer = FluxSchnell(
             model_name_or_path=os.getenv("MODEL_NAME_OR_PATH", "black-forest-labs/FLUX.1-schnell"),
-            device=os.getenv("DEVICE", "CPU")
+            device=os.getenv("DEVICE", "CPU"),
+            weight_format = os.getenv("WEIGHT_FORMAT", "int8"),
+            model_dir = Path(os.getenv("MODEL_DIR", "./data/openvino-flux-schnell"))
         )
         self.image_path = "tmp_output_image.png"
         self.pipeline_status = {"running": False, "completed": False}

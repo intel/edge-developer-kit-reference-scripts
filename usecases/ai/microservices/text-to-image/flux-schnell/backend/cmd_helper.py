@@ -33,11 +33,5 @@ def optimum_cli(model_id, output_dir, show_command=True, additional_args: Dict[s
             export_command += f" --{arg}"
             if value:
                 export_command += f" {value}"
-
-    if show_command:
-        from IPython.display import Markdown, display
-
-        display(Markdown("**Export command:**"))
-        display(Markdown(f"`{export_command}`"))
-
+    
     subprocess.run(export_command.split(" "), shell=(platform.system() == "Windows"), check=True)
