@@ -25,9 +25,14 @@ import Spinner from "@/components/ui/spinner"
 import { useGetLLM, usePullLLM } from "@/hooks/useLLM"
 import { cn } from "@/lib/utils"
 
-export function LLMModelsSelect({ open, updateOpen, value, updateValue }: { open: boolean, updateOpen: (open: boolean) => void; value: string; updateValue: (value: string) => void }) {
+export function LLMModelsSelect({ value, updateValue }: { value: string; updateValue: (value: string) => void }) {
     const { data: llmModelData } = useGetLLM()
     const [searchValue, setSearchValue] = useState("")
+    const [open, setOpen] = useState(false)
+
+    const updateOpen = (open: boolean) => {
+        setOpen(open)
+    }
 
     const pullLLM = usePullLLM()
 

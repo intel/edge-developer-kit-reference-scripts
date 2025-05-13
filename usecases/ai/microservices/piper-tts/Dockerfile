@@ -17,7 +17,7 @@ RUN apt-get update \
     curl \
     && rm -rf /var/lib/apt/lists/* 
 
-RUN apt-get update && apt-get install python3 python3-venv python3-pip -y
+RUN apt-get update && apt-get install --no-install-recommends python3 python3-venv python3-pip -y
 
 RUN addgroup --system intel --gid 1000 \
     && adduser --system --ingroup intel --uid 1000 --home /home/intel intel \
