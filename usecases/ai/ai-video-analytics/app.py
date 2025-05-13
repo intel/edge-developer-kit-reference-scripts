@@ -9,8 +9,8 @@ import gradio as gr
 from utils.chroma import chromaClient
 from utils.model import ImageCaptionPipeline, FaceDataPipeline
 from utils.common import VideoProcessor
-
-image_caption_pipeline = ImageCaptionPipeline(device="CPU")
+DEVICE = os.getenv("DEVICE", "CPU")
+image_caption_pipeline = ImageCaptionPipeline(device=DEVICE)
 face_data_pipeline = FaceDataPipeline()
 VIDEO_FOLDER = "./data/video"
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
