@@ -111,6 +111,7 @@ export default function useAudioRecorder() {
                 const form = new FormData()
                 form.append("file", file)
                 form.append("language", "english")
+                form.append("use_denoise", "true")
                 sttMutation.mutate({ data: form })
             }
 

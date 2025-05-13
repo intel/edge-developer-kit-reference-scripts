@@ -26,7 +26,11 @@ export class FetchAPI {
             }
             this.baseURL = new URL(`${apiVersion}/path`, baseURL).toString();
         } else {
-            this.baseURL = `${baseURL}/${apiVersion}`;
+            if (baseURL.startsWith('/api/config')) {
+                this.baseURL = baseURL;
+            } else {
+                this.baseURL = `${baseURL}/${apiVersion}`;
+            }
         }
     }
 

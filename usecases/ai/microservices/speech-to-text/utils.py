@@ -10,6 +10,11 @@ import soundfile as sf
 import openvino as ov
 import openvino_genai
 
+import wave
+import os
+import copy
+from time import perf_counter
+
 logger = logging.getLogger('uvicorn.error')
 
 
@@ -105,3 +110,138 @@ def translate(pipeline, audio, source_language="english"):
     else:
         logger.error("No translation results.")
         return ""
+
+# DENOISE UTILS
+def download_omz_model(model_id: str, output_dir: str):
+    """Download the model using Open Model Zoo downloader."""
+    try:
+        subprocess.run(
+            ["omz_downloader", "--name", model_id, "-o", output_dir],
+            check=True
+        )
+        logger.info(f"Model {model_id} downloaded successfully.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to download model {model_id}: {str(e)}")
+        raise
+
+def load_denoise_model(model_dir: str, device: str):
+    """Load and compile the denoising model."""
+    import openvino.properties.hint as hints
+
+    core = ov.Core()
+    config = {hints.performance_mode: hints.PerformanceMode.LATENCY}
+    
+    if not os.path.exists(model_dir):
+        raise FileNotFoundError(f"Model file not found: {model_dir}")
+
+    compiled_model = core.compile_model(model_dir, device, config)
+    logger.info(f"Denoising model {model_dir} loaded and compiled.")
+    return compiled_model
+
+def wav_read(wav_name):
+    with wave.open(wav_name, "rb") as wav:
+        if wav.getsampwidth() != 2:
+            raise RuntimeError(f"wav file {wav_name} does not have int16 format")
+        freq = wav.getframerate()
+        data = wav.readframes(wav.getnframes())
+        x = np.frombuffer(data, dtype=np.int16)
+        x = x.astype(np.float32) * (1.0 / np.iinfo(np.int16).max)
+        if wav.getnchannels() > 1:
+            x = x.reshape(-1, wav.getnchannels())
+            x = x.mean(1)
+    return x, freq
+
+def wav_write(wav_name, x, freq):
+    x = np.clip(x, -1, +1)
+    x = (x * np.iinfo(np.int16).max).astype(np.int16)
+    with wave.open(wav_name, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setframerate(freq)
+        wav.setsampwidth(2)
+        wav.writeframes(x.tobytes())
+
+def denoise(compiled_model, file_path):
+    from pydub import AudioSegment
+
+    ov_encoder = compiled_model
+    
+    # Load the audio file
+    audio = AudioSegment.from_wav(f"{file_path}")
+
+    # Set the target sampling rate (16000 Hz)
+    target_sr = 16000
+
+    # Resample the audio to the target sampling rate
+    resampled_audio = audio.set_frame_rate(target_sr)
+
+    # Export the resampled audio to a new WAV file
+    resampled_audio.export(f"{file_path}", format="wav")
+    
+    inp_shapes = {name: obj.shape for obj in ov_encoder.inputs for name in obj.get_names()}
+    out_shapes = {name: obj.shape for obj in ov_encoder.outputs for name in obj.get_names()}
+
+    state_out_names = [n for n in out_shapes.keys() if "state" in n]
+    state_inp_names = [n for n in inp_shapes.keys() if "state" in n]
+    if len(state_inp_names) != len(state_out_names):
+        raise RuntimeError(
+            "Number of input states of the model ({}) is not equal to number of output states({})".
+                format(len(state_inp_names), len(state_out_names)))
+
+    compiled_model = compiled_model
+    infer_request = compiled_model.create_infer_request()
+    sample_inp, freq_data = wav_read(str(file_path))
+    sample_size = sample_inp.shape[0]
+
+    infer_request.infer()
+    delay = 0
+    if "delay" in out_shapes:
+        delay = infer_request.get_tensor("delay").data[0]
+        sample_inp = np.pad(sample_inp, ((0, delay), ))
+    freq_model = 16000
+    if "freq" in out_shapes:
+        freq_model = infer_request.get_tensor("freq").data[0]
+
+    if freq_data != freq_model:
+        raise RuntimeError(
+            "Wav file {} sampling rate {} does not match model sampling rate {}".
+                format(file_path, freq_data, freq_model))
+
+    input_size = inp_shapes["input"][1]
+    res = None
+
+    samples_out = []
+    while sample_inp is not None and sample_inp.shape[0] > 0:
+        if sample_inp.shape[0] > input_size:
+            input = sample_inp[:input_size]
+            sample_inp = sample_inp[input_size:]
+        else:
+            input = np.pad(sample_inp, ((0, input_size - sample_inp.shape[0]), ), mode='constant')
+            sample_inp = None
+
+        #forms input
+        inputs = {"input": input[None, :]}
+
+        #add states to input
+        for n in state_inp_names:
+            if res:
+                inputs[n] = infer_request.get_tensor(n.replace('inp', 'out')).data
+            else:
+                #on the first iteration fill states by zeros
+                inputs[n] = np.zeros(inp_shapes[n], dtype=np.float32)
+
+        infer_request.infer(inputs)
+        res = infer_request.get_tensor("output")
+        samples_out.append(copy.deepcopy(res.data).squeeze(0))
+
+    #concat output patches and align with input
+    sample_out = np.concatenate(samples_out, 0)
+    sample_out = sample_out[delay:sample_size+delay]
+    output_file = "./tmp_audio/tmp_denoise.wav"
+    try:
+        wav_write(output_file, sample_out, freq_data)
+        with open(output_file, 'rb') as f:
+            file_bytes = f.read()
+        
+        return file_bytes
+    finally:
+        os.remove(output_file)

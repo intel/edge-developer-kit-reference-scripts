@@ -16,8 +16,19 @@ export function useGetSTT(): UseMutationResult<Record<string, any>, Error, { dat
             data
         }: { data: FormData }) => {
             try {
+                const start = performance.now() / 1000;
                 const response = await STTAPI.file('audio/transcriptions', data, { headers: {} })
-                return await response.json()
+                const totalLatency = performance.now() / 1000 - start;
+                
+                // add httpLatency to the response data.metrics
+                const responseJson = await response.json();
+                const httpLatency = totalLatency - (responseJson?.metrics?.denoise_latency + responseJson?.metrics?.stt_latency);
+                responseJson.metrics = {
+                    ...responseJson.metrics,
+                    http_latency: httpLatency,
+                }
+                return responseJson
+                // return await response.json()
             } catch (error) {
                 return { status: false, message: "Failed to process audio", data: error }
             }
