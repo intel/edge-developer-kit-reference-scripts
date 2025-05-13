@@ -22,7 +22,7 @@ from ultralytics import FastSAM, YOLO
 
 from utils.facial_recognition.landmarks_detector import LandmarksDetector
 from utils.facial_recognition.face_detector import FaceDetector
-
+DEVICE = os.getenv("DEVICE", "CPU")
 def letterbox_image(image, size):
     '''resize image with unchanged aspect ratio using padding'''
     ih, iw, _ = image.shape
@@ -161,66 +161,81 @@ class ImageCaptionPipeline:
 
     def _yolo_world_inference(self, image, classes=["car", "bus", "bicycle"], imgsz=640, debug=False):
         yolo_world_results = []
+        data = None
         letterbox_img, scale, new_size = letterbox_image(image, (imgsz, imgsz))
         offset_y = imgsz - min(new_size)
         self.yolo_world.set_classes(classes)
-        results = self.yolo_world.predict(letterbox_img)
+        try:
+            results = self.yolo_world.predict(letterbox_img)
+            if results and isinstance(results, list) and len(results) > 0:
+                first_result = results[0]
+                if first_result is not None and hasattr(first_result, "boxes") and first_result.boxes is not None:
+                    if hasattr(first_result.boxes, "xyxy") and first_result.boxes.xyxy is not None:
+                        data = first_result
+                        bbox_data = [box.numpy() for box in data.boxes.xyxy]
+                        formatted_bbox = []
+                        for bbox in bbox_data:
+                            bbox[1] = bbox[1] - offset_y / 2
+                            bbox[3] = bbox[3] - offset_y / 2
+                            bbox /= scale
+                            formatted_bbox.append(bbox)
 
-        data = results[0]
-        if data.boxes:
-            bbox_data = [data.numpy() for data in data.boxes.xyxy]
-            formatted_bbox = []
-            for bbox in bbox_data:
-                bbox[1] = bbox[1] - offset_y/2
-                bbox[3] = bbox[3] - offset_y/2
-                bbox /= scale
-                formatted_bbox.append(bbox)
-
-            for i, bbox in enumerate(formatted_bbox):
-                coordinates = [int(bbox[0]), int(bbox[1]),
-                               int(bbox[2]), int(bbox[3])]
-                cropped_image = crop_image(image, coordinates)
-                yolo_world_results.append(cropped_image)
-                if debug:
-                    os.makedirs("./data/temp/debug", exist_ok=True)
-                    now = datetime.now()
-                    timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
-                    cv2.imwrite(
-                        f"./data/temp/debug/image_{i}_{timestamp}.jpg", cropped_image)
-        return yolo_world_results
+                        for i, bbox in enumerate(formatted_bbox):
+                            coordinates = [int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])]
+                            cropped_image = crop_image(image, coordinates)
+                            yolo_world_results.append(cropped_image)
+                            if debug:
+                                os.makedirs("./data/temp/debug", exist_ok=True)
+                                now = datetime.now()
+                                timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+                                cv2.imwrite(f"./data/temp/debug/image_{i}_{timestamp}.jpg", cropped_image)
+            return yolo_world_results
+        except Exception as e:
+            print(f"Error during YOLO inference: {e}")
+            return None
+        
 
     def _fastsam_inference(self, image, retina_masks=True, imgsz=640, conf=0.75, iou=0.9, debug=False):
         fastsam_results = []
+        data = None
         letterbox_img, scale, new_size = letterbox_image(image, (imgsz, imgsz))
         offset_y = imgsz - min(new_size)
-        results = self.fastsam(
-            letterbox_img,
-            device="cpu",
-            retina_masks=retina_masks,
-            imgsz=imgsz,
-            conf=conf,
-            iou=iou
-        )
-        data = results[0]
-        if data.boxes:
-            bbox_data = [data.numpy() for data in data.boxes.xyxy]
-            formatted_bbox = []
-            for bbox in bbox_data:
-                bbox[1] = bbox[1] - offset_y/2
-                bbox[3] = bbox[3] - offset_y/2
-                bbox /= scale
-                formatted_bbox.append(bbox)
+        try:
+            results = self.fastsam(
+                letterbox_img,
+                device="cpu",
+                retina_masks=retina_masks,
+                imgsz=imgsz,
+                conf=conf,
+                iou=iou
+            )
+            if results and isinstance(results, list) and len(results) > 0:
+                first_result = results[0]
+                if first_result is not None and hasattr(first_result, "boxes") and first_result.boxes is not None:
+                    if hasattr(first_result.boxes, "xyxy") and first_result.boxes.xyxy is not None:
+                        data = first_result
+                        bbox_data = [box.numpy() for box in data.boxes.xyxy]
+                        formatted_bbox = []
+                        for bbox in bbox_data:
+                            bbox[1] = bbox[1] - offset_y/2
+                            bbox[3] = bbox[3] - offset_y/2
+                            bbox /= scale
+                            formatted_bbox.append(bbox)
 
-            for i, bbox in enumerate(formatted_bbox):
-                coordinates = [int(bbox[0]), int(bbox[1]),
-                               int(bbox[2]), int(bbox[3])]
-                cropped_image = crop_image(image, coordinates)
-                fastsam_results.append(cropped_image)
-                if debug:
-                    os.makedirs("./data/temp/debug", exist_ok=True)
-                    cv2.imwrite(
-                        f"./data/temp/debug/image_{i}.jpg", cropped_image)
-        return fastsam_results
+                        for i, bbox in enumerate(formatted_bbox):
+                            coordinates = [int(bbox[0]), int(bbox[1]),
+                                        int(bbox[2]), int(bbox[3])]
+                            cropped_image = crop_image(image, coordinates)
+                            fastsam_results.append(cropped_image)
+                            if debug:
+                                os.makedirs("./data/temp/debug", exist_ok=True)
+                                cv2.imwrite(
+                                    f"./data/temp/debug/image_{i}.jpg", cropped_image)
+            return fastsam_results
+        except Exception as e:
+            print(f"Error during FastSAM inference: {e}")
+            return None
+        
 
     def _filter_captions(self, captions: list):
         captions_list = list(set(captions))
@@ -289,7 +304,7 @@ class FaceDataPipeline:
         fd_input_size = (0,0)
         t_fd = 0.6
         exp_r_fd = 1.15
-        device_fd = "CPU"
+        device_fd = DEVICE
         self.face_detector = FaceDetector(core, m_fd,
                                           fd_input_size,
                                           confidence_threshold=t_fd,
@@ -298,7 +313,7 @@ class FaceDataPipeline:
         #Landmarks Detector
         m_lm = os.path.join(current_dir,"data/model/facial_recognition/landmarks-regression-retail-0009.xml")
         self.landmarks_detector = LandmarksDetector(core,m_lm)
-        device_lm = "CPU"
+        device_lm = DEVICE
 
         self.face_detector.deploy(device_fd)
         self.landmarks_detector.deploy(device_lm, self.QUEUE_SIZE)

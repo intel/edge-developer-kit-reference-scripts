@@ -8,9 +8,14 @@ services:
       dockerfile: Dockerfile
     image: ai-video-analytics
     container_name: ai-video-analytics
+    restart: always
     privileged: true
+    group_add:
+      - ${RENDER_GROUP_ID:-110}
     ipc: host
     network_mode: host
+    environment:
+      - DEVICE=${DEVICE:-CPU}
     devices:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
