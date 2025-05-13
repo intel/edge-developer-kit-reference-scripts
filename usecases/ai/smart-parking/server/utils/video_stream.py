@@ -59,7 +59,7 @@ class VideoStream(threading.Thread):
                 
                 cv2.resize(frame, (self.broadcast_width, self.broadcast_height))
                 
-                if self.detector_omz:
+                if self.detector_omz and frame is not None:
                     h, w = frame.shape[:2]
                     input_image = self.detector_omz.preprocess(frame, self.detector_omz.height, self.detector_omz.width)
                     output = self.detector_omz.predict(input_image)
