@@ -39,6 +39,7 @@ RUN python3 -m venv /usr/src/.venv
 ENV PATH="/usr/src/.venv/bin:$PATH"
 RUN python3 -m pip install --no-cache-dir --upgrade pip \
     && python3 -m pip install --no-cache-dir gradio==5.11.0 \
+    pydantic==2.10.6 \
     openvino-dev==2024.4.0 \
     nncf==2.13.0 \
     optimum==1.22.0 \
