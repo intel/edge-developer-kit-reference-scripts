@@ -1,21 +1,28 @@
 // Copyright (C) 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import useVideoQueue from '@/hooks/useVideoQueue';
 
 export default function Avatar() {
     const { isLoading: isFramesLoading, handleVideoLoaded, updateRefs } = useVideoQueue();
+    const [isVertical, setIsVertical] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const handleLoadedMetadata = () => {
+        if (videoRef.current) {
+          const { videoWidth, videoHeight } = videoRef.current;
+          setIsVertical(videoHeight > videoWidth);
+        }
+      };
 
     useEffect(() => {
         if (videoRef.current && canvasRef.current) {
             updateRefs(videoRef.current, canvasRef.current)
         }
     }, [videoRef, canvasRef, updateRefs])
-
 
     useEffect(() => {
         const videoElement = videoRef.current;
@@ -49,10 +56,11 @@ export default function Avatar() {
                     poster="/assets/image.png"
                     style={{ visibility: 'hidden' }}
                     onLoadedData={handleVideoLoaded}
+                    onLoadedMetadata={handleLoadedMetadata}
                     muted
                 />
                 <div className='size-full absolute flex justify-center'>
-                    <canvas ref={canvasRef} className='w-full h-auto object-cover'></canvas>
+                    <canvas ref={canvasRef} className={`${isVertical ? 'h-full w-auto' : 'w-full h-auto'} object-contain`}></canvas>
                 </div>
 
             </div>

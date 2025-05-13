@@ -4,10 +4,6 @@
 import os
 os.environ['HF_HOME'] = "./data/huggingface"
 
-import io
-import time
-import uuid
-import asyncio
 import logging
 import requests
 import numpy as np
@@ -20,14 +16,14 @@ from openai import OpenAI
 
 import uvicorn
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
+from fastapi import FastAPI, UploadFile, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
-from starlette.background import BackgroundTasks
 
-from utils.prompt import RAG_PROMPT, NO_CONTEXT_FOUND_PROMPT, QUERY_REWRITE_PROMPT
+from utils.prompt import RAG_PROMPT, NO_CONTEXT_FOUND_PROMPT
 from utils.chroma_client import ChromaClient
+import openvino as ov
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -44,7 +40,6 @@ class ICreateChatCompletions(TypedDict, total=False):
     messages: Required[List]
     model: str
     tools: List
-    rag: bool = False
     endpoint: str
     suffix: str
     max_tokens: int = 16
@@ -68,15 +63,59 @@ class ICreateChatCompletions(TypedDict, total=False):
     
 class IModel(TypedDict):
     model: str
+    
+DEVICES = []
+EMBEDDING_DEVICE = os.environ.get('EMBEDDING_DEVICE', "CPU")
+RERANKER_DEVICE = os.environ.get('RERANKER_DEVICE', "CPU")
+CONFIG = {
+    "llm_model": os.environ.get('LLM_MODEL', "qwen2.5"),
+    "system_prompt": os.environ.get('SYSTEM_PROMPT', "You are a helpful assistant. Always reply in English. Summarize content to be 100 words"),
+    "temperature": 1,
+    "max_tokens": 2048,
+    "use_rag": os.environ.get('USE_RAG', True),
+    "embedding_device": EMBEDDING_DEVICE,
+    "reranker_device": RERANKER_DEVICE
+}
 
+class Configurations(BaseModel):
+    llm_model: str
+    system_prompt: str
+    temperature: float
+    max_tokens: int
+    use_rag: Optional[bool] = False
+    embedding_device: Optional[str] = EMBEDDING_DEVICE
+    reranker_device: Optional[str] = RERANKER_DEVICE
+
+def get_available_devices():
+    devices = []
+    core = ov.Core()
+    available_devices = core.get_available_devices()
+    for device_name in available_devices:
+        full_device_name = core.get_property(device_name, "FULL_DEVICE_NAME")
+        devices.append(
+            {
+                "name": full_device_name, 
+                "value": device_name, 
+            })
+    return devices
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global CHROMA_CLIENT
+    global CHROMA_CLIENT, DEVICES
     logger.info("Initializing server services ...")
-    embedding_device = os.environ.get('EMBEDDING_DEVICE', "CPU")
-    reranker_device = os.environ.get('RERANKER_DEVICE', "CPU")
-    CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, embedding_device, reranker_device)
+    DEVICES = get_available_devices()
+    if (CONFIG['use_rag']):
+        CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, CONFIG["embedding_device"], CONFIG["reranker_device"])
+
+    # Check if LLM model exist in list of models
+    model_list = client.models.list()
+    # If it doesn't exist, pull the model
+    if CONFIG["llm_model"] not in model_list:
+        logger.info(f"Model {CONFIG['llm_model']} not found. Pulling the model ...")
+        response = await pull_model({"model": CONFIG["llm_model"]})
+        if response.status_code != 200:
+            logger.error(f"Failed to pull model {CONFIG['llm_model']}. Error: {response.text}")
+            raise HTTPException(status_code=500, detail="Failed to pull model")
     yield
     logger.info("Stopping server services ...")
 
@@ -95,6 +134,15 @@ app.add_middleware(
 def get_healthcheck():
     return 'OK'
 
+@app.get("/v1/config")
+async def get_inference_devices():
+    global DEVICES, CONFIG
+    DEVICES = get_available_devices()
+    config ={
+        "devices": DEVICES,
+        "selected_config": CONFIG
+    }
+    return JSONResponse(content=jsonable_encoder(config))
 
 @app.get("/v1/models", status_code=200)
 async def get_available_model():
@@ -116,6 +164,36 @@ async def get_text_embedding_sources():
     global CHROMA_CLIENT
     data = CHROMA_CLIENT.get_all_sources()
     result = {"status": True, "data": data}
+    return JSONResponse(content=jsonable_encoder(result))
+
+@app.post("/v1/update_config", status_code=200)
+async def update_config(data: Configurations):
+    global CONFIG, CHROMA_CLIENT
+    
+    # Check if LLM model exist in list of models
+    model_list = client.models.list()
+    # If it doesn't exist, pull the model
+    if data.llm_model not in model_list:
+        logger.info(f"Model {data.llm_model} not found. Pulling the model ...")
+        response = await pull_model({"model": data.llm_model})
+        if response.status_code != 200:
+            logger.error(f"Failed to pull model {data.llm_model}. Error: {response.text}")
+            raise HTTPException(status_code=500, detail="Failed to pull model")
+
+    CONFIG = {
+        "llm_model": data.llm_model,
+        "system_prompt": data.system_prompt,
+        "temperature": data.temperature,
+        "max_tokens": data.max_tokens,
+        "use_rag": data.use_rag,
+        "embedding_device": data.embedding_device,
+        "reranker_device": data.reranker_device
+    }
+
+    if (CONFIG['use_rag']):
+        CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, data.embedding_device, data.reranker_device)
+
+    result = {"status": True, "data": None}
     return JSONResponse(content=jsonable_encoder(result))
 
 @app.post("/v1/pull", status_code=200)
@@ -194,7 +272,7 @@ async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[Upload
 
 
 # Chat completions routes
-@app.post("/v1/chat/completions", status_code=200)
+@app.post("/v1/chat", status_code=200)
 async def chat_completion(request: Request, data: ICreateChatCompletions):
     global CHROMA_CLIENT
 
@@ -227,10 +305,12 @@ async def chat_completion(request: Request, data: ICreateChatCompletions):
         )
         return formatted_prompt
 
-    isRAG = False
+    isRAG = CONFIG['use_rag']
 
-    if request.headers.get("rag"):
-        isRAG = True if request.headers.get("rag") == "ON" else False
+    if not any(message['role'] == 'system' for message in data['messages']):
+        systemPrompt = CONFIG['system_prompt']
+        if systemPrompt:
+            data['messages'] = [{'role': 'system', 'content': systemPrompt}] + data['messages']
 
     if isRAG:
         logger.info("RAG settings is enabled. Verifying embedding is available")
@@ -256,12 +336,17 @@ async def chat_completion(request: Request, data: ICreateChatCompletions):
                         question=last_user_message)
                 data['messages'][-1]['content'] = user_prompt
 
+    # Set the configurations for the LLM model
+    data['model'] = CONFIG['llm_model']
+    data['temperature'] = CONFIG['temperature']
+    data['max_tokens'] = CONFIG['max_tokens']
+
+    base_url = OPENAI_BASE_URL
+    if "/v1" in base_url:
+        base_url = base_url.replace("/v1", "")
     endpoint = data.get(
-        'endpoint', f"{OPENAI_BASE_URL}/chat/completions")
-
-    if 'rag' in data:
-        data.pop('rag')
-
+        'endpoint', f"{base_url}/api/chat")
+    
     try:
         llm = requests.post(
             endpoint,

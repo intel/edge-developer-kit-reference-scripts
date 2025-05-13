@@ -13,9 +13,18 @@ const TTSAPI = new FetchAPI(`/api/tts`);
 export function useGetTTSAudio() {
     return useMutation({
         mutationFn: async ({
-            text, speaker
-        }: { text: string, speaker: string }) => {
-            const response = await TTSAPI.post('audio/speech', { text, speaker, keep_file: true })
+            text
+        }: { text: string }) => {
+            const start = performance.now() / 1000;
+            const response = await TTSAPI.post('audio/speech', { text, keep_file: true })
+            const totalLatency = performance.now() / 1000 - start;
+
+            // add httpLatency to the response data
+            const httpLatency = totalLatency - (response.data.inference_latency);
+            response.data = {
+                ...response.data,
+                http_latency: httpLatency,
+            }
             return response
         },
     });

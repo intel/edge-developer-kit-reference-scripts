@@ -27,11 +27,40 @@ import json
 import time
 from setup.download_model import setup
 import torch
+import re
+from pydantic import BaseModel
+from typing import Literal, Optional
+import openvino as ov
 
 logger = logging.getLogger('uvicorn.error')
 WAV2LIP=None
 DATA_DIRECTORY="data"
 
+WAV2LIP_MODELS = ["wav2lip", "wav2lip_gan"]
+ENHANCER_MODELS = [
+        "RealESRGAN_x2plus", 
+        "RealESRGAN_x4plus", 
+        "realesr-animevideov3", 
+        "realesr-general-x4v3", 
+        "realesr-general-x4v3-dn", 
+        "RealESRGAN_x4plus_anime_6B"
+    ]
+DEVICES = []
+CONFIG = {
+    "lipsync_model": os.environ.get('WAV2LIP_MODEL', WAV2LIP_MODELS[0]),
+    "lipsync_device": os.environ.get('DEVICE', "CPU"),
+    "use_enhancer": os.environ.get('USE_ENHANCER', False),
+    "enhancer_device": os.environ.get('ENHANCER_DEVICE', "xpu:0" if torch.xpu.is_available() else "cpu"),
+    "enhancer_model": os.environ.get('ENHANCER_MODEL', "RealESRGAN_x4plus_anime_6B")
+}
+
+class Configurations(BaseModel):
+    lipsync_device: str
+    lipsync_model: Literal[tuple(WAV2LIP_MODELS)]
+    use_enhancer: Optional[bool] = False
+    enhancer_device: Optional[str] = 'xpu:0'
+    enhancer_model: Optional[Literal[tuple(ENHANCER_MODELS)]] = 'RealESRGAN_x4plus_anime_6B'
+    
 async def remove_file(file_name):
     if os.path.exists(file_name):
         try:
@@ -39,20 +68,18 @@ async def remove_file(file_name):
         except:
             logger.error(f"File: {file_name} not available")
 
+def initialize_wav2lip():
+    global CONFIG
+    enhancer=None
+    if CONFIG["use_enhancer"] is not None:
+        enhancer = initialize(CONFIG["enhancer_model"], device=CONFIG["enhancer_device"])
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    setup()
+    wav2lip = OVWav2Lip(device=CONFIG["lipsync_device"], avatar_path="assets/video.mp4", enhancer=enhancer, model=CONFIG["lipsync_model"])
+    return wav2lip    
+
+def warmup():
+    # Warm up the model by running a dummy inference
     global WAV2LIP
-    enhancer = initialize("realesr-animevideov3", device = os.environ.get('ENHANCER_DEVICE', "xpu" if torch.xpu.is_available() else "cpu" ))
-    # enhancer = initialize("RealESRGAN_x4plus_anime_6B")
-    # enhancer = initialize("realesr-general-x4v3")
-    # enhancer = initialize("RealESRGAN_x4plus")
-    # enhancer = initialize("RealESRGAN_x2plus")
-    # enhancer = None
-    WAV2LIP = OVWav2Lip(device="CPU", avatar_path="assets/video.mp4", enhancer=enhancer)
-
-    print("warming up")
     temp_filename = "empty.wav"
     with wave.open(temp_filename, "w") as wf:
         wf.setnchannels(1)  # mono
@@ -60,11 +87,47 @@ async def lifespan(app: FastAPI):
         wf.setframerate(16000)  # 16 kHz
         wf.writeframes(np.zeros(16000 * 2, dtype=np.int16).tobytes())  # 1 second of silence
 
-    result= WAV2LIP.inference(temp_filename, enhance=True)
+    result, frames_generated = WAV2LIP.inference(temp_filename, enhance=CONFIG["use_enhancer"])
     result_path = os.path.join("wav2lip/results", result + ".mp4")
-    # if os.path.exists(result_path):
-    #     os.remove(result_path)
     os.remove(temp_filename)
+    
+def get_devices():
+    devices = {
+        "lipsync_device": [
+        ],
+        "enhancer_device": [
+        ]
+    }
+    
+    core = ov.Core()
+    available_devices = core.get_available_devices()
+    for device_name in available_devices:
+        full_device_name = core.get_property(device_name, "FULL_DEVICE_NAME")
+        devices["lipsync_device"].append({"name": full_device_name, "value": device_name})
+    
+    cpu_device_name = core.get_property("CPU", "FULL_DEVICE_NAME")
+    devices["enhancer_device"].append({"name": cpu_device_name, "value": "cpu"})
+        
+    if torch.xpu.is_available():
+        for i in range(torch.xpu.device_count()):
+            devices["enhancer_device"].append({"name": f"GPU.{i}: {torch.xpu.get_device_name(i)}", "value": f"xpu:{i}"})
+
+    return devices
+
+def is_valid_device(device: str, device_type: str, devices: dict) -> bool:
+    if device_type not in devices:
+        return False
+    return any(d["value"] == device for d in devices[device_type])
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup()
+    global WAV2LIP, DEVICES
+    DEVICES = get_devices()
+    WAV2LIP = initialize_wav2lip()
+
+    warmup()
     yield
 
 
@@ -95,7 +158,7 @@ async def inference(bg_task: BackgroundTasks,starting_frame: int, reversed: str,
         temp_audio_path = temp_audio.name
         with open(temp_audio_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
-            result = WAV2LIP.inference(temp_audio_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame)
+            result, frames_generated = WAV2LIP.inference(temp_audio_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=CONFIG["use_enhancer"])
     print(result, flush=True)
     result = f"wav2lip/results/{result}.mp4"
     return FileResponse(result, media_type="video/mp4", background=bg_task.add_task(remove_file,result ))
@@ -105,14 +168,27 @@ async def test(enhance: bool = False):
     global WAV2LIP
 
     start_time = time.time()
-    result = WAV2LIP.inference("data/audio.wav", reversed=True if reversed == "1" else False, starting_frame=0, enhance=enhance)
+    result, frames_generated = WAV2LIP.inference("data/audio.wav", reversed=True if reversed == "1" else False, starting_frame=0, enhance=enhance)
     end_time = time.time()
     print(f"Inference took {end_time - start_time} seconds", flush=True)
     print(result, flush=True)
     return JSONResponse({"message": "hi"})
 
+@router.get("/config")
+async def get_current_device():
+    global CONFIG, DEVICES
+    DEVICES = get_devices()
+    config = {
+        "lipsync_models": WAV2LIP_MODELS,
+        "enhancer_models": ENHANCER_MODELS,
+        "devices": DEVICES,
+        "selected_config": CONFIG
+    }
+    
+    return JSONResponse(content=jsonable_encoder(config))
+
 @router.post("/inference_from_filename")
-async def inference( data: dict, starting_frame: int, reversed: str, enhance=False):
+async def inference( data: dict, starting_frame: int, reversed: str,):
     global WAV2LIP
     if "filename" not in data:
         return "Filename is required"
@@ -128,12 +204,43 @@ async def inference( data: dict, starting_frame: int, reversed: str, enhance=Fal
     with tempfile.NamedTemporaryFile(suffix=".wav") as temp_file:
         temp_file_path = temp_file.name
         shutil.copyfile(file_path, temp_file_path)
-        result = WAV2LIP.inference(temp_file_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=enhance)
+        result, frames_generated = WAV2LIP.inference(temp_file_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=CONFIG["use_enhancer"])
     end_time = time.time()
+    inference_latency = end_time - start_time
 
     print(result, flush=True)
-    print(f"Inference took {end_time - start_time} seconds", flush=True)
-    return JSONResponse(content=jsonable_encoder({"url": result}))
+    print(f"Inference took {inference_latency} seconds", flush=True)
+    return JSONResponse(content=jsonable_encoder({"url": result, "inference_latency": inference_latency, "frames_generated": frames_generated}))
+
+@router.post("/update_config")
+async def update_config(data: Configurations):
+    global WAV2LIP, CONFIG, DEVICES
+    device = data.lipsync_device
+    enhancer_device = data.enhancer_device
+
+    # Validate lipsync_device
+    if not is_valid_device(device, "lipsync_device", DEVICES):
+        return JSONResponse(content=jsonable_encoder({"message": f"Invalid lipsync_device: {device}"}), status_code=400)
+
+    # Validate enhancer_device if provided
+    if enhancer_device and not is_valid_device(enhancer_device, "enhancer_device", DEVICES):
+        return JSONResponse(content=jsonable_encoder({"message": f"Invalid enhancer_device: {enhancer_device}"}), status_code=400)
+
+    # Initialize WAV2LIP with the validated values
+    CONFIG = {
+        "lipsync_model": data.lipsync_model,
+        "lipsync_device": device,
+        "use_enhancer": data.use_enhancer,
+        "enhancer_device": enhancer_device,
+        "enhancer_model": data.enhancer_model
+    }
+    try:
+        WAV2LIP = initialize_wav2lip()
+        warmup()
+    except Exception as error:
+        logger.error(f"Error in updating device: {str(error)}")
+        return JSONResponse(content=jsonable_encoder({"message": f"Failed to update device. Error: {error}"}), status_code=500)
+    return JSONResponse(content=jsonable_encoder({"message": f"device updated to {device} and enhancer_device updated to {enhancer_device}"}), status_code=200)
 
 @router.get("/video/{id}")
 async def get_video(id: str, bg_task: BackgroundTasks,):

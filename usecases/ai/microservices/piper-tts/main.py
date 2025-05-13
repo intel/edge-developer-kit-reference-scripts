@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+import time
 from fastapi import FastAPI, HTTPException
 from piper.voice import PiperVoice
 from urllib.request import urlretrieve
@@ -9,7 +10,7 @@ import io
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, Literal
 import json
 
 import uvicorn
@@ -31,19 +32,30 @@ DOWNLOAD_URL = f"{huggingface_endpoint.rstrip('/')}/rhasspy/piper-voices/resolve
 MODEL_DIRECTORY = "models"
 DATA_DIRECTORY = "data"
 
+MODELS =  {
+    "female": "en/en_US/hfc_female/medium/en_US-hfc_female-medium", 
+    "male": "en/en_US/hfc_male/medium/en_US-hfc_male-medium"
+}
+CONFIG = {
+    "device" : "CPU",
+    "speed": 1.0,
+    "speaker": "male"
+}
+
 class ISynthesize(BaseModel):
     text: str
-    length_scale: Optional[float] = 1
-    speaker:Optional[str] = "female"
-    keep_file: Optional[bool] = False
+    length_scale: Optional[float] = None
+    speaker:Optional[str] = None
+    keep_file: Optional[bool] = None
+
+class Configurations(BaseModel):
+    device: Optional[str] = "CPU"
+    speed: float    # aka length_scale
+    speaker: Literal[tuple(list(MODELS.keys()))]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global PIPERTTS
-    model_paths = {
-        "female": "en/en_US/hfc_female/medium/en_US-hfc_female-medium", 
-        "male": "en/en_US/hfc_male/medium/en_US-hfc_male-medium"
-        }
+    global PIPERTTS, MODELS
 
     if not os.path.exists(MODEL_DIRECTORY):
         os.makedirs(MODEL_DIRECTORY)
@@ -51,7 +63,7 @@ async def lifespan(app: FastAPI):
     if not os.path.exists(DATA_DIRECTORY):
         os.makedirs(DATA_DIRECTORY)
     
-    for key, value in model_paths.items():
+    for key, value in MODELS.items():
         model_name = value.split("/")[-1]
         
         # Download the model file if it doesn't exist
@@ -84,15 +96,43 @@ app.add_middleware(
 def get_healthcheck():
     return 'OK'
 
+@app.get("/v1/config")
+async def get_config():
+    global CONFIG
+    config = {
+        "speaker": list(MODELS.keys()),
+        "devices": ["CPU"],
+        "selected_config": CONFIG
+    }
+    
+    return JSONResponse(content=config)
+
+@app.post("/v1/update_config")
+async def update_config(data: Configurations):
+    global CONFIG
+    try:
+        if data.speaker not in PIPERTTS:
+            raise HTTPException(status_code=404, detail=f"Speaker {data.speaker} not found")
+        CONFIG["device"] = data.device
+        CONFIG["speed"] = data.speed
+        CONFIG["speaker"] = data.speaker
+        return JSONResponse(content={"message": "Configuration updated successfully"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/v1/audio/speech")
 async def synthesize(data: ISynthesize):
-    global PIPERTTS
-    if data.speaker not in PIPERTTS:
+    global PIPERTTS, CONFIG
+    speaker = data.speaker if data.speaker else CONFIG["speaker"]
+    if speaker not in PIPERTTS:
         raise HTTPException(status_code=404, detail=f"Speaker {data.speaker} not found")
     try:
         wav_io = io.BytesIO()
+        
+        start_time = time.time()
         with wave.open(wav_io, "wb") as wav_file:
-            PIPERTTS[data.speaker].synthesize(data.text, wav_file, length_scale=data.length_scale)
+            PIPERTTS[speaker].synthesize(data.text, wav_file, length_scale=data.length_scale if data.length_scale else CONFIG["speed"])
+        tts_latency = time.time() - start_time
         wav_io.seek(0)
         if data.keep_file:
             with wave.open(wav_io, "rb") as wav_file:
@@ -103,7 +143,7 @@ async def synthesize(data: ISynthesize):
             filename =f"{uuid4()}.wav"
             with open(f"{DATA_DIRECTORY}/{filename}", "wb") as f:
                 f.write(wav_io.read())
-            return JSONResponse(content={"filename": filename, "duration": duration})
+            return JSONResponse(content={"filename": filename, "duration": duration, "inference_latency": tts_latency})
         else:
             return StreamingResponse(wav_io, media_type="audio/wav")
     except Exception as e:

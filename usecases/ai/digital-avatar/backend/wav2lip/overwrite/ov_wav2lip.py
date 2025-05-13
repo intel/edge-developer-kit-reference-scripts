@@ -367,10 +367,10 @@ class OVFaceAlignment:
 
 
 class OVWav2Lip:
-    def __init__(self, avatar_path="assets/xy.png", device="GPU", enhancer = None):
+    def __init__(self, avatar_path="assets/xy.png", device="GPU", enhancer = None, model="wav2lip"):
         # Paths to model checkpoints
         self.face_detection_path = "wav2lip/checkpoints/face_detection.xml"
-        self.wav2lip_path = "wav2lip/checkpoints/wav2lip_gan.xml"
+        self.wav2lip_path = f"wav2lip/checkpoints/{model}.xml"
         self.segmentation_path = 'face_segmentation.pth'
         self.sr_path = 'esrgan_yunying.pth'
         self.face_landmarks_detector_path = 'wav2lip/checkpoints/face_landmarker_v2_with_blendshapes.task'
@@ -580,33 +580,32 @@ class OVWav2Lip:
             y1, y2, x1, x2 = c
             p = p.astype(np.uint8)
 
-            # Adjust coords to only focus on mouth
-            crop_coords = [20, 80, 60, 90] # x1, x2, x3, x4
+            # # Adjust coords to only focus on mouth
+            # crop_coords = [0, 100, 60, 90] # x1, x2, x3, x4
             
-            width_c = x2 - x1
-            height_c = y2 - y1
-            scale_x = width_c / p.shape[1]
-            scale_y = height_c / p.shape[0]
-            
-            p = p[crop_coords[2]: crop_coords[3], crop_coords[0]: crop_coords[1]]
+            # width_c = x2 - x1
+            # height_c = y2 - y1
+            # scale_x = width_c / p.shape[1]
+            # scale_y = height_c / p.shape[0]
+            # p = p[crop_coords[2]: crop_coords[3], crop_coords[0]: crop_coords[1]]
 
-            # Adjust the crop_coords relative to c
-            adjusted_crop_coords = [
-                int(crop_coords[0] * scale_x),
-                int(crop_coords[1] * scale_x),
-                int(crop_coords[2] * scale_y),
-                int(crop_coords[3] * scale_y)
-            ]
-            x1 = x1 + adjusted_crop_coords[0]
-            x2 = x1 + (adjusted_crop_coords[1] - adjusted_crop_coords[0])
-            y1 = y1 + adjusted_crop_coords[2]
-            y2 = y1 + (adjusted_crop_coords[3] - adjusted_crop_coords[2])
+            # # Adjust the crop_coords relative to c
+            # adjusted_crop_coords = [
+            #     int(crop_coords[0] * scale_x),
+            #     int(crop_coords[1] * scale_x),
+            #     int(crop_coords[2] * scale_y),
+            #     int(crop_coords[3] * scale_y)
+            # ]
+            # x1 = x1 + adjusted_crop_coords[0]
+            # x2 = x1 + (adjusted_crop_coords[1] - adjusted_crop_coords[0])
+            # y1 = y1 + adjusted_crop_coords[2]
+            # y2 = y1 + (adjusted_crop_coords[3] - adjusted_crop_coords[2])
 
-            if enhancer and enhance:
-                with self.lock:
-                    p, _ = enhancer.enhance(p)
-            p = cv2.resize(p, (int((crop_coords[1] - crop_coords[0]) * scale_x), int((crop_coords[3] - crop_coords[2]) * scale_y)))
-            
+            # if enhancer and enhance:
+            #     with self.lock:
+            #         p, _ = enhancer.enhance(p)
+            # p = cv2.resize(p, (int((crop_coords[1] - crop_coords[0]) * scale_x), int((crop_coords[3] - crop_coords[2]) * scale_y)))
+            p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
             # Create a mask for seamless cloning
             mask = 255 * np.ones(p.shape, p.dtype)
             
@@ -696,7 +695,7 @@ class OVWav2Lip:
 
         subprocess.call(command, shell=platform.system() != 'Windows')
 
-        return file_id
+        return file_id, frames_generated
 
     def datagen(self, frames, mels, face_det_results, start_index=0):
         img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []
