@@ -1,12 +1,12 @@
 # Digital Avatar
 
-A digital avatar that utilizes Image to Video, Text To Speech, Speech To Text, and LLM to create an interactive avatar.
+A digital avatar that utilizes Text To Speech, Speech To Text, and LLM to create an interactive avatar.
 
 ![Demo](./docs/demo.gif)
 
 
 ## Table of Contents
-- [Architecture Diagram](#requirements)
+- [Architecture Diagram](#architecture-diagram)
 - [Requirements](#requirements)
   - [Minimum](#minimum)
 - [Application Ports](#application-ports)
@@ -18,7 +18,7 @@ A digital avatar that utilizes Image to Video, Text To Speech, Speech To Text, a
   - [Access the App](#access-the-app)
 - [Notes](#notes)
 
-## Architecture DIagram
+## Architecture Diagram
 ![Archictecture Diagram](./docs/architecture.png)
 
 ## Requirements
@@ -48,7 +48,19 @@ Please ensure that you have these ports available before running the application
 1. **Docker and Docker Compose**: Ensure Docker and Docker Compose are installed. Refer to [Docker installation guide](https://docs.docker.com/engine/install/).
 1. **Intel GPU Drivers**:
     1. Refer to [here](../../../README.md#gpu) to install Intel GPU Drivers
-1. **Download Wav2Lip Model**: Download the [Wav2Lip model](https://iiitaphyd-my.sharepoint.com/:u:/g/personal/radrabha_m_research_iiit_ac_in/EdjI7bZlgApMqsVoEUUXpLsBxqXbn5z8VTmoxp55YNDcIA?e=n9ljGW) and place the file in the `weights` folder.
+1. **Download the Wav2Lip Models**:
+    ```bash
+    # Navigate to the weights directory if it doesn't exist
+    mkdir -p weights
+    cd weights
+    
+    # Download both required model files
+    wget -O wav2lip.pth "https://huggingface.co/numz/wav2lip_studio/resolve/main/Wav2lip/wav2lip.pth?download=true"
+    wget -O wav2lip_gan.pth "https://huggingface.co/numz/wav2lip_studio/resolve/main/Wav2lip/wav2lip_gan.pth?download=true"
+    
+    # Return to the main directory
+    cd ..
+    ```
 1. **Create Avatar**:
     1. Place a `video.mp4` file in the `assets` folder. The video should feature an idle person (preferably showing at least the upper half of the body) with subtle movements like blinking or slight body motion, and **no speaking**. Ensure the file is named **`video.mp4`**.
 
@@ -57,7 +69,7 @@ Please ensure that you have these ports available before running the application
     ```bash
     cp .env.template .env
     ```
-* Note: Modify the `LLM_MODEL` in the `.env` file in order to change the LLM used by ollama. Refer to [Ollama library](https://ollama.com/library) for available models. (Default is `QWEN2.5`).
+* Note: Modify the `LLM_MODEL` in the `.env` file in order to change the initial LLM used by ollama. Refer to [Ollama library](https://ollama.com/library) for available models. (Default is `QWEN2.5`).
 
 
 ### Build Docker Container
@@ -72,11 +84,13 @@ docker compose up -d
 ```
 
 ### Access the App
-- Navigate to http://localhost
+To access the web UI and interact with the application, use the following URLs:
+- Main Web Application: http://localhost
+- PayloadCMS Dashboard: http://localhost/admin
 
 ## Notes
 ### Device Workload Configurations
-You can offload model inference to specific device by modifying the environment variable setting in the docker-compose.yml file.
+You can offload model inference to specific initial device by modifying the environment variable setting in the docker-compose.yml file.
 
 | Workload                       | Environment Variable |Supported Device         | 
 |--------------------------------|----------------------|-------------------------|
