@@ -50,8 +50,7 @@ Please ensure that you have these ports available before running the application
     1. Refer to [here](../../../README.md#gpu) to install Intel GPU Drivers
 1. **Download the Wav2Lip Models**:
     ```bash
-    # Navigate to the weights directory if it doesn't exist
-    mkdir -p weights
+    # Navigate to the weights directory
     cd weights
     
     # Download both required model files
