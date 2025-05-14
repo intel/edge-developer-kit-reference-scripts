@@ -29,7 +29,7 @@ RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
 RUN echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | \
     tee /etc/apt/sources.list.d/intel-gpu-jammy.list
 RUN apt-get update \
-    && apt-get install -y libze1 intel-level-zero-gpu intel-opencl-icd clinfo
+    && apt-get install --no-install-recommends -y libze1 intel-level-zero-gpu intel-opencl-icd clinfo
 
 
 USER intel
@@ -66,4 +66,7 @@ RUN wget -O ./data/model/facial_recognition/landmarks-regression-retail-0009.bin
 
 EXPOSE 5980
 
-CMD ["python","app.py"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -I --fail http://localhost:5980/ || exit 1
+
+CMD ["python", "app.py"]
