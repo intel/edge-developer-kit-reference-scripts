@@ -34,14 +34,26 @@ def load_model(path):
 
     return model.eval()
 
+def convert_model(pth_path, xml_path):
+    print(f"Convert {pth_path} Model ...")
+    wav2lip = load_model(pth_path)
+    img_batch = torch.FloatTensor(np.random.rand(123, 6, 96, 96))
+    mel_batch = torch.FloatTensor(np.random.rand(123, 1, 80, 16))
+    example_inputs = {"audio_sequences": mel_batch, "face_sequences": img_batch}
+    wav2lip_ov_model = ov.convert_model(wav2lip, example_input=example_inputs)
+    ov.save_model(wav2lip_ov_model, xml_path)
+    print(f"Converted {pth_path} to OpenVINO model: {xml_path}")
+
 def setup():
     models_urls = {
             's3fd': 'https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth'}
     path_to_detector = "wav2lip/checkpoints/face_detection.pth"
-    path_to_wav2lip = "setup/wav2lip_gan.pth"
+    path_to_wav2lip_gan = "setup/wav2lip_gan.pth"
+    path_to_wav2lip = "setup/wav2lip.pth"
 
     OV_FACE_DETECTION_MODEL_PATH = Path("wav2lip/checkpoints/face_detection.xml")
-    OV_WAV2LIP_MODEL_PATH = Path("wav2lip/checkpoints/wav2lip_gan.xml")
+    OV_WAV2LIP_GAN_MODEL_PATH = Path("wav2lip/checkpoints/wav2lip_gan.xml")
+    OV_WAV2LIP_MODEL_PATH = Path("wav2lip/checkpoints/wav2lip.xml")
 
     # Convert Face Detection Model
     if not os.path.isfile(path_to_detector):
@@ -61,16 +73,12 @@ def setup():
     if not OV_WAV2LIP_MODEL_PATH.exists():
         if not os.path.isfile(path_to_wav2lip):
             raise Exception("Wav2Lip model not found")
-    
-    if not OV_WAV2LIP_MODEL_PATH.exists():
-        print("Convert Wav2Lip Model ...")
-        wav2lip = load_model(path_to_wav2lip)
-        img_batch = torch.FloatTensor(np.random.rand(123, 6, 96, 96))
-        mel_batch = torch.FloatTensor(np.random.rand(123, 1, 80, 16))
-        example_inputs = {"audio_sequences": mel_batch, "face_sequences": img_batch}
-        wav2lip_ov_model = ov.convert_model(wav2lip, example_input=example_inputs)
-        ov.save_model(wav2lip_ov_model, OV_WAV2LIP_MODEL_PATH)
-        print("Converted wav2lip OpenVINO model: ", OV_FACE_DETECTION_MODEL_PATH)
+        convert_model(path_to_wav2lip, OV_WAV2LIP_MODEL_PATH)
+
+    if not OV_WAV2LIP_GAN_MODEL_PATH.exists():
+        if not os.path.isfile(path_to_wav2lip_gan):
+            raise Exception("Wav2Lip model not found")
+        convert_model(path_to_wav2lip_gan, OV_WAV2LIP_GAN_MODEL_PATH)
 
 if __name__ == "__main__":
     setup()
