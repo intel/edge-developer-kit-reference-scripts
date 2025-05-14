@@ -81,6 +81,7 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=intel ./backend/wav2lip .
 COPY --chown=intel ./weights/wav2lip_gan.pth ./setup/
+COPY --chown=intel ./weights/wav2lip.pth ./setup/
 RUN mkdir -p data && mkdir -p assets
 RUN ./setup.sh
 RUN python3 setup/download_model.py
