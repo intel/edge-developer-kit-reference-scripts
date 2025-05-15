@@ -1,0 +1,95 @@
+# Code scan for software release
+
+name: 'Use Cases CI'
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  precheck:
+    runs-on: [self-hosted, scan]
+    continue-on-error: true
+    outputs:
+      should_run: ${{ steps.set_condition.outputs.should_run }}
+    steps:
+      - name: Set condition for PR title or commit message
+        id: set_condition
+        run: |
+          echo "Checking PR title or commit message..."
+          TYPES_TO_SKIP=("ci" "docs")
+          should_run=true
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            for type in "${TYPES_TO_SKIP[@]}"; do
+              if [[ "${{ github.event.pull_request.title }}" == "$type:"* ]]; then
+                echo "Skip because PR title starts with '$type:'"
+                should_run=false
+                break
+              fi
+            done
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            for type in "${TYPES_TO_SKIP[@]}"; do
+              if [[ "${{ github.head_commit.message }}" == "$type:"* ]]; then
+                echo "Skip because commit message starts with '$type:'"
+                should_run=false
+                break
+              fi
+            done
+          fi
+          echo "should_run=$should_run" >> $GITHUB_OUTPUT
+
+  validate-rag-toolkit:
+    runs-on: [self-hosted, case-cse, arls-a770]
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run validation
+        env:
+          no_proxy: localhost,127.0.0.1
+        run: |
+          cd ${{ github.workspace }}
+          echo "Running validation for rag toolkit..."
+          if [[ -f validation_report.csv ]]; then
+            rm validation_report.csv
+          fi
+          if [[ -f validation_run.log ]]; then
+            rm validation_run.log
+          fi
+          .github/tests/validate-use-cases.sh -u rag-toolkit 2>&1 | tee validation_run.log
+          if [ $? -ne 0 ]; then
+            echo "Validation for rag toolkit failed."
+            exit 1
+          fi
+
+      - name: Validate report
+        run: |
+          echo "Validating use cases report..."
+          cd ${{ github.workspace }}
+          if [ ! -f validation_report.csv ]; then
+            echo "Validation report not found."
+            exit 1
+          fi
+
+          # Check if the report contains FAIL
+          if grep -q "FAIL" validation_report.csv; then
+            echo "Validation report contains FAIL."
+            exit 1
+          fi
+
+          echo "All validation for use cases pass."
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RAG Toolkit Validation Report
+          path: |
+            validation_report.csv
+            validation_run.log
+            
