@@ -78,6 +78,14 @@ def get_all_streams():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+@app.route('/health')
+def healthcheck():
+    """
+    Healthcheck endpoint for Docker and monitoring.
+    """
+    return Response("OK", status=200)
+
+
 @app.route('/')
 def default_route():
     """
