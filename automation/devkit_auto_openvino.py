@@ -167,16 +167,19 @@ def copy_script_to_remote(ssh, thm_path, remote_path):
             
     sftp.close()
 
-def check_sku_in_text(text,skus1,skus2):
-    for sku in skus1:
-        if sku in text:
-            return True
+def get_image_name(ssh):
+    """
+    Get the name of the OpenVINO image from the remote SUT.
 
-    for sku in skus2:
-        if sku in text:
-            return True
-        
-    return False
+    Args:
+        ssh (paramiko.SSHClient): SSH connection object.
+
+    Returns:
+        str: The name of the OpenVINO image.
+    """
+    stdin, stdout, stderr = ssh.exec_command("docker images --format '{{.Repository}}:{{.Tag}}' | grep '^openvino'")
+    image_name = stdout.read().decode().strip()
+    return image_name
 
 def cleanup(ssh, script_path):
     """
@@ -191,7 +194,8 @@ def cleanup(ssh, script_path):
         run_command(ssh, f"rm -rf {SUT_SCRIPT_PATH}{script_path}")
         logger.info("Successfully removed %s%s on SUT.", SUT_SCRIPT_PATH, script_path)
         run_command(ssh, "docker stop openvino_app && docker rm openvino_app")
-        run_command(ssh,"docker rmi -f openvino_npu/ubuntu22_dev:latest")
+        image_name = get_image_name(ssh)
+        run_command(ssh,f"docker rmi -f {image_name}")
         logger.info("Successfully removed related docker images on SUT.")
     except Exception as e:
         logger.error("Failed to remove %s%s on SUT: %s", SUT_SCRIPT_PATH, script_path, e)
@@ -247,22 +251,24 @@ def main():
         run_command(sut_ssh, f"mkdir -p {sut_script_folder}")
         # Copy the script to the remote SUT
         copy_script_to_remote(sut_ssh, f"{thm_script_folder}", 
-                              f"{sut_script_folder}")
+                              f"{sut_script_folder}")        
 
         run_command(sut_ssh,f"sed -i '/install_openvino_notebook_docker/s/^/# /' {setup_script_path}")
         run_command(sut_ssh,f"sed -i '/^# install_openvino_notebook_docker/s/^# //g' {setup_script_path}")
 
-        if args.platform == "coreultra":
+        if "coreultra" in args.platform:
             logger.info("Running Script for Core Ultra Platform")
             setup_npu_script_path = sut_script_folder + "npu_container.sh"
             remove_redundant_slashes(setup_npu_script_path)
             
             run_command(sut_ssh, f"chmod +x {setup_script_path} && chmod +x {setup_npu_script_path}")
-            activate_openvino_docker_cmd = f'docker run -it -d --name openvino_app -u root -v /etc/group:/etc/group --device=/dev/dri:rw --device=/dev/accel --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v {SUT_SCRIPT_PATH}{args.usecase_script_path}:/data/workspace -w /data/workspace openvino_npu/ubuntu22_dev:latest'
+        run_command(sut_ssh, f"cd {sut_script_folder} && chmod +x ./{args.script} && ./{args.script}", ignore_stderr=True)
+        openvino_image_name = get_image_name(sut_ssh)
+        if "coreultra" in args.platform:
+            activate_openvino_docker_cmd = f'docker run -it -d --name openvino_app -u root -v /etc/group:/etc/group --device=/dev/dri:rw --device=/dev/accel --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v {SUT_SCRIPT_PATH}{args.usecase_script_path}:/data/workspace -w /data/workspace {openvino_image_name}'
         else:
-            logger.info("Running Script for Non-Core Ultra Platform")
-            activate_openvino_docker_cmd = f'docker run -it -d --name openvino_app -v /etc/group:/etc/group --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v {SUT_SCRIPT_PATH}{args.usecase_script_path}:/data/workspace -w /data/workspace openvino/ubuntu22_dev:latest'
-        run_command(sut_ssh, f"cd {sut_script_folder} && chmod +x ./{args.script} && ./{args.script} && {activate_openvino_docker_cmd}", ignore_stderr=True)
+            activate_openvino_docker_cmd = f'docker run -it -d --name openvino_app -u root -v /etc/group:/etc/group --device=/dev/dri:rw --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v {SUT_SCRIPT_PATH}{args.usecase_script_path}:/data/workspace -w /data/workspace {openvino_image_name}'
+        run_command(sut_ssh, f"{activate_openvino_docker_cmd}", ignore_stderr=True)
         while True:
             # Run BKC installation script on SUT                               
             docker_exec_cmd = 'docker exec openvino_app python3 -c "import openvino as ov; core = ov.Core();print(core.get_available_devices())"'
@@ -272,37 +278,23 @@ def main():
             if stdout:
                 last_stdout_line = stdout.split("\n")[-1]
                 logger.info("Last line of stdout: %s", last_stdout_line)
-                if all(keyword in last_stdout_line for keyword in ["CPU","GPU","NPU"]) and args.platform == "coreultra":
-                    print("openvino get devices successfully")
+                platform_keywords = {
+                    "coreultra": ["CPU", "GPU", "NPU"],
+                    "atom": ["CPU", "GPU"],
+                    "rpl": ["CPU", "GPU"],
+                    "processor": ["CPU", "GPU"],
+                    "gpu": ["CPU", "GPU.0", "GPU.1"],
+                    "xeon": ["CPU"]
+                }
 
-                    logger.info("Use Case Installation Test Pass.")
-                    cleanup(sut_ssh, f"/{base_path}") # Perform post-test cleanup
-                    sut_ssh.close() 
-                    sys.exit(0)  # Exit the script with a success status code
+                for platform, keywords in platform_keywords.items():
+                    if all(keyword in last_stdout_line for keyword in keywords) and platform in args.platform:
+                        print("openvino get devices successfully")
 
-                if all(keyword in last_stdout_line for keyword in ["CPU","GPU"]) and args.platform == "core-atom":
-                    print("openvino get devices successfully")
-
-                    logger.info("Use Case Installation Test Pass.")
-                    cleanup(sut_ssh, f"/{base_path}") # Perform post-test cleanup
-                    sut_ssh.close() 
-                    sys.exit(0)  # Exit the script with a success status code
-
-                if all(keyword in last_stdout_line for keyword in ["CPU", "GPU.0", "GPU.1"]) and args.platform == "dgpu":
-                    print("openvino get devices successfully")
-
-                    logger.info("Use Case Installation Test Pass.")
-                    cleanup(sut_ssh, f"/{base_path}") # Perform post-test cleanup
-                    sut_ssh.close() 
-                    sys.exit(0)  # Exit the script with a success status code
-                
-                if all(keyword in last_stdout_line for keyword in ["CPU"]) and args.platform == "xeon":
-                    print("openvino get devices successfully")
-
-                    logger.info("Use Case Installation Test Pass.")
-                    cleanup(sut_ssh, f"/{base_path}") # Perform post-test cleanup
-                    sut_ssh.close() 
-                    sys.exit(0)  # Exit the script with a success status code
+                        logger.info("Use Case Installation Test Pass.")
+                        cleanup(sut_ssh, f"/{base_path}")  # Perform post-test cleanup
+                        sut_ssh.close()
+                        sys.exit(0)  # Exit the script with a success status code
             else:
                 logger.error("Use Case Installation Test Fail.")
                 cleanup(sut_ssh, f"/{base_path}")
