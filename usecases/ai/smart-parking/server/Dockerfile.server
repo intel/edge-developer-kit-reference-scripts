@@ -25,7 +25,6 @@ RUN apt-get update \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-ugly \
     gstreamer1.0-libav \
-    # gstreamer1.0-doc \
     gstreamer1.0-tools \
     gstreamer1.0-x \
     gstreamer1.0-alsa \
@@ -35,9 +34,9 @@ RUN apt-get update \
     gstreamer1.0-pulseaudio
 
 # Install Intel GPU Drivers
-RUN mkdir /tmp/neo \
-    && cd /tmp/neo \
-    && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-core_1.0.17791.9_amd64.deb \
+WORKDIR /tmp/neo
+
+RUN wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-core_1.0.17791.9_amd64.deb \
     && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-opencl_1.0.17791.9_amd64.deb \
     && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu-dbgsym_1.6.31294.12_amd64.ddeb \
     && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu_1.6.31294.12_amd64.deb \
@@ -49,14 +48,20 @@ RUN mkdir /tmp/neo \
 RUN groupadd -g ${RENDER_GROUP_ID} render \
     && usermod -aG render openvino
 
-USER openvino
-WORKDIR /
+RUN mkdir -p /usr/src \
+    && chown -R openvino:openvino /usr/src \
+    && mkdir -p /usr/src/app/data \
+    && chown -R openvino:openvino /usr/src/app/data
 
-COPY --chown=openvino:openvino ./server /app
-WORKDIR /app
+USER openvino
+WORKDIR /usr/src/app
+
+COPY --chown=openvino:openvino ./server .
+
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /dev/app
+HEALTHCHECK --interval=60s --timeout=180s --start-period=5s --retries=3 \
+  CMD curl -f --insecure https://localhost/health || exit 1
 
 CMD [ "/bin/bash", "run.sh" ]
