@@ -10,6 +10,7 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
     sudo \
     wget \
+    curl \
     gnupg2 \
     python3.11 \
     python3.11-venv \
