@@ -18,7 +18,7 @@ REPORT_FILE="${REPORT_FILE:-validation_report.csv}"
 LOG_DIR="${LOG_DIR:-./logs}"
 
 # List of available use cases
-AVAILABLE_USECASES=("rag-toolkit")
+AVAILABLE_USECASES=("rag-toolkit" "ai-video-analytics")
 
 # Create an associative array to store validation results
 declare -A validation_results
@@ -111,8 +111,52 @@ validate_rag_toolkit() {
     fi
 
     log $LOG_LEVEL_INFO "Setting up environment for $module_name module..."
+    export LLM_DEVICE="CPU"
     ./setup.sh || {
         log $LOG_LEVEL_ERROR "Failed to run setup script for $module_name"
+        success=false
+    }
+
+    log $LOG_LEVEL_INFO "Running $module_name module completed"
+
+    sleep 5
+
+    # Cleanup the module
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module..."
+    docker compose down || {
+        log $LOG_LEVEL_ERROR "Failed to clean up $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module completed"
+    cd - || {
+        log $LOG_LEVEL_ERROR "Failed to return to previous directory"
+        success=false
+    }
+    
+    # Record the validation result
+    if [ "$success" = true ]; then
+        record_validation "$module_name" "PASS"
+    else
+        record_validation "$module_name" "FAIL"
+    fi
+}
+
+validate_ai_video_analytics() {
+    local module_name="ai-video-analytics"
+    log $LOG_LEVEL_INFO "Validating $module_name use case..."
+    
+    # Add detailed logging for debugging if needed
+    log $LOG_LEVEL_DEBUG "Checking $module_name directory structure"
+    
+    local success=true
+    
+    if [[ ! -d "./usecases/ai/ai-video-analytics" ]]; then
+        log $LOG_LEVEL_ERROR "$module_name directory not found"
+        success=false
+    fi
+
+    cd ./usecases/ai/ai-video-analytics || {
+        log $LOG_LEVEL_ERROR "Failed to change directory to $module_name"
         success=false
     }
 
@@ -126,7 +170,7 @@ validate_rag_toolkit() {
 
     # Run the module
     log $LOG_LEVEL_INFO "Running $module_name module on CPU..."
-    export LLM_DEVICE="CPU"
+    export DEVICE="CPU"
     docker compose up -d || {
         log $LOG_LEVEL_ERROR "Failed to run $module_name module"
         success=false
@@ -142,6 +186,7 @@ validate_rag_toolkit() {
         success=false
     }
     log $LOG_LEVEL_INFO "Cleaning up $module_name module completed"
+    
     cd - || {
         log $LOG_LEVEL_ERROR "Failed to return to previous directory"
         success=false
@@ -236,6 +281,9 @@ run_validations() {
         case "$usecase" in
             rag-toolkit)
                 validate_rag_toolkit
+                ;;
+            ai-video-analytics)
+                validate_ai_video_analytics
                 ;;
             # Additional use cases can be added here as they are implemented
             *)
