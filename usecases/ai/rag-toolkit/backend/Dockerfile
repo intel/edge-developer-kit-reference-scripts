@@ -1,70 +1,82 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-FROM openvino/ubuntu22_dev:2024.6.0
+FROM debian:12-slim
+ARG DEBIAN_FRONTEND=noninteractive
+ARG OPENVINO_VERSION=2025.1.0
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 USER root
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get install -y wget \
-        gnupg2 \
+    && apt-get upgrade -y \
+    && apt-get install --no-install-recommends -y \
+        sudo \
+        curl \
+        git \
+        gpg-agent \
+        software-properties-common \
+        python3 \
+        python3-venv \
+    && curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key | gpg --dearmor | tee /usr/share/keyrings/intel-graphics.gpg \
+    && echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" > /etc/apt/sources.list.d/intel-graphics.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        intel-opencl-icd \
+        intel-level-zero-gpu \
+        libze1 \
+        libze-dev \
+        clinfo \
         libtbb12 \
-        python3.11 \
-        python3.11-venv 
-
-# Install GPU drivers
-RUN mkdir /tmp/neo \
-    && cd /tmp/neo \
-    && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-core_1.0.17791.9_amd64.deb \
-    && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-opencl_1.0.17791.9_amd64.deb \
-    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu-dbgsym_1.6.31294.12_amd64.ddeb \
-    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu_1.6.31294.12_amd64.deb \
-    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-opencl-icd-dbgsym_24.39.31294.12_amd64.ddeb \
-    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-opencl-icd_24.39.31294.12_amd64.deb \
-    && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/libigdgmm12_22.5.2_amd64.deb \
-    && dpkg -i *.deb
+    && addgroup --system intel --gid 1000 \
+    && adduser --system --ingroup intel --uid 1000 --home /home/intel intel \
+    && echo "intel ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/intel \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /usr/src/app/data \
+    && chown -R intel:intel /usr/src
 
 # Install NPU drivers
-RUN mkdir /tmp/npu-driver \
-    && cd /tmp/npu-driver\
-    && wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.0/intel-driver-compiler-npu_1.10.0.20241107-11729849322_ubuntu22.04_amd64.deb \
-    && wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.0/intel-fw-npu_1.10.0.20241107-11729849322_ubuntu22.04_amd64.deb \
-    && wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.0/intel-level-zero-npu_1.10.0.20241107-11729849322_ubuntu22.04_amd64.deb \
-    && wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb \
+WORKDIR /tmp/npu-driver
+RUN curl -LO https://github.com/intel/linux-npu-driver/releases/download/v1.17.0/intel-driver-compiler-npu_1.17.0.20250508-14912879441_ubuntu22.04_amd64.deb \
+    && curl -LO https://github.com/intel/linux-npu-driver/releases/download/v1.17.0/intel-fw-npu_1.17.0.20250508-14912879441_ubuntu22.04_amd64.deb \
+    && curl -LO https://github.com/intel/linux-npu-driver/releases/download/v1.17.0/intel-level-zero-npu_1.17.0.20250508-14912879441_ubuntu22.04_amd64.deb \
+    && curl -LO https://github.com/oneapi-src/level-zero/releases/download/v1.21.9/level-zero_1.21.9+u22.04_amd64.deb \
     && dpkg -i *.deb
 
-RUN mkdir -p /usr/src \
-    && chown -R openvino:openvino /usr/src \
-    && mkdir -p /usr/src/app/data \
-    && chown -R openvino:openvino /usr/src/app/data
+USER intel
+WORKDIR /usr/src/app
 
-USER openvino
+RUN mkdir -p /usr/src \
+    && chown -R intel:intel /usr/src \
+    && mkdir -p /usr/src/app/data \
+    && chown -R intel:intel /usr/src/app/data
+
 WORKDIR /usr/src/app
 RUN python3 -m venv /usr/src/.venv 
 ENV PATH="/usr/src/.venv/bin:$PATH"
 
 # Install python dependencies
 RUN python3 -m pip install fastapi[all]==0.111.0 \
-    sse_starlette==2.1.2 \
-    scipy \
-    soundfile \
-    numpy==1.26.4 \
-    openai==1.56.2 \
-    pyyaml==6.0.1 \
-    pypdf==5.0.0 \
-    langchain==0.3.8 \
-    langchain-chroma==0.1.4 \
-    langchain-community===0.3.8 \
-    chromadb==0.5.18 \
-    'huggingface_hub>=0.23.0' \
-    botocore==1.34.88 \
-    cached_path==1.6.3
+        sse_starlette==2.1.2 \
+        scipy \
+        soundfile \
+        numpy==1.26.4 \
+        openai==1.56.2 \
+        pyyaml==6.0.1 \
+        pypdf==5.0.0 \
+        langchain==0.3.8 \
+        langchain-chroma==0.1.4 \
+        langchain-community===0.3.8 \
+        chromadb==0.5.18 \
+        'huggingface_hub>=0.23.0' \
+        botocore==1.34.88 \
+        cached_path==1.6.3
 RUN python3 -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
-    'torch>=2.6.0' \
-    'torchaudio>=2.6.0' \
-    openvino==2025.1.0 \
-    optimum-intel[openvino,nncf]==1.22.0
+        'torch>=2.6.0' \
+        'torchaudio>=2.6.0' \
+        openvino==2025.1.0 \
+        optimum-intel[openvino,nncf]==1.22.0
 
 COPY --chown=openvino:openvino backend .
 
