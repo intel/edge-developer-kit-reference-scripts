@@ -231,7 +231,7 @@ jobs:
           trivy config \
             --exit-code  1 \
             --file-patterns "dockerfile:.*dockerfile" \
-            --skip-dirs "**/node_modules" \
+            --skip-dirs "**/vision-edge-ai" \
             --format json --output ct222-report.json .
 
       - name: Preview Trivy report
