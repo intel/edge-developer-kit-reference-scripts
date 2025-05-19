@@ -12,6 +12,7 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m venv .venv
 
+USER intel
 ENV PATH="/opt/intel/llm-app/.venv/bin:$PATH"
 ENV LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH"
 RUN python3 -m pip install --upgrade pip \

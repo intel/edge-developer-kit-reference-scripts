@@ -7,7 +7,7 @@ USER root
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get install -y ffmpeg \
+    && apt-get install --no-install-recommends -y ffmpeg \
         wget \
         gnupg2 \
         libtbb12 \
@@ -15,9 +15,8 @@ RUN apt-get update \
         python3.11-venv 
 
 # Install GPU drivers
-RUN mkdir /tmp/neo \
-    && cd /tmp/neo \
-    && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-core_1.0.17791.9_amd64.deb \
+WORKDIR /tmp/neo
+RUN wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-core_1.0.17791.9_amd64.deb \
     && wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17791.9/intel-igc-opencl_1.0.17791.9_amd64.deb \
     && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu-dbgsym_1.6.31294.12_amd64.ddeb \
     && wget https://github.com/intel/compute-runtime/releases/download/24.39.31294.12/intel-level-zero-gpu_1.6.31294.12_amd64.deb \
@@ -27,9 +26,8 @@ RUN mkdir /tmp/neo \
     && dpkg -i *.deb
 
 # Install NPU drivers
-RUN mkdir /tmp/npu-driver \
-    && cd /tmp/npu-driver\
-    && wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.0/intel-driver-compiler-npu_1.10.0.20241107-11729849322_ubuntu22.04_amd64.deb \
+WORKDIR /tmp/npu-driver
+RUN wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.0/intel-driver-compiler-npu_1.10.0.20241107-11729849322_ubuntu22.04_amd64.deb \
     && wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.0/intel-fw-npu_1.10.0.20241107-11729849322_ubuntu22.04_amd64.deb \
     && wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.0/intel-level-zero-npu_1.10.0.20241107-11729849322_ubuntu22.04_amd64.deb \
     && wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb \
