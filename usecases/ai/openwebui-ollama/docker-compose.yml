@@ -85,9 +85,10 @@ services:
     container_name: ollama
     image: intel-ipex-ollama
     restart: always
+    group_add:
+      - ${RENDER_GROUP_ID:-110}
     ports:
       - 11434:11434
-    privileged: true
     networks:
       - app-network
     environment:
@@ -95,10 +96,11 @@ services:
       - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU:-999}
       - ZES_ENABLE_SYSMAN=1
       - SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
+      - ONEAPI_DEVICE_SELECTOR=level_zero:0
     devices:
-      - /dev:/dev:rw
+      - /dev/dri:/dev/dri:rw
     volumes:
-      - ollama:/root/.ollama
+      - ollama:/home/intel/.ollama
 
 networks:
   app-network:

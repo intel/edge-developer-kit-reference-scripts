@@ -12,6 +12,10 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m venv .venv
 
+RUN useradd -ms /bin/bash intel
+RUN mkdir -p /home/intel/.ollama \
+    && chown -R intel:intel /home/intel/.ollama \
+    && chown -R intel:intel /opt/intel/llm-app
 USER intel
 ENV PATH="/opt/intel/llm-app/.venv/bin:$PATH"
 ENV LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH"
