@@ -18,7 +18,7 @@ REPORT_FILE="${REPORT_FILE:-validation_report.csv}"
 LOG_DIR="${LOG_DIR:-./logs}"
 
 # List of available use cases
-AVAILABLE_USECASES=("rag-toolkit" "ai-video-analytics")
+AVAILABLE_USECASES=("rag-toolkit" "ai-video-analytics" "openwebui-ollama")
 
 # Create an associative array to store validation results
 declare -A validation_results
@@ -200,6 +200,67 @@ validate_ai_video_analytics() {
     fi
 }
 
+validate_openwebui_ollama(){
+    local module_name="openwebui-ollama"
+    log $LOG_LEVEL_INFO "Validating $module_name use case..."
+    
+    # Add detailed logging for debugging if needed
+    log $LOG_LEVEL_DEBUG "Checking $module_name directory structure"
+    
+    local success=true
+    
+    if [[ ! -d "./usecases/ai/openwebui-ollama" ]]; then
+        log $LOG_LEVEL_ERROR "$module_name directory not found"
+        success=false
+    fi
+
+    cd ./usecases/ai/openwebui-ollama || {
+        log $LOG_LEVEL_ERROR "Failed to change directory to $module_name"
+        success=false
+    }
+
+    # Build the module
+    log $LOG_LEVEL_INFO "Building $module_name module..."
+    docker compose build --no-cache || {
+        log $LOG_LEVEL_ERROR "Failed to build $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Building $module_name module completed"
+
+    # Run the module
+    log $LOG_LEVEL_INFO "Running $module_name module on CPU..."
+    local render_gid
+    render_gid=$(getent group render | cut -d: -f3)
+    export RENDER_GROUP_ID="$render_gid"
+    docker compose up -d || {
+        log $LOG_LEVEL_ERROR "Failed to run $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Running $module_name module completed"
+
+    sleep 5
+
+    # Cleanup the module
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module..."
+    docker compose down || {
+        log $LOG_LEVEL_ERROR "Failed to clean up $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module completed"
+    
+    cd - || {
+        log $LOG_LEVEL_ERROR "Failed to return to previous directory"
+        success=false
+    }
+    
+    # Record the validation result
+    if [ "$success" = true ]; then
+        record_validation "$module_name" "PASS"
+    else
+        record_validation "$module_name" "FAIL"
+    fi
+}
+
 # Display usage information
 show_usage() {
     echo "Usage: $0 [OPTIONS]"
@@ -284,6 +345,9 @@ run_validations() {
                 ;;
             ai-video-analytics)
                 validate_ai_video_analytics
+                ;;
+            openwebui-ollama)
+                validate_openwebui_ollama
                 ;;
             # Additional use cases can be added here as they are implemented
             *)
