@@ -18,7 +18,7 @@ REPORT_FILE="${REPORT_FILE:-validation_report.csv}"
 LOG_DIR="${LOG_DIR:-./logs}"
 
 # List of available use cases
-AVAILABLE_USECASES=("rag-toolkit" "ai-video-analytics" "openwebui-ollama")
+AVAILABLE_USECASES=("rag-toolkit" "ai-video-analytics" "openwebui-ollama" "smart-parking")
 
 # Create an associative array to store validation results
 declare -A validation_results
@@ -261,6 +261,78 @@ validate_openwebui_ollama(){
     fi
 }
 
+validate_smart_parking() {
+    local module_name="smart-parking"
+    log $LOG_LEVEL_INFO "Validating $module_name use case..."
+    
+    # Add detailed logging for debugging if needed
+    log $LOG_LEVEL_DEBUG "Checking $module_name directory structure"
+    
+    local success=true
+    
+    if [[ ! -d "./usecases/ai/smart-parking" ]]; then
+        log $LOG_LEVEL_ERROR "$module_name directory not found"
+        success=false
+    fi
+
+    cd ./usecases/ai/smart-parking || {
+        log $LOG_LEVEL_ERROR "Failed to change directory to $module_name"
+        success=false
+    }
+    bash setup/generate-certs.sh || {
+        log $LOG_LEVEL_ERROR "Failed to generate certificates for $module_name"
+        success=false
+    }
+
+    wget https://videos.pexels.com/video-files/30937634/13228649_1920_1080_30fps.mp4 -O server/resources/carpark_video_1.mp4 || {
+        log $LOG_LEVEL_ERROR "Failed to download video for $module_name"
+        success=false
+    }
+
+    if [[ ! -f "docker-compose.yml" && ! -f "docker-compose.yaml" ]]; then
+        log $LOG_LEVEL_ERROR "No docker-compose.yml or docker-compose.yaml found in $module_name"
+        success=false
+    fi
+    sed -i "/DISPLAY=\${DISPLAY:?err}/s/^\([[:space:]]*\)/\1# /" docker-compose.yml
+
+    # Build the module
+    log $LOG_LEVEL_INFO "Building $module_name module..."
+    docker compose build --no-cache || {
+        log $LOG_LEVEL_ERROR "Failed to build $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Building $module_name module completed"
+
+    # Run the module
+    docker compose up -d || {
+        log $LOG_LEVEL_ERROR "Failed to run $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Running $module_name module completed"
+
+    sleep 5
+
+    # Cleanup the module
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module..."
+    docker compose down -v || {
+        log $LOG_LEVEL_ERROR "Failed to clean up $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module completed"
+    
+    cd - || {
+        log $LOG_LEVEL_ERROR "Failed to return to previous directory"
+        success=false
+    }
+    
+    # Record the validation result
+    if [ "$success" = true ]; then
+        record_validation "$module_name" "PASS"
+    else
+        record_validation "$module_name" "FAIL"
+    fi
+}
+
 # Display usage information
 show_usage() {
     echo "Usage: $0 [OPTIONS]"
@@ -348,6 +420,9 @@ run_validations() {
                 ;;
             openwebui-ollama)
                 validate_openwebui_ollama
+                ;;
+            smart-parking)
+                validate_smart_parking
                 ;;
             # Additional use cases can be added here as they are implemented
             *)

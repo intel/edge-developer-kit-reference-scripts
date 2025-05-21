@@ -199,3 +199,56 @@ jobs:
           path: |
             validation_report.csv
             validation_run.log
+
+  validate-smart-parking:
+    runs-on: [self-hosted, case-cse, arlh]
+    needs: precheck
+    if: needs.precheck.outputs.should_run == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run validation
+        env:
+          no_proxy: localhost, 127.0.0.1
+        run: |
+          cd ${{ github.workspace }}
+          echo "Running validation for smart parking..."
+          if [[ -f validation_report.csv ]]; then
+            rm validation_report.csv
+          fi
+          if [[ -f validation_run.log ]]; then
+            rm validation_run.log
+          fi
+          docker system prune -af
+          .github/tests/validate-use-cases.sh -u smart-parking 2>&1 | tee validation_run.log
+          if [ $? -ne 0 ]; then
+            echo "Validation for smart parking failed."
+            exit 1
+          fi
+
+      - name: Validate report
+        run: |
+          echo "Validating use cases report..."
+          cd ${{ github.workspace }}
+          if [ ! -f validation_report.csv ]; then
+            echo "Validation report not found."
+            exit 1
+          fi
+
+          # Check if the report contains FAIL
+          if grep -q "FAIL" validation_report.csv; then
+            echo "Validation report contains FAIL."
+            exit 1
+          fi
+
+          echo "All validation for use cases pass."
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Smart Parking Validation Report
+          path: |
+            validation_report.csv
+            validation_run.log
