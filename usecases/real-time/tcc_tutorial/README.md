@@ -34,7 +34,8 @@ This application is used to demonstrate the possible optimization steps to incre
 ## 1. Intel® TCC Mode
 
 In the first step, let's take a look at the <span style="font-family: 'Courier New';">Intel® TCC Mode</span> and how this single UEFI BIOS/Slim Bootloader (SBL) knob can help quickly optimize firmware settings for low latency. The <span style="font-family: 'Courier New';">Intel® TCC Mode</span> should be avialble on all Intel® TCC enabled platforms. With the Intel® reference BIOS, you can enable <span style="font-family: 'Courier New';">Intel® TCC Mode</span> by navigating to <span style="font-family: 'Courier New';">"Intel® Advanced Menu > Time Coordinated Computing"</span>. 
-If <span style="font-family: 'Courier New';">Intel® TCC Mode</span> is not visible, consult your board vendor or follow the steps listed in the "Intel® Core Processors Firmware Configuration" section of [TCC User Guide](https://cdrdv2.intel.com/v1/dl/getContent/831868?explicitVersion=true) to set the options manually.
+
+If <span style="font-family: 'Courier New';">Intel® TCC Mode</span> is not visible, consult your board vendor or follow the steps listed in the "Intel® Core Processors Firmware Configuration" section of [TCC User Guide](https://cdrdv2.intel.com/v1/dl/getContent/831067) to set the options manually.
 
 <span style="font-family: 'Courier New';">Intel® TCC Mode</span> includes a wide range of real-time optimizations including the following:
 - Power Management, for example:
@@ -147,9 +148,8 @@ As demonstrated, partitioning the cache using Intel® Cache Allocation Technolog
 
 This is just an example, and the configuration needs to be adjusted to your specific use case and processor. You can determine the cache topology, including the size and number of ways supported for a particular processor, by using the CPUID leaf "Deterministic Cache Parameters Leaf - 0x4." Additionally, Linux utilities like lstopo are very useful for getting an overview of the cache topology of a processor. Here are some references if you need more information about CAT ...
   
-  
-  - Public Intel® Time Coordinated Computing (TCC) User Guide - RDC #[831067](https://cdrdv2.intel.com/v1/dl/getContent/831067?fileName=Public+TCC+User+Guide+-+September+2024+-+RDC-831067.pdf)
-  - Intel® Resource Director Technology (Intel® RDT) Architecture Specification - RDC #[789566](https://cdrdv2.intel.com/v1/dl/getContent/789566?fileName=356688-intel-rdt-arch-spec.pdf)
+  - Public Intel® Time Coordinated Computing (TCC) User Guide - RDC #[831067](https://cdrdv2.intel.com/v1/dl/getContent/831067)
+  - Intel® Resource Director Technology (Intel® RDT) Architecture Specification - RDC #[789566](https://cdrdv2.intel.com/v1/dl/getContent/789566)
   - Intel® 64 and IA-32 Architectures Software Developer’s Manual - RDC#[671200](https://cdrdv2.intel.com/v1/dl/getContent/671200)
   
 ### 3. Intel® Speed Shift technology for Edge Computing
@@ -158,7 +158,7 @@ In the third and final step of this tutorial, let's examine another aspect of po
 
 Until the 11th generation of Intel Core processors, it was recommended for hard real-time use cases to disable all DVFS features in the BIOS, which would lock the frequency of all cores permanently to the base frequency. Starting with the 11th generation of Intel Core processors, P-State transitions were optimized. As a result, from the 11th generation onward, Intel® Speed Step, Speed Shift, and Turbo Boost Technology are no longer disabled if you enable <span style="font-family: 'Courier New';">Intel® TCC Mode</span> in the BIOS. You still have the option to lock core frequency during runtime using the HWP MSRs or the intel_pstate driver under Linux.
 
-With this knowledge, let's revisit the performance metrics. First, lock the core frequency of all cores to the base frequency. In the second step, boost the frequency of the real-time core to a value within the turbo frequency range to leverage higher single-threaded performance. Here let's follow the recommendations for the enveloping frequency configurations which are listed in the [TCC User Guide](https://cdrdv2.intel.com/v1/dl/getContent/831067?fileName=Public+TCC+User+Guide+-+September+2024+-+RDC-831067) for the specific processor SKU.
+With this knowledge, let's revisit the performance metrics. First, lock the core frequency of all cores to the base frequency. In the second step, boost the frequency of the real-time core to a value within the turbo frequency range to leverage higher single-threaded performance. Here let's follow the recommendations for the enveloping frequency configurations which are listed in the [TCC User Guide](https://cdrdv2.intel.com/v1/dl/getContent/831067) for the specific processor SKU.
 
 More information about HWP and the MSR can be found in the Intel® 64 and IA-32 Architectures Software Developer’s Manual Vol3 section "Power and Thermal Management-Hardware Controlled Performance States - RDC#[671200](https://cdrdv2.intel.com/v1/dl/getContent/671200) 
 
@@ -209,7 +209,7 @@ Use the script with `rt-boost`, followed by the identfier of the real-time core 
   ``` 
   <span style="color:red"> Note: The script and the specified frequencies are examples tailored for this tutorial and the Intel® Core™ i5-1350PE processor. You may need to adapt them to match your processor and use case.</span>
 
-For more information on directly accessing the HWP MSR instead of using the sysfs entries of the intel_pstate driver, please refer to the [TCC User Guide](https://cdrdv2.intel.com/v1/dl/getContent/831067?fileName=Public+TCC+User+Guide+-+September+2024+-+RDC-831067) and in the Intel® 64 and IA-32 Architectures Software Developer’s Manual Vol3 section "Power and Thermal Management-Hardware Controlled Performance States - RDC#[671200](https://cdrdv2.intel.com/v1/dl/getContent/671200) 
+For more information on directly accessing the HWP MSR instead of using the sysfs entries of the intel_pstate driver, please refer to the [TCC User Guide](https://cdrdv2.intel.com/v1/dl/getContent/831067) and in the Intel® 64 and IA-32 Architectures Software Developer’s Manual Vol3 section "Power and Thermal Management-Hardware Controlled Performance States - RDC#[671200](https://cdrdv2.intel.com/v1/dl/getContent/671200) 
 
 <p align="center">
   <img src="images/result_CAT_isol_boost.png " alt="Speed Shift - Results" style="width: 80%;">
