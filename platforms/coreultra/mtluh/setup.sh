@@ -15,8 +15,8 @@ S_VALID="✓"
 #S_INVALID="✗"
 
 # verify current user
-if [ "$EUID" -eq 0 ]; then
-    echo "Must not run with sudo or root user"
+if [ ! "$EUID" -eq 0 ]; then
+    echo "Please run with sudo or root user"
     exit 1
 fi
 
@@ -33,8 +33,8 @@ install_packages(){
         fi
     done
     if [ $INSTALL_REQUIRED -eq 1 ]; then
-        sudo -E apt update
-        sudo -E apt install -y "${PACKAGES[@]}"
+        apt update
+        apt install -y "${PACKAGES[@]}"
     fi
 }
 
@@ -56,10 +56,10 @@ verify_intel_gpu_package_repo(){
     if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
-            sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
+            gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | \
-            sudo tee /etc/apt/sources.list.d/intel-gpu-jammy.list
-        sudo apt update
+            tee /etc/apt/sources.list.d/intel-gpu-jammy.list
+        apt update
     fi
 
 }
@@ -136,15 +136,15 @@ verify_kernel_package() {
     if [[ ! "$LATEST_KERNEL_VERSION" == *"$CURRENT_KERNEL_VERSION_REVISION"* ]]; then
         if dpkg -l | grep -q 'linux-image.*generic$' && [ "$KERNEL_FLAVOUR" != "generic" ]; then
             echo "Removing generic kernel"
-            sudo apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
+            apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
+            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
         elif dpkg -l | grep -q 'linux-image.*iotg$' && [ "$KERNEL_FLAVOUR" != "intel-iotg" ]; then
             echo "Removing Intel IoT kernel"
-            sudo apt remove -y --auto-remove linux-image-intel-iotg
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
+            apt remove -y --auto-remove linux-image-intel-iotg
+            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
         elif dpkg -l | grep -q 'linux-image.*oem$' && [ "$KERNEL_FLAVOUR" != "oem" ]; then
             echo "Removing OEM kernel"
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
+            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
         fi
         echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
         echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
@@ -183,13 +183,26 @@ verify_igpu_driver(){
         FIRMWARE=(linux-firmware)
         install_packages "${FIRMWARE[@]}"
 
+        # $USER here is root
         if ! id -nG "$USER" | grep -q -w '\<video\>'; then
-            echo "Adding current user to 'video' group"
-            sudo usermod -aG video "$USER"
+            echo "Adding current user ($USER) to 'video' group"
+            usermod -aG video "$USER"
         fi
         if ! id -nG "$USER" | grep -q '\<render\>'; then
-            echo "Adding current user to 'render' group"
-            sudo usermod -aG render "$USER"
+            echo "Adding current user ($USER) to 'render' group"
+            usermod -aG render "$USER"
+        fi
+
+        # Get the native user who invoked sudo
+        NATIVE_USER="$(logname)"
+        
+        if ! id -nG "$NATIVE_USER" | grep -q -w '\<video\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'video' group"
+            usermod -aG video "$NATIVE_USER"
+        fi
+        if ! id -nG "$NATIVE_USER" | grep -q '\<render\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'render' group"
+            usermod -aG render "$NATIVE_USER"
         fi
         echo "System reboot is required. Re-run the script after reboot"
         exit 0
@@ -222,7 +235,7 @@ verify_compute_runtime(){
     sha256sum -c ww13.sum
 
     echo -e "\nInstalling compute runtime as root"
-    sudo dpkg -i ./*.deb
+    dpkg -i ./*.deb
 
     cd ..
     echo -e "Cleaning up /tmp/neo_temp folder after installation"
@@ -239,9 +252,9 @@ verify_npu_driver(){
 
     if [[ -z $COMPILER_PKG || -z $LEVEL_ZERO_PKG ]]; then
         echo -e "NPU Driver is not installed. Proceed installing"
-        sudo dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu
-        sudo apt install --fix-broken
-        sudo -E apt update
+        dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu
+        apt install --fix-broken
+        apt update
 
         if [ -d /tmp/npu_temp ];then
             rm -rf /tmp/npu_temp
@@ -254,17 +267,17 @@ verify_npu_driver(){
             wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb
             wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero-devel_1.17.6+u22.04_amd64.deb
 
-            sudo dpkg -i ./*.deb
+            dpkg -i ./*.deb
                                                                                                                                                                                                  
             cd ..
             rm -rf npu_temp
             cd "$CURRENT_DIR"
         fi
-        sudo chown root:render /dev/accel/accel0
-        sudo chmod g+rw /dev/accel/accel0
-	sudo bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
-	sudo udevadm control --reload-rules
-	sudo udevadm trigger --subsystem-match=accel
+        chown root:render /dev/accel/accel0
+        chmod g+rw /dev/accel/accel0
+	bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
+	udevadm control --reload-rules
+	udevadm trigger --subsystem-match=accel
     fi
 }
 
@@ -281,7 +294,7 @@ verify_drivers(){
 
     verify_npu_driver
     
-    NPU_DRIVER_VERSION="$(sudo dmesg | grep vpu | awk 'NR==3{ print; }' | awk -F " " '{print $5" "$6" "$7}')"
+    NPU_DRIVER_VERSION="$(dmesg | grep vpu | awk 'NR==3{ print; }' | awk -F " " '{print $5" "$6" "$7}')"
     echo "$S_VALID Intel NPU Drivers: $NPU_DRIVER_VERSION"
 }
 
