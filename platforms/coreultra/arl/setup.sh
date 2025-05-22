@@ -16,8 +16,8 @@ S_VALID="✓"
 #S_INVALID="✗"
 
 # verify current user
-if [ "$EUID" -eq 0 ]; then
-    echo "Must not run with sudo or root user"
+if [ ! "$EUID" -eq 0 ]; then
+    echo "Please run with sudo or root user"
     exit 1
 fi
 
@@ -34,8 +34,8 @@ install_packages(){
         fi
     done
     if [ $INSTALL_REQUIRED -eq 1 ]; then
-        sudo -E apt update
-        sudo -E apt install -y "${PACKAGES[@]}"
+        apt update
+        apt install -y "${PACKAGES[@]}"
     fi
 }
 
@@ -64,10 +64,10 @@ verify_intel_gpu_package_repo(){
     if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
-            sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
+            gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
         echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | \
-            sudo tee /etc/apt/sources.list.d/intel-gpu-noble.list
-        sudo -E apt update
+            tee /etc/apt/sources.list.d/intel-gpu-noble.list
+        apt update
     fi
 
 }
@@ -122,33 +122,33 @@ verify_os() {
 
 verify_kernel_package() {
     echo -e "## Install User Space Components"
-    sudo apt -y update
-    sudo apt -y upgrade
+    apt -y update
+    apt -y upgrade
 
     # Download Kernel
-    sudo touch /etc/apt/sources.list.d/intel-arl.list
+    touch /etc/apt/sources.list.d/intel-arl.list
     echo -e "deb https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels\n\
-    deb-src https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels" | sudo tee /etc/apt/sources.list.d/intel-arl.list
+    deb-src https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels" | tee /etc/apt/sources.list.d/intel-arl.list
 
     echo -e "### Download GPG key to /etc/apt/trusted.gpg.d/arl.gpg"
-    sudo wget https://download.01.org/intel-linux-overlay/ubuntu/E6FA98203588250569758E97D176E3162086EE4C.gpg -O /etc/apt/trusted.gpg.d/arl.gpg
+    wget https://download.01.org/intel-linux-overlay/ubuntu/E6FA98203588250569758E97D176E3162086EE4C.gpg -O /etc/apt/trusted.gpg.d/arl.gpg
 
     echo -e "### Set the preferred list in /etc/apt/preferences.d/intel-arl"
-    sudo touch /etc/apt/preferences.d/intel-arl
+    touch /etc/apt/preferences.d/intel-arl
     echo -e "Package: *\n\
     Pin: release o=intel-iot-linux-overlay-noble\n\
-    Pin-Priority: 2000" | sudo tee /etc/apt/preferences.d/intel-arl
+    Pin-Priority: 2000" | tee /etc/apt/preferences.d/intel-arl
     
     # Install kernel
     echo -e "## Install Kernel"
-    sudo apt -y update
-    sudo apt -y install linux-image-6.11-intel
-    sudo apt -y install linux-headers-6.11-intel
+    apt -y update
+    apt -y install linux-image-6.11-intel
+    apt -y install linux-headers-6.11-intel
 
     echo -e "## Update grub"
-    sudo sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT=.*$|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash i915.enable_guc=3 i915.max_vfs=7 i915.force_probe=* udmabuf.list_limit=8192"|' /etc/default/grub
-    sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.11-intel"/' /etc/default/grub
-    sudo update-grub
+    sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT=.*$|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash i915.enable_guc=3 i915.max_vfs=7 i915.force_probe=* udmabuf.list_limit=8192"|' /etc/default/grub
+    sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.11-intel"/' /etc/default/grub
+    update-grub
 
     CURRENT_KERNEL_VERSION_INSTALLED=$(uname -r)
 
@@ -186,14 +186,28 @@ verify_igpu_driver(){
         FIRMWARE=(linux-firmware)
         install_packages "${FIRMWARE[@]}"
 
+         # $USER here is root
         if ! id -nG "$USER" | grep -q -w '\<video\>'; then
-            echo "Adding current user to 'video' group"
-            sudo usermod -aG video "$USER"
+            echo "Adding current user ($USER) to 'video' group"
+            usermod -aG video "$USER"
         fi
         if ! id -nG "$USER" | grep -q '\<render\>'; then
-            echo "Adding current user to 'render' group"
-            sudo usermod -aG render "$USER"
+            echo "Adding current user ($USER) to 'render' group"
+            usermod -aG render "$USER"
         fi
+
+        # Get the native user who invoked sudo
+        NATIVE_USER="$(logname)"
+        
+        if ! id -nG "$NATIVE_USER" | grep -q -w '\<video\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'video' group"
+            usermod -aG video "$NATIVE_USER"
+        fi
+        if ! id -nG "$NATIVE_USER" | grep -q '\<render\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'render' group"
+            usermod -aG render "$NATIVE_USER"
+        fi
+
         echo "System reboot is required. Re-run the script after reboot"
         exit 0
     fi
@@ -225,7 +239,7 @@ verify_compute_runtime(){
     sha256sum -c ww52.sum
 
     echo -e "\nInstalling compute runtime as root"
-    sudo dpkg -i ./*.deb
+    dpkg -i ./*.deb
 
     cd ..
     echo -e "Cleaning up /tmp/neo_temp folder after installation"
@@ -242,9 +256,9 @@ verify_npu_driver(){
 
     if [[ -z $COMPILER_PKG || -z $LEVEL_ZERO_PKG ]]; then
         echo -e "NPU Driver is not installed. Proceed installing"
-        sudo dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu
-        sudo apt install --fix-broken
-        sudo -E apt update
+        dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu
+        apt install --fix-broken
+        apt update
 
         if [ -d /tmp/npu_temp ];then
             rm -rf /tmp/npu_temp
@@ -256,17 +270,17 @@ verify_npu_driver(){
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.13.0/intel-level-zero-npu_1.13.0.20250131-13074932693_ubuntu24.04_amd64.deb
             wget https://github.com/oneapi-src/level-zero/releases/download/v1.18.5/level-zero_1.18.5+u24.04_amd64.deb
 
-            sudo dpkg -i ./*.deb
+            dpkg -i ./*.deb
                                                                                                                                                                                                  
             cd ..
             rm -rf npu_temp
             cd "$CURRENT_DIR"
         fi
-        sudo chown root:render /dev/accel/accel0
-        sudo chmod g+rw /dev/accel/accel0
-	sudo bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
-    sudo udevadm control --reload-rules
-    sudo udevadm trigger --subsystem-match=accel
+        chown root:render /dev/accel/accel0
+        chmod g+rw /dev/accel/accel0
+	bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
+    udevadm control --reload-rules
+    udevadm trigger --subsystem-match=accel
     fi
 }
 
@@ -282,7 +296,7 @@ verify_drivers(){
 
     verify_npu_driver
     
-    NPU_DRIVER_VERSION="$(sudo dmesg | grep vpu | awk 'NR==3{ print; }' | awk -F " " '{print $5" "$6" "$7}')"
+    NPU_DRIVER_VERSION="$(dmesg | grep vpu | awk 'NR==3{ print; }' | awk -F " " '{print $5" "$6" "$7}')"
     echo "$S_VALID Intel NPU Drivers: $NPU_DRIVER_VERSION"
 }
 

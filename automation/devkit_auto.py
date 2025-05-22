@@ -231,7 +231,7 @@ def main():
      
         while True:
             # Run BKC installation script on SUT
-            stdout, _ = run_command(sut_ssh, f"cd {SUT_SCRIPT_PATH}{args.script_path} && ./{args.script}", 
+            stdout, _ = run_command(sut_ssh, f"cd {SUT_SCRIPT_PATH}{args.script_path} && sudo ./{args.script}", 
                                 ignore_stderr=True)                                 
             
             if stdout:
