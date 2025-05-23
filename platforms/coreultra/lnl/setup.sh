@@ -15,8 +15,8 @@ S_VALID="✓"
 #S_INVALID="✗"
 
 # verify current user
-if [ "$EUID" -eq 0 ]; then
-    echo "Must not run with sudo or root user"
+if [ ! "$EUID" -eq 0 ]; then
+    echo "Please run with sudo or root user"
     exit 1
 fi
 
@@ -34,8 +34,8 @@ install_packages(){
         fi
     done
     if [ $INSTALL_REQUIRED -eq 1 ]; then
-        sudo -E apt update
-        sudo -E apt install -y "${PACKAGES[@]}"
+        apt update
+        apt install -y "${PACKAGES[@]}"
     fi
 }
 
@@ -59,13 +59,13 @@ verify_intel_gpu_package_repo(){
     if [ ! -e /etc/apt/sources.list.d/intel-gpu-noble.list ]; then
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
-        sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
+        gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
         echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | \
-        sudo tee /etc/apt/sources.list.d/intel-gpu-noble.list
-        sudo apt update
-        sudo apt-get install -y libze-intel-gpu1 libze1 intel-opencl-icd clinfo intel-gsc
-        sudo apt update
-        sudo apt -y dist-upgrade
+        tee /etc/apt/sources.list.d/intel-gpu-noble.list
+        apt update
+        apt-get install -y libze-intel-gpu1 libze1 intel-opencl-icd clinfo intel-gsc
+        apt update
+        apt -y dist-upgrade
 
     fi
 
@@ -88,13 +88,26 @@ verify_igpu_driver(){
         FIRMWARE=(linux-firmware)
         install_packages "${FIRMWARE[@]}"
 
+         # $USER here is root
         if ! id -nG "$USER" | grep -q -w '\<video\>'; then
-            echo "Adding current user to 'video' group"
-            sudo usermod -aG video "$USER"
+            echo "Adding current user ($USER) to 'video' group"
+            usermod -aG video "$USER"
         fi
         if ! id -nG "$USER" | grep -q '\<render\>'; then
-            echo "Adding current user to 'render' group"
-            sudo usermod -aG render "$USER"
+            echo "Adding current user ($USER) to 'render' group"
+            usermod -aG render "$USER"
+        fi
+
+        # Get the native user who invoked sudo
+        NATIVE_USER="$(logname)"
+        
+        if ! id -nG "$NATIVE_USER" | grep -q -w '\<video\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'video' group"
+            usermod -aG video "$NATIVE_USER"
+        fi
+        if ! id -nG "$NATIVE_USER" | grep -q '\<render\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'render' group"
+            usermod -aG render "$NATIVE_USER"
         fi
     fi
 }
@@ -125,8 +138,8 @@ verify_compute_runtime(){
     sha256sum -c ww52.sum
 
     echo -e "\nInstalling compute runtime as root"
-    sudo apt remove -y intel-ocloc libze-intel-gpu1
-    sudo dpkg -i ./*.deb 
+    apt remove -y intel-ocloc libze-intel-gpu1
+    dpkg -i ./*.deb 
 
     cd ..
     echo -e "Cleaning up /tmp/neo_temp folder after installation"
@@ -159,9 +172,9 @@ verify_npu_driver(){
 
     if [[ -z $COMPILER_PKG || -z $LEVEL_ZERO_PKG ]]; then
         echo -e "NPU Driver is not installed. Proceed installing"
-        sudo dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu
-        sudo apt install --fix-broken
-        sudo -E apt update
+        dpkg --purge --force-remove-reinstreq intel-driver-compiler-npu intel-fw-npu intel-level-zero-npu
+        apt install --fix-broken
+        apt update
 
         if [ -d /tmp/npu_temp ];then
             rm -rf /tmp/npu_temp
@@ -174,17 +187,17 @@ verify_npu_driver(){
             wget https://github.com/intel/linux-npu-driver/releases/download/v1.10.1/intel-level-zero-npu_1.10.1.20241220-12430270326_ubuntu24.04_amd64.deb
             wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.44/level-zero_1.17.44+u22.04_amd64.deb
             
-            sudo dpkg -i ./*.deb
+            dpkg -i ./*.deb
                                                                                                                                                                                                  
             cd ..
             rm -rf npu_temp
             cd "$CURRENT_DIR"
         fi
-        sudo chown root:render /dev/accel/accel0
-        sudo chmod g+rw /dev/accel/accel0
-	sudo bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
-	sudo udevadm control --reload-rules
-	sudo udevadm trigger --subsystem-match=accel
+        chown root:render /dev/accel/accel0
+        chmod g+rw /dev/accel/accel0
+	bash -c "echo 'SUBSYSTEM==\"accel\", KERNEL==\"accel*\", GROUP=\"render\", MODE=\"0660\"' > /etc/udev/rules.d/10-intel-vpu.rules"
+	udevadm control --reload-rules
+	udevadm trigger --subsystem-match=accel
     fi
 }
 
@@ -249,8 +262,8 @@ verify_kernel_package() {
         KERNEL_PACKAGES=("${KERNEL_PACKAGE_NAME}")
         if [ "$KERNEL_PACKAGE_NAME" = "6.11.0-1007-oem" ]; then
             echo hello
-            sudo apt-get install linux-image-6.11.0-1007-oem -y
-            sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.11-intel"/' /etc/default/grub
+            apt-get install linux-image-6.11.0-1007-oem -y
+            sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.11-intel"/' /etc/default/grub
         else
             echo "${KERNEL_PACKAGE_NAME}"
             install_packages "${KERNEL_PACKAGES[@]}"
@@ -259,15 +272,15 @@ verify_kernel_package() {
     if [[ ! "$LATEST_KERNEL_VERSION" == *"$CURRENT_KERNEL_VERSION_REVISION"* ]]; then
         if dpkg -l | grep -q 'linux-image.*generic$' && [ "$KERNEL_FLAVOUR" != "generic" ]; then
             echo "Removing generic kernel"
-            sudo apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
+            apt remove -y --auto-remove linux-image-generic-hwe-$OS_VERSION
+            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-generic'
         elif dpkg -l | grep -q 'linux-image.*iotg$' && [ "$KERNEL_FLAVOUR" != "intel-iotg" ]; then
             echo "Removing Intel IoT kernel"
-            sudo apt remove -y --auto-remove linux-image-intel-iotg
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
+            apt remove -y --auto-remove linux-image-intel-iotg
+            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-iotg'
         elif dpkg -l | grep -q 'linux-image.*oem$' && [ "$KERNEL_FLAVOUR" != "oem" ]; then
             echo "Removing OEM kernel"
-            sudo DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
+            DEBIAN_FRONTEND=noninteractive apt purge -y 'linux-image-*-oem'
         fi
         echo "Running kernel version: $CURRENT_KERNEL_VERSION_REVISION"
         echo "Installed kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"

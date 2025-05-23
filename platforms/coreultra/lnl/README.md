@@ -17,7 +17,7 @@ Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble
 This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceeding to the next step.
 
 ```bash
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/refs/heads/main/platforms/coreultra/lnl/setup.sh)"
+sudo bash -c "$(wget -qLO - https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/refs/heads/main/platforms/coreultra/lnl/setup.sh)"
 ```
 After finished installation, it may ask you to reboot your system. Reboot the system. 
 Installation is completed when you see this message:
