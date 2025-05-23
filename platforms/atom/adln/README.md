@@ -34,7 +34,7 @@ This step will configure the basic setup of the platform. Make sure all of the r
 Running this script might require a minimum of 1 hour. 
 
 ```bash
-./setup.sh
+sudo ./setup.sh
 ```
 
 During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:

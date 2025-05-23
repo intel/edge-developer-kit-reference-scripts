@@ -15,8 +15,8 @@ S_VALID="✓"
 #S_INVALID="✗"
 
 # verify current user
-if [ "$EUID" -eq 0 ]; then
-    echo "Must not run with sudo or root user"
+if [ ! "$EUID" -eq 0 ]; then
+    echo "Please run with sudo or root user"
     exit 1
 fi
 
@@ -42,8 +42,8 @@ install_packages(){
         fi
     done
     if [ $INSTALL_REQUIRED -eq 1 ]; then
-        sudo -E apt update
-        sudo -E apt install -y "${PACKAGES[@]}"
+        apt update
+        apt install -y "${PACKAGES[@]}"
     fi
 }
 
@@ -63,10 +63,10 @@ verify_intel_gpu_package_repo(){
     if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
         echo "Adding Intel GPU repository"
         wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
-            sudo gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
+            gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
         echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | \
-            sudo tee /etc/apt/sources.list.d/intel-gpu-noble.list
-        sudo -E apt update
+            tee /etc/apt/sources.list.d/intel-gpu-noble.list
+        apt update
     fi
 }
 
@@ -89,45 +89,59 @@ verify_igpu_driver(){
             hwinfo
         )
         install_packages "${IGPU_PACKAGES[@]}"
+
+        # $USER here is root
         if ! id -nG "$USER" | grep -q -w '\<video\>'; then
-            echo "Adding current user to 'video' group"
-            sudo usermod -aG video "$USER"
+            echo "Adding $USER to 'video' group"
+            usermod -aG video "$USER"
         fi
         if ! id -nG "$USER" | grep -q '\<render\>'; then
-            echo "Adding current user to 'render' group"
-            sudo usermod -aG render "$USER"
+            echo "Adding $USER to 'render' group"
+            usermod -aG render "$USER"
+        fi
+
+        # Get the native user who invoked sudo
+        NATIVE_USER="$(logname)"
+        
+        if ! id -nG "$NATIVE_USER" | grep -q -w '\<video\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'video' group"
+            usermod -aG video "$NATIVE_USER"
+        fi
+        if ! id -nG "$NATIVE_USER" | grep -q '\<render\>'; then
+            echo "Adding native user ($NATIVE_USER) to 'render' group"
+            usermod -aG render "$NATIVE_USER"
         fi
     fi
 }
 
 install_kernel_overlay() {
     echo -e "## Install User Space Components"
-    sudo apt -y update
-    sudo apt -y upgrade
+    apt -y update
+    apt -y upgrade
 
     echo -e "### Add download link into /etc/apt/sources.list.d/intel-asladln.list"
-    sudo touch /etc/apt/sources.list.d/intel-asladln.list
+    touch /etc/apt/sources.list.d/intel-asladln.list
     echo -e "deb https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels\n\
     deb-src https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels" | sudo tee /etc/apt/sources.list.d/intel-asladln.list
 
     echo -e "### Download the GPG key to /etc/apt/trusted.gpg.d and rename it to asladln.gpg"
-    sudo wget https://download.01.org/intel-linux-overlay/ubuntu/E6FA98203588250569758E97D176E3162086EE4C.gpg -O /etc/apt/trusted.gpg.d/asladln.gpg
+    wget https://download.01.org/intel-linux-overlay/ubuntu/E6FA98203588250569758E97D176E3162086EE4C.gpg -O /etc/apt/trusted.gpg.d/asladln.gpg
 
     echo -e "### Set the preferred list in /etc/apt/preferences.d/intel-asladln"
-    sudo touch /etc/apt/preferences.d/intel-asladln
+    touch /etc/apt/preferences.d/intel-asladln
     echo -e "Package: *\n\
     Pin: release o=intel-iot-linux-overlay-noble\n\
-    Pin-Priority: 2000" | sudo tee /etc/apt/preferences.d/intel-asladln
+    Pin-Priority: 2000" | tee /etc/apt/preferences.d/intel-asladln
 
     echo -e "## Install Kernel Overlay"
-    sudo apt -y update
-    sudo apt -y install linux-image-6.6-intel
-    sudo apt -y install linux-headers-6.6-intel
-    sudo apt -y install linux-libc-dev
+    apt -y update
+    apt -y install linux-image-6.6-intel
+    apt -y install linux-headers-6.6-intel
+    apt -y install linux-libc-dev
 
     echo -e "## Update grub"
-    sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.6-intel"/' /etc/default/grub
-    sudo update-grub
+    sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.6-intel"/' /etc/default/grub
+    update-grub
 
     echo "System reboot is required. Re-run the script after reboot"
     exit 0
