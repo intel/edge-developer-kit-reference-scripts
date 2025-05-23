@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Send, Mic, Ban, EllipsisVertical } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -74,6 +74,78 @@ export default function Chatbox() {
     const latency = 1500 // assuming there is a delay of 500ms to transfer and receive files for each second
     const minGenerationTime = 200  // assuming it takes 0.05s everytime there is a lipsync request
     const lipsyncGenerationTimePerSecond = 300 // assuming it takes 0.4s to generate lipsync for 1s audio
+
+    const formatSeconds = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60)
+        const remainingSeconds = seconds % 60
+        const formattedSeconds = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds
+        return `${minutes}:${formattedSeconds}`
+    }
+
+    const savePerformanceResults = async (performanceResults: PerformanceResults, selectedConfig: SelectedPipelineConfig) => {
+        await createPerformanceResult({
+            denoise: performanceResults.denoise,
+            stt: performanceResults.stt,
+            llm: performanceResults.llm,
+            tts: performanceResults.tts?.map(result => ({
+                httpLatency: result.httpLatency ?? 0,
+                inferenceLatency: result.inferenceLatency ?? 0,
+                metadata: result.metadata ?? null,
+            })),
+            lipsync: performanceResults.lipsync?.map(result => ({
+                httpLatency: result.httpLatency ?? 0,
+                inferenceLatency: result.inferenceLatency ?? 0,
+                metadata: result.metadata ?? null,
+            })),
+            metadata: performanceResults.metadata ? { ...performanceResults.metadata } : undefined,
+            config: {...selectedConfig},
+        })
+    }
+
+    const handleStopChat = () => {
+        stop()
+        cleanup()
+    }
+
+    const handleStartRecording = () => {
+        cleanup()
+        startRecording()
+        setIsCalling(true)
+    }
+
+    const handleStopRecording = () => {
+        stopRecording(false)
+        setIsCalling(false)
+        handleStopChat()
+    }
+
+    const handleClearChat = () => {
+        cleanup()
+        handleStopChat()
+        setMessages([])
+    }
+
+    const cleanup = useCallback(() => {
+        // Cleanup task queue
+        setTaskQueue([]);
+
+        // Reset performance results
+        setPerformanceResults({});
+
+        // Stop recording and cleanup audio resources
+        stopRecording(false);
+
+        // Reset video queue
+        reset();
+    }, [reset, stopRecording]);
+
+    useEffect(() => {
+        return () => {
+            cleanup();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Ensure scroll to bottom when new message is added
     useEffect(() => {
         if (chatBottomRef.current) {
@@ -101,7 +173,6 @@ export default function Chatbox() {
         }
         
         if (performanceResults.lipsync) {
-            console.log("COMPLETE!")
             if (configResponse?.data) {
                 const selectedConfig: SelectedPipelineConfig =  {
                     denoiseStt: configResponse.data.denoiseStt.selected_config,
@@ -159,8 +230,6 @@ export default function Chatbox() {
 
         const processText = async (index: number, text: string) => {
             addVideo({ id: index, url: undefined })
-
-            // console.time(`Total time for message ${index}`)
             // TTS
             const { data: ttsData } = await getTTSAudio.mutateAsync({ text })
 
@@ -211,13 +280,6 @@ export default function Chatbox() {
         }
     }, [taskQueue, isProcessing, addVideo, getTTSAudio, getLipsync, updateVideo, currentFrame, fps, isReversed, framesLength, getTotalVideoDuration])
 
-    const formatSeconds = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60)
-        const remainingSeconds = seconds % 60
-        const formattedSeconds = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds
-        return `${minutes}:${formattedSeconds}`
-    }
-
     useEffect(() => {
         if (sttMutation.status === "success" && sttMutation.data) {
             // Save STT performance results
@@ -256,50 +318,8 @@ export default function Chatbox() {
                 stopRecording()
             })
         }
-        // eslint-disabl-next-line reac-hooks/exhaustive-deps -- sttMutatio.reset added todependency will cause infinite loop
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- sttMutatio.reset added todependency will cause infinite loop
     }, [sttMutation.status, sttMutation.data, isCalling, startRecording])
-
-    const savePerformanceResults = async (performanceResults: PerformanceResults, selectedConfig: SelectedPipelineConfig) => {
-        await createPerformanceResult({
-            denoise: performanceResults.denoise,
-            stt: performanceResults.stt,
-            llm: performanceResults.llm,
-            tts: performanceResults.tts?.map(result => ({
-                httpLatency: result.httpLatency ?? 0,
-                inferenceLatency: result.inferenceLatency ?? 0,
-                metadata: result.metadata ?? null,
-            })),
-            lipsync: performanceResults.lipsync?.map(result => ({
-                httpLatency: result.httpLatency ?? 0,
-                inferenceLatency: result.inferenceLatency ?? 0,
-                metadata: result.metadata ?? null,
-            })),
-            metadata: performanceResults.metadata ? { ...performanceResults.metadata } : undefined,
-            config: {...selectedConfig},
-        })
-    }
-
-    const handleStopChat = () => {
-        stop()
-        reset()
-        setTaskQueue([])
-    }
-
-    const handleStartRecording = () => {
-        startRecording()
-        setIsCalling(true)
-    }
-
-    const handleStopRecording = () => {
-        stopRecording(false)
-        setIsCalling(false)
-        handleStopChat()
-    }
-
-    const handleClearChat = () => {
-        handleStopChat()
-        setMessages([])
-    }
 
     return (
         <>
@@ -352,6 +372,7 @@ export default function Chatbox() {
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={async (ev) => {
                                 if (ev.key === "Enter") {
+                                    cleanup()
                                     append({ content: input, role: "user" })
                                     setInput("")
                                 }
@@ -367,7 +388,10 @@ export default function Chatbox() {
                                 </Button>
                                 :
                                 (input.trim() || status === "submitted") && 
-                                    <Button onClick={handleSubmit} disabled={status === "submitted"} size="icon">
+                                    <Button onClick={() => {
+                                        cleanup()
+                                        handleSubmit()
+                                    }} disabled={status === "submitted"} size="icon">
                                         <Send className="size-3" />
                                         <span className="sr-only">Send</span>
                                     </Button>

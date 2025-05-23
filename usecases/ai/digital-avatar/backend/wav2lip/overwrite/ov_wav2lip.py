@@ -621,7 +621,7 @@ class OVWav2Lip:
         output_path = Path(f'wav2lip/results/{file_id}.mp4')
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        wav, wav_duration = load_wav(audio_path, 16000)
+        wav, _ = load_wav(audio_path, 16000)
         mel = melspectrogram(wav)
 
         mel_chunks = []
@@ -656,46 +656,63 @@ class OVWav2Lip:
         # temp_path2 = f'wav2lip/temp_2/{file_id}'
         # os.mkdir(temp_path)
         # os.mkdir(temp_path2)
-        for i, (img_batch, mel_batch, frames, coords) in enumerate(tqdm(gen,
-                                                                        total=int(np.ceil(float(len(mel_chunks))/self.batch_size)))):
-            if i == 0:
-                img_batch = torch.FloatTensor(
-                    np.transpose(img_batch, (0, 3, 1, 2))).to(device)
-                mel_batch = torch.FloatTensor(
-                    np.transpose(mel_batch, (0, 3, 1, 2))).to(device)
+        try:
+            for i, (img_batch, mel_batch, frames, coords) in enumerate(tqdm(gen,
+                                                                            total=int(np.ceil(float(len(mel_chunks))/self.batch_size)))):
+                if i == 0:
+                    img_batch = torch.FloatTensor(
+                        np.transpose(img_batch, (0, 3, 1, 2))).to(device)
+                    mel_batch = torch.FloatTensor(
+                        np.transpose(mel_batch, (0, 3, 1, 2))).to(device)
 
-                frame_h, frame_w = new_frames[0].shape[:-1]
-                out = cv2.VideoWriter('wav2lip/temp/result.avi',
-                                      cv2.VideoWriter_fourcc(*'DIVX'), self.fps, (frame_w, frame_h))
-                pred_ov = self.compiled_wav2lip_model(
-                    {"audio_sequences": mel_batch.numpy(), "face_sequences": img_batch.numpy()})[0]
-            else:
-                img_batch = np.transpose(img_batch, (0, 3, 1, 2))
-                mel_batch = np.transpose(mel_batch, (0, 3, 1, 2))
-                pred_ov = self.compiled_wav2lip_model(
-                    {"audio_sequences": mel_batch, "face_sequences": img_batch})[0]
-            # pred_ov = compiled_wav2lip_model({"audio_sequences": mel_batch, "face_sequences": img_batch})[0]
-            pred_ov = pred_ov.transpose(0, 2, 3, 1) * 255.
+                    frame_h, frame_w = new_frames[0].shape[:-1]
+                    out = cv2.VideoWriter('wav2lip/temp/result.avi',
+                                        cv2.VideoWriter_fourcc(*'DIVX'), self.fps, (frame_w, frame_h))
+                    pred_ov = self.compiled_wav2lip_model(
+                        {"audio_sequences": mel_batch.numpy(), "face_sequences": img_batch.numpy()})[0]
+                else:
+                    img_batch = np.transpose(img_batch, (0, 3, 1, 2))
+                    mel_batch = np.transpose(mel_batch, (0, 3, 1, 2))
+                    pred_ov = self.compiled_wav2lip_model(
+                        {"audio_sequences": mel_batch, "face_sequences": img_batch})[0]
+                # pred_ov = compiled_wav2lip_model({"audio_sequences": mel_batch, "face_sequences": img_batch})[0]
+                pred_ov = pred_ov.transpose(0, 2, 3, 1) * 255.
 
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = [executor.submit(process_frame, i, p, f, c, self.enhancer, enhance) for i, (p, f, c) in enumerate(zip(pred_ov, frames, coords))]
-                results = [None] * len(futures)
-                for future in futures:
-                    index, processed_frame = future.result()
-                    results[index] = processed_frame
+                with ThreadPoolExecutor(max_workers=min(os.cpu_count(), 8)) as executor:
+                    futures = [executor.submit(process_frame, i, p, f, c, self.enhancer, enhance) for i, (p, f, c) in enumerate(zip(pred_ov, frames, coords))]
+                    results = [None] * len(futures)
+                    for future in futures:
+                        index, processed_frame = future.result()
+                        results[index] = processed_frame
 
-            for f in results:
-                frames_generated += 1
-                out.write(f)
+                for f in results:
+                    frames_generated += 1
+                    out.write(f)
 
-        out.release()
-        print(output_path)
-        command = 'ffmpeg -y -i {} -i {} -strict -2 -q:v 1 -vf "hqdn3d,unsharp=5:5:0.5" {} > /dev/null 2>&1'.format(
-        audio_path, 'wav2lip/temp/result.avi', output_path)
+            if out:
+                out.release()
+            command = 'ffmpeg -y -i {} -i {} -strict -2 -q:v 1 -vf "hqdn3d,unsharp=5:5:0.5" {} > /dev/null 2>&1'.format(
+            audio_path, 'wav2lip/temp/result.avi', output_path)
 
-        subprocess.call(command, shell=platform.system() != 'Windows')
+            subprocess.call(command, shell=platform.system() != 'Windows')
 
-        return file_id, frames_generated
+            return file_id, frames_generated
+        
+        finally:
+            # Ensure resources are properly cleaned up
+            if out:
+                out.release()
+            # Clear memory
+            if 'pred_ov' in locals():
+                del pred_ov
+            if 'gen' in locals():
+                del gen
+            if 'mel_chunks' in locals():
+                del mel_chunks
+            if 'img_batch' in locals():
+                del img_batch
+            if 'mel_batch' in locals():
+                del mel_batch
 
     def datagen(self, frames, mels, face_det_results, start_index=0):
         img_batch, mel_batch, frame_batch, coords_batch = [], [], [], []

@@ -83,6 +83,7 @@ class InferenceFileRequest(BaseModel):
 
 @router.get("/video/{id}")
 async def get_video(id: str, bg_task: BackgroundTasks,):
+    # TODO: remove lipsync file after streaming (refer to Wav2Lip main.py)
     async def remove_file(video_path):
         if os.path.exists(video_path):
             try:
@@ -96,6 +97,7 @@ async def get_video(id: str, bg_task: BackgroundTasks,):
 
 @router.post("/inference_from_filename")
 async def inference_from_filename(data: InferenceFileRequest, starting_frame: int, reversed: str, enhance: bool  = False):
+    # TODO: remove audio file after streaming (refer to Wav2Lip main.py)
     async def remove_file(file_name):
         if os.path.exists(file_name):
             try:
