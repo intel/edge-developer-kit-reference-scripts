@@ -20,6 +20,8 @@ export default function useAudioRecorder() {
     const [durationCounter, setDurationCounter] = useState<NodeJS.Timeout | null>(null)
     const [durationSeconds, setDurationSeconds] = useState(0);
     const [visualizerData, setVisualizerData] = useState(Array(VISUALIZER_BUFFER_LENGTH).fill(0))
+    // Add a ref to store the animation frame ID for proper cleanup
+    const animationFrameRef = useRef<number | null>(null);
 
     const sttMutation = useGetSTT()
 
@@ -51,52 +53,72 @@ export default function useAudioRecorder() {
 
         let lastSoundTime = Date.now();
         let hasStartedSpeaking = false
-
+        
+        // Clear any existing animation frame before starting a new one
+        if (animationFrameRef.current !== null) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
+        
         const detectSound = () => {
             const processFrame = () => {
-                if (recording) {
-                    analyser.getByteTimeDomainData(timeDomainData);
-                    analyser.getByteFrequencyData(domainData);
-
-                    // Calculate RMS level from time domain data
-                    const rmsLevel = calculateRMS(timeDomainData);
-                    // Push the calculated decibel level to visualizerData
-                    setVisualizerData((prev) => {
-                        if (prev.length >= VISUALIZER_BUFFER_LENGTH) {
-                            prev.shift();
-                        }
-                        return [...prev, normalizeRMS(rmsLevel)];
-                    })
-
-                    // Check if initial speech/noise has started
-                    const hasSound = domainData.some((value) => value > 0);
-                    if (hasSound) {
-                        if (!hasStartedSpeaking) {
-                            hasStartedSpeaking = true
-                        }
-
-                        lastSoundTime = Date.now();
-                    }
-
-                    // Start silence detection only after initial speech/noise has been detected
-                    if (hasStartedSpeaking) {
-                        if (Date.now() - lastSoundTime > 2000) {
-                            if (mediaRecorder) {
-                                console.log('stop')
-                                mediaRecorder.stop();
-                                return;
-                            }
-                        }
-                    }
-
-                    window.requestAnimationFrame(processFrame);
+                if (!recording) {
+                    // Cancel animation frame if no longer recording
+                    animationFrameRef.current = null;
+                    return;
                 }
+                
+                analyser.getByteTimeDomainData(timeDomainData);
+                analyser.getByteFrequencyData(domainData);
+
+                // Calculate RMS level from time domain data
+                const rmsLevel = calculateRMS(timeDomainData);
+                // Push the calculated decibel level to visualizerData
+                setVisualizerData((prev) => {
+                    if (prev.length >= VISUALIZER_BUFFER_LENGTH) {
+                        prev.shift();
+                    }
+                    return [...prev, normalizeRMS(rmsLevel)];
+                })
+
+                // Check if initial speech/noise has started
+                const hasSound = domainData.some((value) => value > 0);
+                if (hasSound) {
+                    if (!hasStartedSpeaking) {
+                        hasStartedSpeaking = true
+                    }
+
+                    lastSoundTime = Date.now();
+                }
+
+                // Start silence detection only after initial speech/noise has been detected
+                if (hasStartedSpeaking) {
+                    if (Date.now() - lastSoundTime > 2000) {
+                        if (mediaRecorder) {
+                            console.log('stop')
+                            mediaRecorder.stop();
+                            return;
+                        }
+                    }
+                }
+
+                // Store the animation frame ID for cleanup
+                animationFrameRef.current = window.requestAnimationFrame(processFrame);
             };
 
-            window.requestAnimationFrame(processFrame);
+            // Start the animation frame and store the ID
+            animationFrameRef.current = window.requestAnimationFrame(processFrame);
         };
 
         detectSound();
+        
+        // Return cleanup function that cancels any active animation frame
+        return () => {
+            if (animationFrameRef.current !== null) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+        };
     }, [analyser, mediaRecorder, recording]);
 
     const initiateMediaRecoder = useCallback(
@@ -214,9 +236,32 @@ export default function useAudioRecorder() {
 
     useEffect(() => {
         if (recording) {
-            analyseAudio()
+            const cleanup = analyseAudio();
+            return cleanup;
         }
     }, [analyseAudio, recording])
+
+    // Add cleanup to stop animation frames when recording stops
+    useEffect(() => {
+        if (!recording && animationFrameRef.current !== null) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
+    }, [recording]);
+
+    // Make sure to clean up animation frames when component unmounts
+    useEffect(() => {
+        return () => {
+            if (animationFrameRef.current !== null) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+            // Clear any active timers
+            if (durationCounter !== null) {
+                clearInterval(durationCounter);
+            }
+        };
+    }, []);
 
     return {
         startRecording,

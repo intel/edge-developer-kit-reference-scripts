@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import time
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from piper.voice import PiperVoice
 from urllib.request import urlretrieve
 import wave
@@ -121,11 +121,11 @@ async def update_config(data: Configurations):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/v1/audio/speech")
-async def synthesize(data: ISynthesize):
+async def synthesize(data: ISynthesize, background_tasks: BackgroundTasks):
     global PIPERTTS, CONFIG
     speaker = data.speaker if data.speaker else CONFIG["speaker"]
     if speaker not in PIPERTTS:
-        raise HTTPException(status_code=404, detail=f"Speaker {data.speaker} not found")
+        raise HTTPException(status_code=404, detail=f"Speaker {speaker} not found")
     try:
         wav_io = io.BytesIO()
         
@@ -143,10 +143,13 @@ async def synthesize(data: ISynthesize):
             filename =f"{uuid4()}.wav"
             with open(f"{DATA_DIRECTORY}/{filename}", "wb") as f:
                 f.write(wav_io.read())
+            wav_io.close()
             return JSONResponse(content={"filename": filename, "duration": duration, "inference_latency": tts_latency})
         else:
+            background_tasks.add_task(lambda: wav_io.close())
             return StreamingResponse(wav_io, media_type="audio/wav")
     except Exception as e:
+        wav_io.close()
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
