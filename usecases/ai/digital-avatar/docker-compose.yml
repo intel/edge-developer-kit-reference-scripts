@@ -149,7 +149,6 @@ services:
     container_name: ollama
     image: intel-ipex-ollama
     restart: always
-    privileged: true
     ports:
       - 8015:11434
     environment:
@@ -163,11 +162,12 @@ services:
       - OLLAMA_KEEP_ALIVE=-1
     networks:
       - app-network
+    group_add:
+      - ${RENDER_GROUP_ID:-992}
     devices:
-      - /dev:/dev:rw
-      - /lib/modules:/lib/modules:rw
+      - /dev/dri:/dev/dri:rw
     volumes:
-      - ./data/ollama:/root/.ollama
+      - ./data/ollama:/home/ubuntu/.ollama
       - ./scripts/run.sh:/opt/intel/llm-app/run.sh
       - ./scripts/healthcheck.sh:/opt/intel/llm-app/healthcheck.sh
     healthcheck:

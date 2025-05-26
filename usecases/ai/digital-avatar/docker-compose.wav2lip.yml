@@ -158,7 +158,7 @@ services:
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:rw
     volumes:
-      - ./data/ollama:/root/.ollama
+      - ./data/ollama:/home/ubuntu/.ollama
       - ./scripts/run.sh:/opt/intel/llm-app/run.sh
       - ./scripts/healthcheck.sh:/opt/intel/llm-app/healthcheck.sh
     healthcheck:
