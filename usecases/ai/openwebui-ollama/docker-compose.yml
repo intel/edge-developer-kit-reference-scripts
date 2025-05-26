@@ -100,7 +100,7 @@ services:
     devices:
       - /dev/dri:/dev/dri:rw
     volumes:
-      - ollama:/home/intel/.ollama
+      - ollama:/home/ubuntu/.ollama
 
 networks:
   app-network:
