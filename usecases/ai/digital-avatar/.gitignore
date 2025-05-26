@@ -30,3 +30,6 @@ backend/liveportrait/templates
 !/data/piper
 /data/piper/*
 !/data/piper/.gitkeep
+!/data/ollama
+/data/ollama/*
+!/data/ollama/.gitkeep
