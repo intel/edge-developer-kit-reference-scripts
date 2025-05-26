@@ -87,7 +87,7 @@ def warmup():
         wf.setframerate(16000)  # 16 kHz
         wf.writeframes(np.zeros(16000 * 2, dtype=np.int16).tobytes())  # 1 second of silence
 
-    result, frames_generated = WAV2LIP.inference(temp_filename, enhance=CONFIG["use_enhancer"])
+    result, _ = WAV2LIP.inference(temp_filename, enhance=CONFIG["use_enhancer"])
     result_path = os.path.join("wav2lip/results", result + ".mp4")
     os.remove(temp_filename)
     
@@ -121,7 +121,7 @@ def is_valid_device(device: str, device_type: str, devices: dict) -> bool:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):
     setup()
     global WAV2LIP, DEVICES
     DEVICES = get_devices()
@@ -149,8 +149,7 @@ router = APIRouter(prefix="/v1",
                    responses={404: {"description": "Unable to find route"}})
 
 @router.post("/inference")
-async def inference(bg_task: BackgroundTasks,starting_frame: int, reversed: str, file: UploadFile=File(...) ):
-    global WAV2LIP
+async def inference(bg_task: BackgroundTasks, starting_frame: int, reversed: str, file: UploadFile = File(...)):
     if not file.filename.endswith(".wav"):
         return "Only .wav files are allowed"
     
@@ -158,17 +157,15 @@ async def inference(bg_task: BackgroundTasks,starting_frame: int, reversed: str,
         temp_audio_path = temp_audio.name
         with open(temp_audio_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
-            result, frames_generated = WAV2LIP.inference(temp_audio_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=CONFIG["use_enhancer"])
+            result, _ = WAV2LIP.inference(temp_audio_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=CONFIG["use_enhancer"])
     print(result, flush=True)
     result = f"wav2lip/results/{result}.mp4"
     return FileResponse(result, media_type="video/mp4", background=bg_task.add_task(remove_file,result ))
 
 @router.get("/test")
 async def test(enhance: bool = False):
-    global WAV2LIP
-
     start_time = time.time()
-    result, frames_generated = WAV2LIP.inference("data/audio.wav", reversed=True if reversed == "1" else False, starting_frame=0, enhance=enhance)
+    result, _ = WAV2LIP.inference("data/audio.wav", reversed=True if reversed == "1" else False, starting_frame=0, enhance=enhance)
     end_time = time.time()
     print(f"Inference took {end_time - start_time} seconds", flush=True)
     print(result, flush=True)
@@ -188,8 +185,7 @@ async def get_current_device():
     return JSONResponse(content=jsonable_encoder(config))
 
 @router.post("/inference_from_filename")
-async def inference( data: dict, starting_frame: int, reversed: str,):
-    global WAV2LIP
+async def inference(data: dict, starting_frame: int, reversed: str, bg_task: BackgroundTasks):
     if "filename" not in data:
         return "Filename is required"
     filename = data["filename"]
@@ -207,10 +203,16 @@ async def inference( data: dict, starting_frame: int, reversed: str,):
         result, frames_generated = WAV2LIP.inference(temp_file_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=CONFIG["use_enhancer"])
     end_time = time.time()
     inference_latency = end_time - start_time
+    
+    # Remove audio file after response
+    bg_task.add_task(remove_file, file_path)
 
     print(result, flush=True)
     print(f"Inference took {inference_latency} seconds", flush=True)
-    return JSONResponse(content=jsonable_encoder({"url": result, "inference_latency": inference_latency, "frames_generated": frames_generated}))
+    return JSONResponse(
+        content=jsonable_encoder({"url": result, "inference_latency": inference_latency, "frames_generated": frames_generated}),
+        background=bg_task
+    )
 
 @router.post("/update_config")
 async def update_config(data: Configurations):
@@ -243,9 +245,31 @@ async def update_config(data: Configurations):
     return JSONResponse(content=jsonable_encoder({"message": f"device updated to {device} and enhancer_device updated to {enhancer_device}"}), status_code=200)
 
 @router.get("/video/{id}")
-async def get_video(id: str, bg_task: BackgroundTasks,):
+async def get_video(id: str, bg_task: BackgroundTasks):
     video_path = f"wav2lip/results/{id}.mp4"
-    return StreamingResponse(open(video_path, "rb"), media_type="video/mp4")
+
+    # Verify file exists
+    if not os.path.exists(video_path):
+        return JSONResponse(content=jsonable_encoder({"message": "file does not exist"}))
+    
+    # Open file in binary mode and stream chunks
+    file = open(video_path, "rb")
+    
+    # Set headers for chunked streaming
+    headers = {
+        "Accept-Ranges": "bytes",  # Critical for partial content requests
+        "Content-Type": "video/mp4",
+    }
+    
+    # Remove file after streaming
+    bg_task.add_task(remove_file, video_path)
+
+    return StreamingResponse(
+        file,
+        media_type="video/mp4",
+        headers=headers,
+        background=bg_task
+    )
 
 app.include_router(router)
 
