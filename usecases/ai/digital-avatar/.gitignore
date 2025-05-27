@@ -27,9 +27,9 @@ backend/liveportrait/templates
 !/data/sadtalker
 /data/sadtalker/*
 !/data/sadtalker/.gitkeep
-!/data/piper
-/data/piper/*
-!/data/piper/.gitkeep
+!/data/tts
+/data/tts/*
+!/data/tts/.gitkeep
 !/data/ollama
 /data/ollama/*
 !/data/ollama/.gitkeep
