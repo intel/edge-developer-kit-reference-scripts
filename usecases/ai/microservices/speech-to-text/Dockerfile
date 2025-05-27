@@ -7,7 +7,7 @@ USER root
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y ffmpeg \
+    && apt-get install -y --no-install-recommends ffmpeg \
         wget \
         gnupg2 \
         libtbb12 \

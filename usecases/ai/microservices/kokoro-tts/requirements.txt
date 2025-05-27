@@ -1,0 +1,4 @@
+kokoro>=0.9.4 
+soundfile
+misaki[zh]
+fastapi[standard]==0.115.6

@@ -52,6 +52,7 @@ services:
       - app-network
     environment:
       - SERVER_PORT=8011
+      - SERVER_HOST=0.0.0.0
       - DEVICE=CPU
       - ALLOWED_CORS=["http://localhost"] # frontend url
     # group_add:
@@ -62,8 +63,8 @@ services:
       - ./weights/wav2lip_gan.pth:/usr/src/app/setup/wav2lip_gan.pth
       - ./data/audio:/usr/src/app/data
       - ./data/wav2lip:/usr/src/app/wav2lip/results
-    ports:
-      - 8011:8011
+    # ports: # For dev only
+      # - 8011:8011
     command: "python3 main.py"
 
   frontend:
@@ -101,7 +102,7 @@ services:
 
   tts_service:
     build:
-      context: ../microservices/piper-tts
+      context: ../microservices/kokoro-tts
       dockerfile: Dockerfile
     image: tts_service
     hostname: tts_service
@@ -111,11 +112,12 @@ services:
       - app-network
     environment:
       - ALLOWED_CORS=["*"]
+      - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8013
-    ports:
-      - 8013:8013
+    # ports:
+    #   - 8013:8013
     volumes:
-      - ./data/piper:/usr/src/app/models:rw
+      - ./data/tts:/usr/src/app/models:rw
       - ./data/audio:/usr/src/app/data:rw
     command: python3 main.py
     
@@ -133,9 +135,10 @@ services:
     environment:
       - DEFAULT_MODEL_ID=openai/whisper-medium
       - STT_DEVICE=CPU
+      - SERVER_HOST=0.0.0.0
       - ALLOWED_CORS=["*"]
-    ports:
-      - 8014:5996
+    # ports:
+    #   - 8014:5996
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -149,8 +152,9 @@ services:
     container_name: ollama
     image: intel-ipex-ollama
     restart: always
-    ports:
-      - 8015:11434
+    privileged: true
+    # ports:
+    #   - 8015:11434
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
       - OLLAMA_NUM_GPU=999
@@ -190,13 +194,14 @@ services:
       - /dev/dri:/dev/dri
     networks:
       - app-network
-    ports:
-      - "8012:8012"
+    # ports:
+    #   - "8012:8012"
     environment:
       - OPENAI_BASE_URL=http://ollama:11434/v1
       - OPENAI_API_KEY=ollama
       - EMBEDDING_DEVICE=${EMBEDDING_DEVICE:-CPU}
       - RERANKER_DEVICE=${RERANKER_DEVICE:-CPU}
+      - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8012
     depends_on:
       ollama:
