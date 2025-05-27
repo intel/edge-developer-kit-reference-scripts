@@ -155,7 +155,7 @@ async def synthesize(data: ISynthesize, background_tasks: BackgroundTasks):
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
-        host=os.environ.get('SERVER_HOST', "0.0.0.0"),
+        host=os.environ.get('SERVER_HOST', "127.0.0.1"),
         port=int(os.environ.get('SERVER_PORT', "8013")),
         reload=True
     )
