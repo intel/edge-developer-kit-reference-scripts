@@ -18,7 +18,7 @@ REPORT_FILE="${REPORT_FILE:-validation_report.csv}"
 LOG_DIR="${LOG_DIR:-./logs}"
 
 # List of available use cases
-AVAILABLE_USECASES=("rag-toolkit" "ai-video-analytics" "openwebui-ollama" "smart-parking")
+AVAILABLE_USECASES=("rag-toolkit" "ai-video-analytics" "openwebui-ollama" "smart-parking" "digital-avatar")
 
 # Create an associative array to store validation results
 declare -A validation_results
@@ -333,6 +333,103 @@ validate_smart_parking() {
     fi
 }
 
+validate_digital_avatar() {
+    local module_name="digital-avatar"
+    log $LOG_LEVEL_INFO "Validating $module_name use case..."
+    
+    # Add detailed logging for debugging if needed
+    log $LOG_LEVEL_DEBUG "Checking $module_name directory structure"
+    
+    local success=true
+    
+    if [[ ! -d "./usecases/ai/digital-avatar" ]]; then
+        log $LOG_LEVEL_ERROR "$module_name directory not found"
+        success=false
+    fi
+    # Check if video.mp4 exists, if not, download it
+    if [[ ! -f "./.github/tests/assets/video.mp4" && ! -f "./.github/tests/assets/video.mp4" ]]; then
+        log $LOG_LEVEL_ERROR "No video.mp4 found in $module_name"
+        success=false
+    fi
+    cp -r ./.github/tests/assets/video.mp4 ./usecases/ai/digital-avatar/assets || {
+        log $LOG_LEVEL_ERROR "Failed to copy video.mp4 to $module_name"
+        success=false
+    }
+    cd ./usecases/ai/digital-avatar/weights || {
+        log $LOG_LEVEL_ERROR "Failed to change directory to $module_name"
+        success=false
+    }
+    # Always re-download wav2lip.pth
+    if [[ -f "wav2lip.pth" ]]; then
+        log $LOG_LEVEL_INFO "wav2lip.pth exists, removing before re-downloading"
+        rm -f wav2lip.pth
+    fi
+    wget -O wav2lip.pth "https://huggingface.co/numz/wav2lip_studio/resolve/main/Wav2lip/wav2lip.pth?download=true" || {
+        log $LOG_LEVEL_ERROR "Failed to download wav2lip.pth for $module_name"
+        success=false
+    }
+
+    # Always re-download wav2lip_gan.pth
+    if [[ -f "wav2lip_gan.pth" ]]; then
+        log $LOG_LEVEL_INFO "wav2lip_gan.pth exists, removing before re-downloading"
+        rm -f wav2lip_gan.pth
+    fi
+    wget -O wav2lip_gan.pth "https://huggingface.co/numz/wav2lip_studio/resolve/main/Wav2lip/wav2lip_gan.pth?download=true" || {
+        log $LOG_LEVEL_ERROR "Failed to download wav2lip_gan.pth for $module_name"
+        success=false
+    }
+    pwd
+    cd ../ || {
+        log $LOG_LEVEL_ERROR "Failed to change directory to $module_name"
+        success=false
+    }
+
+    cp .env.template .env || {
+        log $LOG_LEVEL_ERROR "Failed to copy .env.template to .env for $module_name"
+        success=false
+    }
+    sed -i 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=Intel1234/' .env
+    sed -i 's/^FRONTEND_PAYLOAD_SECRET=.*/FRONTEND_PAYLOAD_SECRET=Intel1234/' .env
+    # Build the module
+    log $LOG_LEVEL_INFO "Building $module_name module..."
+    docker compose build --no-cache || {
+        log $LOG_LEVEL_ERROR "Failed to build $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Building $module_name module completed"
+    local render_gid
+    render_gid=$(getent group render | cut -d: -f3)
+    export RENDER_GROUP_ID="$render_gid"
+    # Run the module
+    docker compose up -d || {
+        log $LOG_LEVEL_ERROR "Failed to run $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Running $module_name module completed"
+
+    sleep 5
+
+    # Cleanup the module
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module..."
+    docker compose down -v || {
+        log $LOG_LEVEL_ERROR "Failed to clean up $module_name module"
+        success=false
+    }
+    log $LOG_LEVEL_INFO "Cleaning up $module_name module completed"
+    
+    cd - || {
+        log $LOG_LEVEL_ERROR "Failed to return to previous directory"
+        success=false
+    }
+    
+    # Record the validation result
+    if [ "$success" = true ]; then
+        record_validation "$module_name" "PASS"
+    else
+        record_validation "$module_name" "FAIL"
+    fi
+}
+
 # Display usage information
 show_usage() {
     echo "Usage: $0 [OPTIONS]"
@@ -423,6 +520,9 @@ run_validations() {
                 ;;
             smart-parking)
                 validate_smart_parking
+                ;;
+            digital-avatar)
+                validate_digital_avatar
                 ;;
             # Additional use cases can be added here as they are implemented
             *)
