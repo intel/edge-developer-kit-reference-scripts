@@ -407,8 +407,6 @@ validate_digital_avatar() {
     }
     log $LOG_LEVEL_INFO "Running $module_name module completed"
 
-    sleep 5
-
     # Cleanup the module
     log $LOG_LEVEL_INFO "Cleaning up $module_name module..."
     docker compose down -v || {
