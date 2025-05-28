@@ -52,7 +52,7 @@ RUN python3 -m pip install -r requirements.txt
 COPY --chown=openvino:openvino main.py .
 COPY --chown=openvino:openvino utils.py .
 
-HEALTHCHECK --interval=60s --timeout=180s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=6m --start-period=5s --retries=10 \
     CMD wget --no-verbose --no-proxy -O /dev/null --tries=1 http://localhost:5996/healthcheck || exit 1
 
 CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5996"]

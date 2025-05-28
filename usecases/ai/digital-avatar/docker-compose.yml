@@ -57,6 +57,12 @@ services:
       - ALLOWED_CORS=["http://localhost"] # frontend url
     # group_add:
     #   - ${RENDER_GROUP_ID:-992}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --no-proxy -O /dev/null --tries=1 http://localhost:$${SERVER_PORT}/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 10m
+      retries: 20
+      start_period: 30s
     volumes:
       - ./weights/checkpoints:/usr/src/app/wav2lip/checkpoints:rw
       - ./assets:/usr/src/app/assets
@@ -139,6 +145,12 @@ services:
       - ALLOWED_CORS=["*"]
     # ports:
     #   - 8014:5996
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --no-proxy -O /dev/null --tries=1 http://localhost:5996/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 10m
+      retries: 20
+      start_period: 30s
     devices:
       - /dev/dri:/dev/dri
     volumes:
