@@ -26,12 +26,11 @@ Based on the platform you are using, select the following to get started:
 ## Use Cases
 1. [Intel® Distribution of OpenVINO™ Toolkit](usecases/ai/openvino/README.md)
 2. [Open WebUI with Ollama](usecases/ai/openwebui-ollama/README.md)
-3. [LLM Finetuning Benchmark](usecases/ai/finetuning-benchmark/README.md)
-4. [LLM RAG Toolkit](usecases/ai/rag-toolkit/README.md)
-5. [AI Video Analytics](usecases/ai/ai-video-analytics/README.md)
-6. [Digital Avatar](usecases/ai/digital-avatar/README.md)
-7. [Time Coordinated Computing (TCC)](usecases/real-time/tcc_tutorial/README.md)
-8. [Smart Parking](usecases/ai/smart-parking/README.md)
+3. [LLM RAG Toolkit](usecases/ai/rag-toolkit/README.md)
+4. [AI Video Analytics](usecases/ai/ai-video-analytics/README.md)
+5. [Digital Avatar](usecases/ai/digital-avatar/README.md)
+6. [Time Coordinated Computing (TCC)](usecases/real-time/tcc_tutorial/README.md)
+7. [Smart Parking](usecases/ai/smart-parking/README.md)
 
 ## Disclaimer
 GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.
