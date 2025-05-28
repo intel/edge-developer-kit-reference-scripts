@@ -7,10 +7,10 @@
 
 ## Quick Start
 ### 1. Install operating system
-Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
+Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
 > **Note**
-> Ubuntu* 22.04 installation process may freeze if the primary display is set to dGPU. Some devices for example, the Asus IoT PE3000G, has the default dGPU set as the primary display. To solve this, go to the BIOS menu, select Advanced -> Graphic Configuration -> Primary Display, select 'IGFX'. Save changes and reboot the system. Then, you can proceed to install Ubuntu 22.04 and following the setup script.
+> Ubuntu* 24.04 installation process may freeze if the primary display is set to dGPU. Some devices for example, the Asus IoT PE3000G, has the default dGPU set as the primary display. To solve this, go to the BIOS menu, select Advanced -> Graphic Configuration -> Primary Display, select 'IGFX'. Save changes and reboot the system. Then, you can proceed to install Ubuntu 24.04 and following the setup script.
 > If you wish to use the dGPU as the primary display, go to the BIOS and switch the selection back to 'PEG Slot' or 'AUTO'.
 
 ### 2. Download scripts
