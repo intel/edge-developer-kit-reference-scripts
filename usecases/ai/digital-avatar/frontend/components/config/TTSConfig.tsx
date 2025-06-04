@@ -3,7 +3,7 @@
 import { Headphones } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SelectedPipelineConfig, Speaker, TTSConfigApiResponse } from "@/types/config"
+import { SelectedPipelineConfig, TTSConfigApiResponse, TTSLanguage } from "@/types/config"
 import { ConfigSection } from "./ConfigSection"
 import SliderControl from "./SliderControl"
 import { SelectSkeleton, SliderSkeleton } from "./InputSkeletons"
@@ -45,47 +45,44 @@ export default function TTSConfig({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="tts-gender">Gender</Label>
+              <Label htmlFor="tts-language">Language</Label>
               <Select 
-                value={config.selected_config.speaker}
-                onValueChange={(value) => handleConfigChange("tts", "speaker", value as Speaker)}
+                value={config.selected_config.language}
+                onValueChange={(value) => handleConfigChange("tts", "language", value)}
               >
-                <SelectTrigger id="tts-gender">
-                  <SelectValue placeholder="Select gender" />
+                <SelectTrigger id="tts-language">
+                  <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
-                  {config.speaker.map(option => (
+                  {Object.keys(config.speakers).map(option => (
                     <SelectItem key={`tts-${option}`} value={option}>
-                      {option}
+                      {TTSLanguage[option as keyof typeof TTSLanguage]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* <div className="space-y-2">
-              <Label htmlFor="tts-model">Model</Label>
+            
+            <div className="space-y-2">
+              <Label htmlFor="tts-speaker">Speaker</Label>
               <Select 
-                value={config.selected_config.tts.model}
-                onValueChange={(value) => handleConfigChange("tts", "model", value)}
+                value={config.selected_config.speaker}
+                onValueChange={(value) => handleConfigChange("tts", "speaker", value)}
               >
-                <SelectTrigger id="tts-model">
-                  <SelectValue placeholder="Select model" />
+                <SelectTrigger id="tts-speaker">
+                  <SelectValue placeholder="Select speaker" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[
-                    {value: "piper", label: "Piper"},
-                    {value: "melo-tts", label: "MeloTTS"},
-                  ].map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {config.speakers[config.selected_config.language].map(option => (
+                    <SelectItem key={`tts-${option.name}`} value={option.name}>
+                      {option.name} ({option.gender})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div> */}
+            </div>
 
             <SliderControl
               id="tts-speed"
