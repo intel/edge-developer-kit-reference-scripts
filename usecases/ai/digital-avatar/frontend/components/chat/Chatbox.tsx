@@ -83,23 +83,27 @@ export default function Chatbox() {
     }
 
     const savePerformanceResults = async (performanceResults: PerformanceResults, selectedConfig: SelectedPipelineConfig) => {
-        await createPerformanceResult({
-            denoise: performanceResults.denoise,
-            stt: performanceResults.stt,
-            llm: performanceResults.llm,
-            tts: performanceResults.tts?.map(result => ({
-                httpLatency: result.httpLatency ?? 0,
-                inferenceLatency: result.inferenceLatency ?? 0,
-                metadata: result.metadata ?? null,
-            })),
-            lipsync: performanceResults.lipsync?.map(result => ({
-                httpLatency: result.httpLatency ?? 0,
-                inferenceLatency: result.inferenceLatency ?? 0,
-                metadata: result.metadata ?? null,
-            })),
-            metadata: performanceResults.metadata ? { ...performanceResults.metadata } : undefined,
-            config: {...selectedConfig},
-        })
+        try {
+            await createPerformanceResult({
+                denoise: performanceResults.denoise,
+                stt: performanceResults.stt,
+                llm: performanceResults.llm,
+                tts: performanceResults.tts?.map(result => ({
+                    httpLatency: result.httpLatency ?? 0,
+                    inferenceLatency: result.inferenceLatency ?? 0,
+                    metadata: result.metadata ?? null,
+                })),
+                lipsync: performanceResults.lipsync?.map(result => ({
+                    httpLatency: result.httpLatency ?? 0,
+                    inferenceLatency: result.inferenceLatency ?? 0,
+                    metadata: result.metadata ?? null,
+                })),
+                metadata: performanceResults.metadata ? { ...performanceResults.metadata } : undefined,
+                config: {...selectedConfig},
+            })
+        } catch (error) {
+            console.error("Error saving performance results:", error)
+        }
     }
 
     const handleStopChat = () => {
@@ -133,7 +137,7 @@ export default function Chatbox() {
         setPerformanceResults({});
 
         // Stop recording and cleanup audio resources
-        stopRecording(false);
+        // stopRecording(false);
 
         // Reset video queue
         reset();
@@ -229,45 +233,49 @@ export default function Chatbox() {
         }
 
         const processText = async (index: number, text: string) => {
-            addVideo({ id: index, url: undefined })
-            // TTS
-            const { data: ttsData } = await getTTSAudio.mutateAsync({ text })
+            const processedText = text.replace(/[*#]|[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "").trim();
+            if (processedText.length >= 0) {
+                addVideo({ id: index, url: undefined })
 
-            // const { startIndex, reversed } = calculateVideoStart(ttsData.duration + getTotalVideoDuration())
-            const startIndex = 0
-            const reversed = false
+                // TTS
+                const { data: ttsData } = await getTTSAudio.mutateAsync({ text: processedText })
 
-            // Lipsync
-            const { data: lipsyncData } = await getLipsync.mutateAsync({ data: { filename: ttsData.filename }, startIndex: startIndex.toString(), reversed: reversed ? "1" : "0" })
-            updateVideo(index, lipsyncData.url, startIndex, reversed, ttsData.duration)
+                // const { startIndex, reversed } = calculateVideoStart(ttsData.duration + getTotalVideoDuration())
+                const startIndex = 0
+                const reversed = false
 
-            setPerformanceResults(prev => {
-                const newResults = {
-                    ...prev,
-                    tts: [
-                        ...(prev.tts || []), // Append to the existing array or initialize if undefined
-                        {
-                            httpLatency: ttsData.http_latency,
-                            inferenceLatency: ttsData.inference_latency,
-                            metadata: { outputAudioDuration: ttsData.duration }
-                        }
-                    ],
-                    lipsync: [
-                        ...(prev.lipsync || []), // Append to the existing array or initialize if undefined
-                        {
-                            httpLatency: lipsyncData.http_latency,
-                            inferenceLatency: lipsyncData.inference_latency,
-                            metadata: { framesGenerated: lipsyncData.frames_generated }
-                        }
-                    ],
-                };
+                // Lipsync
+                const { data: lipsyncData } = await getLipsync.mutateAsync({ data: { filename: ttsData.filename }, startIndex: startIndex.toString(), reversed: reversed ? "1" : "0" })
+                updateVideo(index, lipsyncData.url, startIndex, reversed, ttsData.duration)
 
-                // Only update if the new results are different
-                if (JSON.stringify(prev) !== JSON.stringify(newResults)) {
-                    return newResults;
-                }
-                return prev;
-            });
+                setPerformanceResults(prev => {
+                    const newResults = {
+                        ...prev,
+                        tts: [
+                            ...(prev.tts || []), // Append to the existing array or initialize if undefined
+                            {
+                                httpLatency: ttsData.http_latency,
+                                inferenceLatency: ttsData.inference_latency,
+                                metadata: { outputAudioDuration: ttsData.duration }
+                            }
+                        ],
+                        lipsync: [
+                            ...(prev.lipsync || []), // Append to the existing array or initialize if undefined
+                            {
+                                httpLatency: lipsyncData.http_latency,
+                                inferenceLatency: lipsyncData.inference_latency,
+                                metadata: { framesGenerated: lipsyncData.frames_generated }
+                            }
+                        ],
+                    };
+
+                    // Only update if the new results are different
+                    if (JSON.stringify(prev) !== JSON.stringify(newResults)) {
+                        return newResults;
+                    }
+                    return prev;
+                });
+            }
 
             setIsProcessing(false)
             setTaskQueue(prev => { return prev.slice(1) })

@@ -80,17 +80,38 @@ export interface LLMConfigApiResponse extends LLMConfigOptions {
 }
 
 // TTS Config
-export type Speaker = "female" | "male";
+type Speaker = {
+  name: string;
+  gender: 'F' | 'M';
+};
+
+type Speakers = {
+  [key: string]: Speaker[];
+};
+
+export enum TTSLanguage {
+  a = "American English",
+  b = "British English",
+  e = "Spanish",
+  f = "French",
+  h = "Hindi",
+  i = "Italian",
+  j = "Japanese",
+  p = "Brazilian Portuguese",
+  z = "Chinese",
+}
 
 export interface TTSConfigOptions {
-  speaker: Speaker[];
+  speakers: Speakers;
   devices: string[];
+  languages: string[];
 }
 
 export interface TTSSelectedConfig {
   device: string;
   speed: number;
-  speaker: Speaker;
+  speaker: string;
+  language: string;
 }
 
 export interface TTSConfigApiResponse extends TTSConfigOptions {

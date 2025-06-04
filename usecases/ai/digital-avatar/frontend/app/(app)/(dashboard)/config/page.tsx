@@ -93,31 +93,31 @@ export default function ConfigurationPanel() {
 
       {/* Denoise Section */}
       <DenoiseConfig 
-        config={selectedConfig ? selectedConfig.denoiseStt : undefined}
+        config={selectedConfig?.denoiseStt ? selectedConfig.denoiseStt : undefined}
         handleConfigChange={handleConfigChange} 
       />
 
       {/* STT Section */}
       <STTConfig 
-        config={selectedConfig ? selectedConfig.denoiseStt : undefined}
+        config={selectedConfig?.denoiseStt ? selectedConfig.denoiseStt : undefined}
         handleConfigChange={handleConfigChange} 
       />
 
       {/* LLM Section */}
       <LLMConfig 
-        config={selectedConfig ? selectedConfig.llm : undefined}
+        config={selectedConfig?.llm ? selectedConfig.llm : undefined}
         handleConfigChange={handleConfigChange} 
       />
 
       {/* TTS Section */}
       <TTSConfig 
-        config={selectedConfig ? selectedConfig.tts : undefined}
+        config={selectedConfig?.tts ? selectedConfig.tts : undefined}
         handleConfigChange={handleConfigChange} 
       />
 
       {/* Lipsync Section */}
       <LipsyncConfig 
-        config={selectedConfig ? selectedConfig.lipsync : undefined}
+        config={selectedConfig?.lipsync ? selectedConfig.lipsync : undefined}
         handleConfigChange={handleConfigChange} 
       />
       

@@ -17,6 +17,7 @@ from pydantic import BaseModel
 import time
 from uuid import uuid4
 import uvicorn
+import numpy as np
 
 # 🇺🇸 'a' => American English, 🇬🇧 'b' => British English
 # 🇪🇸 'e' => Spanish es
@@ -36,7 +37,7 @@ os.environ["ESPEAK_DATA_PATH"]="/usr/lib/x86_64-linux-gnu/espeak-ng-data"
 
 CONFIG = {
     "device" : "CPU",
-    "speed": 1.5,
+    "speed": 1.0,
     "speaker": "af_heart",
     "language": "a"
 }
@@ -132,20 +133,23 @@ async def synthesize(data: ISynthesize):
         )
         tts_latency = time.time() - start_time
         
-        gs, ps, audio =next(generator)
-        # print(i)  # i => index
-        # print(gs) # gs => graphemes/text
-        # print(ps) # ps => phonemes
+        audio_chunks = []
+        for gs, ps, audio in generator:
+            audio_chunks.append(audio)
+        if not audio_chunks:
+            raise HTTPException(status_code=500, detail="No audio generated")
+        combined_audio = np.concatenate(audio_chunks)
+        
         if data.keep_file:
-            duration = len(audio) / 24000 
+            duration = len(combined_audio) / 24000 
             
             filename =f"{uuid4()}.wav"
-            sf.write(f"{DATA_DIRECTORY}/{filename}", audio, 24000)  
+            sf.write(f"{DATA_DIRECTORY}/{filename}", combined_audio, 24000)  
             
             return JSONResponse(content={"filename": filename, "duration": duration, "inference_latency": tts_latency})
         else:
             wav_io = io.BytesIO()
-            sf.write(wav_io, audio, 24000)  
+            sf.write(wav_io, combined_audio, 24000)  
             wav_io.seek(0)
             return StreamingResponse(wav_io, media_type="audio/wav")
             

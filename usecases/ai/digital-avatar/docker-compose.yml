@@ -133,6 +133,7 @@ services:
       dockerfile: Dockerfile
     image: stt_service
     container_name: stt_service
+    restart: always
     hostname: stt_service
     group_add:
       - ${RENDER_GROUP_ID:-992}
@@ -199,6 +200,7 @@ services:
       context: ./backend/rag-backend
     image: digital-avatar.backend.rag
     container_name: digital-avatar.backend.rag
+    restart: always
     hostname: rag-backend
     group_add:
       - ${RENDER_GROUP_ID:-992}
