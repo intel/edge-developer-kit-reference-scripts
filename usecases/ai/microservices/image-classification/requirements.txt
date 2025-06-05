@@ -1,6 +1,6 @@
 openvino-dev[onnx,pytorch,tensorflow]==2024.6.0
-torch==2.7.0
-torchvision==0.22.0
+torch==2.7.1
+torchvision==0.22.1
 grpcio==1.69.0
 tensorflow-serving-api==2.17.1
 opencv-python==4.10.0.84
