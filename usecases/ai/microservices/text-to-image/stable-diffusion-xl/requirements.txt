@@ -1,6 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-torch==2.7.0
+torch==2.7.1
 torchvision==0.22.0
 diffusers==0.32.1
 invisible-watermark==0.2.0
