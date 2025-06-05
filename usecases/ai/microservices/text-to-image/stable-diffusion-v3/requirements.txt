@@ -4,7 +4,7 @@
 git+https://github.com/initml/diffusers.git@clement/feature/flash_sd3
 
 # Dependencies with version specifications
-torch==2.7.0
+torch==2.7.1
 transformers==4.50.0
 nncf==2.14.1
 datasets==3.2.0
