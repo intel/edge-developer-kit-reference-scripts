@@ -35,22 +35,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
   
-  CREATE TABLE IF NOT EXISTS "rag_documents" (
-  	"id" serial PRIMARY KEY NOT NULL,
-  	"description" varchar,
-  	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
-  	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
-  	"url" varchar,
-  	"thumbnail_u_r_l" varchar,
-  	"filename" varchar NOT NULL,
-  	"mime_type" varchar,
-  	"filesize" numeric,
-  	"width" numeric,
-  	"height" numeric,
-  	"focal_x" numeric,
-  	"focal_y" numeric
-  );
-  
   CREATE TABLE IF NOT EXISTS "users" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -77,7 +61,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"parent_id" integer NOT NULL,
   	"path" varchar NOT NULL,
   	"performance_results_id" integer,
-  	"rag_documents_id" integer,
   	"users_id" integer
   );
   
@@ -130,12 +113,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   END $$;
   
   DO $$ BEGIN
-   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_rag_documents_fk" FOREIGN KEY ("rag_documents_id") REFERENCES "public"."rag_documents"("id") ON DELETE cascade ON UPDATE no action;
-  EXCEPTION
-   WHEN duplicate_object THEN null;
-  END $$;
-  
-  DO $$ BEGIN
    ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_users_fk" FOREIGN KEY ("users_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
   EXCEPTION
    WHEN duplicate_object THEN null;
@@ -159,9 +136,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX IF NOT EXISTS "performance_results_lipsync_parent_id_idx" ON "performance_results_lipsync" USING btree ("_parent_id");
   CREATE INDEX IF NOT EXISTS "performance_results_updated_at_idx" ON "performance_results" USING btree ("updated_at");
   CREATE INDEX IF NOT EXISTS "performance_results_created_at_idx" ON "performance_results" USING btree ("created_at");
-  CREATE INDEX IF NOT EXISTS "rag_documents_updated_at_idx" ON "rag_documents" USING btree ("updated_at");
-  CREATE INDEX IF NOT EXISTS "rag_documents_created_at_idx" ON "rag_documents" USING btree ("created_at");
-  CREATE UNIQUE INDEX IF NOT EXISTS "rag_documents_filename_idx" ON "rag_documents" USING btree ("filename");
   CREATE INDEX IF NOT EXISTS "users_updated_at_idx" ON "users" USING btree ("updated_at");
   CREATE INDEX IF NOT EXISTS "users_created_at_idx" ON "users" USING btree ("created_at");
   CREATE UNIQUE INDEX IF NOT EXISTS "users_email_idx" ON "users" USING btree ("email");
@@ -172,7 +146,6 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_parent_idx" ON "payload_locked_documents_rels" USING btree ("parent_id");
   CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_path_idx" ON "payload_locked_documents_rels" USING btree ("path");
   CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_performance_results_id_idx" ON "payload_locked_documents_rels" USING btree ("performance_results_id");
-  CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_rag_documents_id_idx" ON "payload_locked_documents_rels" USING btree ("rag_documents_id");
   CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_users_id_idx" ON "payload_locked_documents_rels" USING btree ("users_id");
   CREATE INDEX IF NOT EXISTS "payload_preferences_key_idx" ON "payload_preferences" USING btree ("key");
   CREATE INDEX IF NOT EXISTS "payload_preferences_updated_at_idx" ON "payload_preferences" USING btree ("updated_at");
@@ -190,7 +163,6 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
    DROP TABLE "performance_results_tts" CASCADE;
   DROP TABLE "performance_results_lipsync" CASCADE;
   DROP TABLE "performance_results" CASCADE;
-  DROP TABLE "rag_documents" CASCADE;
   DROP TABLE "users" CASCADE;
   DROP TABLE "payload_locked_documents" CASCADE;
   DROP TABLE "payload_locked_documents_rels" CASCADE;

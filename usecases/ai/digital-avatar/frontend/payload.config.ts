@@ -3,7 +3,6 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { buildConfig } from 'payload'
 import { PerformanceResults } from './payload/collections/PerformanceResults'
-import { RagDocuments } from './payload/collections/RagDocuments'
 import { migrations } from './payload/migrations'
 
 export default buildConfig({
@@ -11,7 +10,7 @@ export default buildConfig({
     editor: lexicalEditor(),
 
     // Define and configure your collections in this array
-    collections: [PerformanceResults, RagDocuments],
+    collections: [PerformanceResults],
 
     // Your Payload secret - should be a complex and secure string, unguessable
     secret: process.env.PAYLOAD_SECRET || '',
