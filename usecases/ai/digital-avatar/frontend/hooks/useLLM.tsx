@@ -12,12 +12,12 @@ import { handleAPIResponse } from "@/utils/common";
 
 const LLMAPI = new FetchAPI(`/api/llm`);
 
-export const useGetLLM = (): UseQueryResult<{ data: LLMModel[], object: string }, Error> => {
+export const useGetLLM = (): UseQueryResult<{ models: LLMModel[] }, Error> => {
     return useQuery({
         queryKey: ['llm_models'],
         queryFn: async () => {
             const response = await LLMAPI.get('models')
-            const result = handleAPIResponse<{ data: LLMModel[], object: string }>(response);
+            const result = handleAPIResponse<{ models: LLMModel[] }>(response);
             return result ?? null;
         },
     });
