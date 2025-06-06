@@ -170,7 +170,7 @@ async def test(enhance: bool = False):
     print(f"Inference took {end_time - start_time} seconds", flush=True)
     print(result, flush=True)
     return JSONResponse({"message": "hi"})
-
+ 
 @router.get("/config")
 async def get_current_device():
     global CONFIG, DEVICES
@@ -252,24 +252,7 @@ async def get_video(id: str, bg_task: BackgroundTasks):
     if not os.path.exists(video_path):
         return JSONResponse(content=jsonable_encoder({"message": "file does not exist"}))
     
-    # Open file in binary mode and stream chunks
-    file = open(video_path, "rb")
-    
-    # Set headers for chunked streaming
-    headers = {
-        "Accept-Ranges": "bytes",  # Critical for partial content requests
-        "Content-Type": "video/mp4",
-    }
-    
-    # Remove file after streaming
-    bg_task.add_task(remove_file, video_path)
-
-    return StreamingResponse(
-        file,
-        media_type="video/mp4",
-        headers=headers,
-        background=bg_task
-    )
+    return FileResponse(video_path)
 
 app.include_router(router)
 
