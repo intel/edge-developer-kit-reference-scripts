@@ -34,7 +34,7 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
     const [queue, setQueue] = useState<Video[]>([]);
     const currentFrame = 0
     // const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-    const [videoData, setVideoData] = useState<Record<string, string | number | HTMLVideoElement>>({ status: "idle" });
+    const [videoData, setVideoData] = useState<Record<string, string | number>>({ status: "idle" });
     // const [isReversed, setIsReversed] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [frames, setFrames] = useState<ImageData[]>([]);
@@ -54,13 +54,15 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
         setQueue((prevQueue) => [...prevQueue, video]);
     };
 
-    const updateVideo = (id: number, url: string, startIndex: number, reversed: boolean, duration: number) => {
+    const updateVideo = async (id: number, url: string, startIndex: number, reversed: boolean, duration: number) => {
+        const response = await fetch(`/api/lipsync/v1/video/${url}`);
+        const blob = await response.blob();
+        const objectURL = URL.createObjectURL(blob);
+
         setQueue((prevQueue) => {
-            const video = document.createElement('video');
-            video.src = `/api/lipsync/v1/video/${url}`;
             return prevQueue.map((item) => {
                 if (item.id === id) {
-                    return { ...item, url, duration, el: video }
+                    return { ...item, url: objectURL, duration }
                 }
                 return { ...item }
             })
@@ -129,11 +131,14 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
         video.play()
     }
 
-    const playVideoURL = useCallback((video: HTMLVideoElement) => {
+    const playVideoURL = useCallback((videoURL: string) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const context = canvas.getContext('2d');
         if (!context) return;
+
+        const video = document.createElement('video');
+        video.src = videoURL;
 
         video.addEventListener('play', () => {
             const drawFrame = () => {
@@ -180,11 +185,11 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
 
     const reset = useCallback(() => {
         setQueue([])
-        if (videoData.el) {
-            (videoData.el as HTMLVideoElement).pause()
+        if (videoRef.current) {
+            videoRef.current.pause()
         }
         // setVideoData({ status: "idle" })
-    }, [videoData])
+    }, [videoRef])
 
 
     useEffect(() => {
@@ -193,11 +198,11 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
 
         if ((!currentVideo || !currentVideo.url) && videoData.status === "none") {
             setVideoData({ status: "idle" })
-        } else if (currentVideo && currentVideo.url && currentVideo.el) {
+        } else if (currentVideo && currentVideo.url) {
             if (videoData.status !== "play") {
                 if (timeoutIDRef.current)
                     clearTimeout(timeoutIDRef.current as NodeJS.Timeout)
-                setVideoData({ status: "play", url: currentVideo.url, el: currentVideo.el })
+                setVideoData({ status: "play", url: currentVideo.url })
             }
         }
     }, [frames, currentVideo, videoData])
@@ -206,8 +211,8 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
         if (videoData.status === "idle") {
             playIdleVideo()
         }
-        else if (videoData.status === "play" && videoData.el) {
-            playVideoURL(videoData.el as HTMLVideoElement)
+        else if (videoData.status === "play" && videoData.url) {
+            playVideoURL(videoData.url as string)
         }
     }, [videoData, playIdleVideo, playVideoURL])
 
