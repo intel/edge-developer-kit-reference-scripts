@@ -68,6 +68,7 @@ Please ensure that you have these ports available before running the application
     ```bash
     cp .env.template .env
     ```
+2. Set the `POSTGRES_PASSWORD` and `FRONTEND_PAYLOAD_SECRET` in the `.env` file.
 * Note: Modify the `LLM_MODEL` in the `.env` file in order to change the initial LLM used by ollama. Refer to [Ollama library](https://ollama.com/library) for available models. (Default is `QWEN2.5`).
 
 

@@ -7,7 +7,7 @@ import { Trash2 } from "lucide-react";
 import { useContext, useMemo, useState, type MouseEvent } from "react";
 
 import { ConfirmationContext } from "@/context/ConfirmationContext";
-import { useDeleteTextEmbeddingBySource } from "@/hooks/api-hooks/use-dataset-api";
+import { useDeleteTextEmbeddingBySource } from "@/hooks/useLLM";
 
 
 function DeleteButton({
@@ -36,8 +36,10 @@ function DeleteButton({
 
 const DocumentSourceTable = ({
     data,
+    refetch,
 }: {
     data: string[];
+    refetch: () => void;
 }) => {
     const [deletingIds, setDeletingIds] = useState<string[]>([]);
     const { openConfirmationDialog } = useContext(ConfirmationContext);
@@ -68,6 +70,7 @@ const DocumentSourceTable = ({
                             // enqueueSnackbar(`Source deleted successfully.`, {
                             //   variant: "success",
                             // });
+                            refetch()
                         } else {
                             // enqueueSnackbar(
                             //   "Failed to delete source. Please check with admin.",

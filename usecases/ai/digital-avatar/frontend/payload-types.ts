@@ -68,7 +68,6 @@ export interface Config {
   blocks: {};
   collections: {
     'performance-results': PerformanceResult;
-    'rag-documents': RagDocument;
     users: User;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -77,7 +76,6 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     'performance-results': PerformanceResultsSelect<false> | PerformanceResultsSelect<true>;
-    'rag-documents': RagDocumentsSelect<false> | RagDocumentsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -240,25 +238,6 @@ export interface PerformanceResult {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "rag-documents".
- */
-export interface RagDocument {
-  id: number;
-  description?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename: string;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -284,10 +263,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'performance-results';
         value: number | PerformanceResult;
-      } | null)
-    | ({
-        relationTo: 'rag-documents';
-        value: number | RagDocument;
       } | null)
     | ({
         relationTo: 'users';
@@ -379,24 +354,6 @@ export interface PerformanceResultsSelect<T extends boolean = true> {
   metadata?: T;
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "rag-documents_select".
- */
-export interface RagDocumentsSelect<T extends boolean = true> {
-  description?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
