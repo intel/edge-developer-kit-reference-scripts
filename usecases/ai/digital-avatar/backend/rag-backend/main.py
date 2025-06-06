@@ -31,10 +31,6 @@ OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:8012/v1")
 CHROMA_CLIENT = None
 VECTORDB_DIR = "./data/embeddings"
 DOCSTORE_DIR = "./data/embeddings/documents"
-client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY", "-"),
-    base_url=OPENAI_BASE_URL
-)
 
 class ICreateChatCompletions(TypedDict, total=False):
     messages: Required[List]
@@ -99,6 +95,18 @@ def get_available_devices():
             })
     return devices
 
+def get_models():
+    base_url = OPENAI_BASE_URL
+    if "/v1" in base_url:
+        base_url = base_url.replace("/v1", "")
+    try:
+        response = requests.get(f"{base_url}/api/tags")
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        logger.error(f"Failed to fetch models: {e}")
+        return {"models": []}
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global CHROMA_CLIENT, DEVICES
@@ -108,9 +116,10 @@ async def lifespan(app: FastAPI):
         CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, CONFIG["embedding_device"], CONFIG["reranker_device"])
 
     # Check if LLM model exist in list of models
-    model_list = client.models.list()
+    model_list = get_models().get("models", [])
+    model_names = [m.get("name") for m in model_list]
     # If it doesn't exist, pull the model
-    if CONFIG["llm_model"] not in model_list:
+    if CONFIG["llm_model"] not in model_names:
         logger.info(f"Model {CONFIG['llm_model']} not found. Pulling the model ...")
         response = await pull_model({"model": CONFIG["llm_model"]})
         if response.status_code != 200:
@@ -146,9 +155,8 @@ async def get_inference_devices():
 
 @app.get("/v1/models", status_code=200)
 async def get_available_model():
-    model_list = client.models.list()
-    return model_list
-
+    models = get_models()
+    return JSONResponse(content=jsonable_encoder(models))
 
 # RAG Routes
 @app.get("/v1/rag/text_embeddings", status_code=200)
@@ -171,9 +179,10 @@ async def update_config(data: Configurations):
     global CONFIG, CHROMA_CLIENT
     
     # Check if LLM model exist in list of models
-    model_list = client.models.list()
+    model_list = get_models().get("models", [])
+    model_names = [m.get("name") for m in model_list]
     # If it doesn't exist, pull the model
-    if data.llm_model not in model_list:
+    if data.llm_model not in model_names:
         logger.info(f"Model {data.llm_model} not found. Pulling the model ...")
         response = await pull_model({"model": data.llm_model})
         if response.status_code != 200:
@@ -367,5 +376,5 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host=os.environ.get('SERVER_HOST', "127.0.0.1"),
-        port=int(os.environ.get('SERVER_PORT', "8011"))
+        port=int(os.environ.get('SERVER_PORT', "8012"))
     )

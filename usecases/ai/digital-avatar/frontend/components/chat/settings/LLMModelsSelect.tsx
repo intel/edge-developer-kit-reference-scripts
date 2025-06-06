@@ -37,10 +37,7 @@ export function LLMModelsSelect({ value, updateValue }: { value: string; updateV
     const pullLLM = usePullLLM()
 
     const llmModels = useMemo(() => {
-        if (llmModelData) {
-            return llmModelData.data
-        }
-        return undefined
+        return llmModelData?.models ?? []
     }, [llmModelData])
 
     const handlePullLLM = () => {
@@ -63,7 +60,7 @@ export function LLMModelsSelect({ value, updateValue }: { value: string; updateV
                     className="w-[200px] justify-between"
                 >
                     {value && llmModels
-                        ? llmModels.find((models) => models.id.split(':')[0] === value)?.id.split(':')[0]
+                        ? llmModels.find((models) => models.name === (value.includes(":") ? value : `${value}:latest`))?.name
                         : "Select Model"}
                     <ChevronsUpDown className="opacity-50" />
                 </Button>
@@ -90,7 +87,7 @@ export function LLMModelsSelect({ value, updateValue }: { value: string; updateV
                         </CommandEmpty>
                         <CommandGroup>
                             {llmModels && llmModels.map((model) => {
-                                const modelName = model.id.split(':')[0];
+                                const modelName = model.name;
                                 return (
                                     <CommandItem
                                         key={modelName}
