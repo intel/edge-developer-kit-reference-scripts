@@ -1,0 +1,3 @@
+vulnerabilities:
+  - id: CVE-2025-48068
+    statement: Information exposure in Next.js dev server due to lack of origin verification, it only affect when using (npm run dev). Our project is not using it. https://github.com/intel-innersource/applications.platforms.network-and-edge-developer-kits/security/dependabot/78
