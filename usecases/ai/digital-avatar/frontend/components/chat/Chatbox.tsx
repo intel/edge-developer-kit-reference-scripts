@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Send, Mic, Ban, EllipsisVertical } from 'lucide-react'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,7 +62,7 @@ export default function Chatbox() {
             }
         }
     })
-    const { startRecording, stopRecording, recording, durationSeconds, visualizerData, sttMutation } = useAudioRecorder()
+    const { startRecording, stopRecording, recording, durationSeconds, visualizerData, sttMutation, isDeviceFound } = useAudioRecorder()
     const { addVideo, updateVideo, currentFrame, fps, isReversed, framesLength, getTotalVideoDuration, isQueueEmpty, reset } = useVideoQueue()
     const chatBottomRef = useRef<HTMLDivElement>(null)
     const getTTSAudio = useGetTTSAudio()
@@ -117,10 +117,9 @@ export default function Chatbox() {
         setIsCalling(true)
     }
 
-    const handleStopRecording = () => {
-        stopRecording(false)
+    const handleStopRecording = (save: boolean = false) => {
+        stopRecording(save)
         setIsCalling(false)
-        handleStopChat()
     }
 
     const handleClearChat = () => {
@@ -129,19 +128,16 @@ export default function Chatbox() {
         setMessages([])
     }
 
-    const cleanup = useCallback(() => {
+    const cleanup = () => {
         // Cleanup task queue
         setTaskQueue([]);
 
         // Reset performance results
         setPerformanceResults({});
 
-        // Stop recording and cleanup audio resources
-        // stopRecording(false);
-
         // Reset video queue
         reset();
-    }, [reset, stopRecording]);
+    }
 
     useEffect(() => {
         return () => {
@@ -289,45 +285,55 @@ export default function Chatbox() {
     }, [taskQueue, isProcessing, addVideo, getTTSAudio, getLipsync, updateVideo, currentFrame, fps, isReversed, framesLength, getTotalVideoDuration])
 
     useEffect(() => {
-        if (sttMutation.status === "success" && sttMutation.data) {
-            // Save STT performance results
-            const { 
-                denoise_latency: denoiseInferenceLatency, 
-                stt_latency: sttInferenceLatency,
-                http_latency: httpLatency,
-            } = sttMutation.data.metrics
+        if (sttMutation.data && sttMutation.data.status && sttMutation.data.metrics) {
+            try {
+                // Save STT performance results
+                const { 
+                    denoise_latency: denoiseInferenceLatency, 
+                    stt_latency: sttInferenceLatency,
+                    http_latency: httpLatency,
+                } = sttMutation.data.metrics
 
-            setPerformanceResults(prev => {
-                const newResults = {
-                    ...prev,
-                    denoise: {
-                        inferenceLatency: denoiseInferenceLatency,
-                    },
-                    stt: {
-                        inferenceLatency: sttInferenceLatency,
-                        httpLatency: httpLatency,
-                    },
-                    metadata: {
-                        ...prev.metadata,
-                        inputAudioDurationInSeconds: durationSeconds
+                setPerformanceResults(prev => {
+                    const newResults = {
+                        ...prev,
+                        denoise: {
+                            inferenceLatency: denoiseInferenceLatency,
+                        },
+                        stt: {
+                            inferenceLatency: sttInferenceLatency,
+                            httpLatency: httpLatency,
+                        },
+                        metadata: {
+                            ...prev.metadata,
+                            inputAudioDurationInSeconds: durationSeconds
+                        }
+                    };
+
+                    // Only update if the new results are different
+                    if (JSON.stringify(prev) !== JSON.stringify(newResults)) {
+                        return newResults;
                     }
-                };
+                    return prev;
+                });
 
-                // Only update if the new results are different
-                if (JSON.stringify(prev) !== JSON.stringify(newResults)) {
-                    return newResults;
-                }
-                return prev;
-            });
-
-            // Add STT result to chat
-            append({ content: sttMutation.data.text, role: "user" }).then(() => {
-                sttMutation.reset()
-                stopRecording()
-            })
+                // Add STT result to chat
+                append({ content: sttMutation.data.text, role: "user" }).then(() => {
+                    sttMutation.reset()
+                    stopRecording()
+                })
+            } catch (error) {
+                console.error("Error processing STT data:", error)
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps -- sttMutatio.reset added todependency will cause infinite loop
-    }, [sttMutation.status, sttMutation.data, isCalling, startRecording])
+    }, [sttMutation.status, sttMutation.data])
+
+    useEffect(() => {
+        if (isCalling || recording) {
+            handleStopRecording()
+        }
+    }, [isDeviceFound])
 
     return (
         <>
@@ -409,12 +415,15 @@ export default function Chatbox() {
                 }
                 {
                     isCalling ? (
-                        <Button size="icon" variant="destructive" onClick={handleStopRecording} color="red">
+                        <Button size="icon" variant="destructive" onClick={() => {
+                            handleStopChat()
+                            handleStopRecording()
+                        }} color="red">
                             <Ban color="white" className="size-4" />
                             <span className="sr-only">Stop recording</span>
                         </Button>
                     ) : (!input.trim() && !(status === "streaming" || status === "submitted" || !isQueueEmpty || sttMutation.isPending) &&
-                        <Button size="icon" onClick={handleStartRecording}>
+                        <Button size="icon" onClick={handleStartRecording} disabled={!isDeviceFound}>
                             <Mic className="size-4" />
                             <span className="sr-only">Voice input</span>
                         </Button>
