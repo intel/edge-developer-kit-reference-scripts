@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useGetSTT } from './useSTT';
+import { toast } from 'sonner';
 
 export default function useAudioRecorder() {
     const MIN_DECIBELS = -45;
@@ -20,6 +21,7 @@ export default function useAudioRecorder() {
     const [durationCounter, setDurationCounter] = useState<NodeJS.Timeout | null>(null)
     const [durationSeconds, setDurationSeconds] = useState(0);
     const [visualizerData, setVisualizerData] = useState(Array(VISUALIZER_BUFFER_LENGTH).fill(0))
+    const [isDeviceFound, setIsDeviceFound] = useState(false);
     // Add a ref to store the animation frame ID for proper cleanup
     const animationFrameRef = useRef<number | null>(null);
 
@@ -172,6 +174,8 @@ export default function useAudioRecorder() {
             source.connect(sourceAnalyser);
             sourceAnalyser.minDecibels = MIN_DECIBELS
             setAnalyser(sourceAnalyser)
+
+            setIsDeviceFound(true);
         },
         [MIN_DECIBELS, sttMutation]
     );
@@ -183,10 +187,19 @@ export default function useAudioRecorder() {
             }, 1000));
         };
 
-        if (mediaRecorder) {
-            startDurationCounter();
-            setRecording(true);
-            mediaRecorder.start();
+        try {
+            if (mediaRecorder) {
+                mediaRecorder.start();
+                startDurationCounter();
+                setRecording(true);
+            }
+        } catch (error) {
+            setIsDeviceFound(false);
+            if (error instanceof Error && error.name === 'NotSupportedError') {
+                toast.error("Microphone device not found. Please refresh the page and allow microphone access.");
+            } else {
+                toast.error("Error recording audio. Please refresh the page and allow microphone access.");
+            }
         }
 
         setVisualizerData(Array(VISUALIZER_BUFFER_LENGTH).fill(0))
@@ -200,7 +213,6 @@ export default function useAudioRecorder() {
             }
             setDurationSeconds(0);
         };
-
 
         if (mediaRecorder) {
             stopDurationCounter()
@@ -225,6 +237,10 @@ export default function useAudioRecorder() {
         async function loadRecorder(): Promise<void> {
 
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            navigator.mediaDevices.ondevicechange = () => {
+                setIsDeviceFound(false);
+                toast.error("Microphone device not found. Please refresh the page and allow microphone access.");
+            }
             initiateMediaRecoder(stream);
         }
 
@@ -271,7 +287,8 @@ export default function useAudioRecorder() {
         durationSeconds,
         sttMutation,
         pauseRecording,
-        resumeRecording
+        resumeRecording,
+        isDeviceFound
     };
 };
 
