@@ -43,6 +43,7 @@ verify_dependencies(){
         curl
         wget
         gpg-agent
+        software-properties-common
     )
     install_packages "${DEPENDENCIES_PACKAGES[@]}"
     echo "$S_VALID Dependencies installed";
@@ -54,17 +55,7 @@ verify_intel_gpu_package_repo(){
         add-apt-repository -y ppa:kobuk-team/intel-graphics
         apt update
     fi
-}
-
-verify_intel_dgpu_package_repo(){
-   arc_repo=$(< /etc/apt/sources.list.d/intel-gpu-jammy.list grep "jammy arc")
-   if [ ! "$arc_repo" ]; then
-       echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/graphics/ubuntu jammy arc" | \
-           tee /etc/apt/sources.list.d/intel-gpu-jammy.list
-       apt update
-   fi
-}
-            
+}        
 
 verify_dgpu_driver(){
     echo -e "Verifying dGPU driver"
@@ -95,6 +86,18 @@ verify_dgpu_driver(){
     if ! id -nG "$USER" | grep -q '\<render\>'; then
         echo "Adding current user ($USER) to 'render' group"
         usermod -aG render "$USER"
+    fi
+
+    # Get the native user who invoked sudo
+    NATIVE_USER="$(logname)"
+        
+    if ! id -nG "$NATIVE_USER" | grep -q -w '\<video\>'; then
+        echo "Adding native user ($NATIVE_USER) to 'video' group"
+        usermod -aG video "$NATIVE_USER"
+    fi
+    if ! id -nG "$NATIVE_USER" | grep -q '\<render\>'; then
+        echo "Adding native user ($NATIVE_USER) to 'render' group"
+        usermod -aG render "$NATIVE_USER"
     fi
 
 }
@@ -185,6 +188,7 @@ setup() {
 
     echo -e "\n# Status"
     echo "$S_VALID Platform configured"
+    echo "Please log out and log back in to take effect."
 }
 
 setup
