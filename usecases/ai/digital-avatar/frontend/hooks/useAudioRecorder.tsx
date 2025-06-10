@@ -16,6 +16,7 @@ export default function useAudioRecorder() {
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [recording, setRecording] = useState(false);
     const chunks = useRef<Blob[]>([]);
+    const hasSoundRef = useRef<boolean>(false);
     const saveAudio = useRef<boolean>(true)
     const [analyser, setAnalyser] = useState<AnalyserNode | null>(null)
     const [durationCounter, setDurationCounter] = useState<NodeJS.Timeout | null>(null)
@@ -49,10 +50,8 @@ export default function useAudioRecorder() {
     const analyseAudio = useCallback(() => {
         if (!analyser) return;
         const bufferLength = analyser.frequencyBinCount;
-
         const domainData = new Uint8Array(bufferLength);
         const timeDomainData = new Uint8Array(analyser.fftSize);
-
         let lastSoundTime = Date.now();
         let hasStartedSpeaking = false
         
@@ -86,6 +85,7 @@ export default function useAudioRecorder() {
                 // Check if initial speech/noise has started
                 const hasSound = domainData.some((value) => value > 0);
                 if (hasSound) {
+                    hasSoundRef.current = true;
                     if (!hasStartedSpeaking) {
                         hasStartedSpeaking = true
                     }
@@ -181,6 +181,7 @@ export default function useAudioRecorder() {
     );
 
     const startRecording = useCallback(() => {
+        hasSoundRef.current = false;
         const startDurationCounter = () => {
             setDurationCounter(setInterval(() => {
                 setDurationSeconds(prev => prev + 1);
@@ -206,7 +207,7 @@ export default function useAudioRecorder() {
     }, [mediaRecorder])
 
     const stopRecording = useCallback((save: boolean = true) => {
-        saveAudio.current = save
+        saveAudio.current = save;
         const stopDurationCounter = () => {
             if (durationCounter !== null) {
                 clearInterval(durationCounter);
@@ -215,7 +216,11 @@ export default function useAudioRecorder() {
         };
 
         if (mediaRecorder) {
-            stopDurationCounter()
+            if (!hasSoundRef.current) {
+                saveAudio.current = false;
+                toast.error("No audio detected. Please try again.");
+            }
+            stopDurationCounter();
             mediaRecorder.stop();
         }
     }, [durationCounter, mediaRecorder]);
