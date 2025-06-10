@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-import { Send, Mic, Ban, EllipsisVertical } from 'lucide-react'
+import { Send, Mic, Ban, EllipsisVertical, Square } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { Button } from "@/components/ui/button"
@@ -415,13 +415,22 @@ export default function Chatbox() {
                 }
                 {
                     isCalling ? (
-                        <Button size="icon" variant="destructive" onClick={() => {
-                            handleStopChat()
-                            handleStopRecording()
-                        }} color="red">
-                            <Ban color="white" className="size-4" />
-                            <span className="sr-only">Stop recording</span>
-                        </Button>
+                        !(status === "streaming" || !isQueueEmpty || sttMutation.isPending) ? (
+                            <Button size="icon" variant="destructive" onClick={() => {
+                                handleStopRecording(true)
+                            }} color="red">
+                                <Square fill='white' color="white" className="size-4" />
+                                <span className="sr-only">Stop recording</span>
+                            </Button>
+                        ) : (
+                            <Button size="icon" variant="destructive" onClick={() => {
+                                handleStopRecording()
+                                handleStopChat()
+                            }} color="red">
+                                <Ban color="white" className="size-4" />
+                                <span className="sr-only">Stop Chat</span>
+                            </Button>
+                        )
                     ) : (!input.trim() && !(status === "streaming" || status === "submitted" || !isQueueEmpty || sttMutation.isPending) &&
                         <Button size="icon" onClick={handleStartRecording} disabled={!isDeviceFound}>
                             <Mic className="size-4" />
