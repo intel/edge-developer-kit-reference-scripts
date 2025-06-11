@@ -21,6 +21,6 @@ docker run -t -d --rm --name notebooks \
 -v "${CURRENT_DIRECTORY}":/mnt \
 -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY="$DISPLAY" \
 -p 127.0.0.1:8888:8888 \
-openvino_notebook/ubuntu22_dev:latest
+openvino_notebook/ubuntu24_dev:latest
 
 docker exec notebooks bash -c "cd /mnt/openvino_notebooks/notebooks ; jupyter-lab --allow-root --ip=0.0.0.0 --no-browser --NotebookApp.iopub_data_rate_limit=10000000"
