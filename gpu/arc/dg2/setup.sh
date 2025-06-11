@@ -187,8 +187,8 @@ setup() {
     verify_drivers
 
     echo -e "\n# Status"
-    echo "$S_VALID Platform configured"
     echo "Please log out and log back in to take effect."
+    echo "$S_VALID Platform configured"
 }
 
 setup

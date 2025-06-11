@@ -56,42 +56,11 @@ setup_docker(){
 install_openvino_docker(){
 
     echo -e "\n# Install OpenVINO™ Runtime docker image"
-    if ! docker images | grep openvino/ubuntu22_dev; then
-        if ! docker images | grep openvino_dgpu/ubuntu22_dev; then
-            docker pull openvino/ubuntu22_dev:latest
+    if ! docker images | grep openvino/ubuntu24_dev; then
+        if ! docker images | grep openvino_dgpu/ubuntu24_dev; then
+            docker pull openvino/ubuntu24_dev:latest
             echo "Default OpenVINO™ Runtime docker image installed"
         fi        
-    fi
-
-    echo -e "\n# Install GPU driver in OpenVINO™ Runtime docker image"
-    if ! docker images | grep openvino_dgpu/ubuntu22_dev; then
-        if docker ps | grep openvino_install_gpu; then
-            docker stop openvino_install_gpu
-            sleep 5
-            docker rm openvino_install_gpu
-        fi
-
-        docker run -u root -t -d --rm --name openvino_install_gpu \
-        -v /usr/share/keyrings/intel-graphics.gpg:/usr/share/keyrings/intel-graphics.gpg \
-        -v /etc/environment:/etc/environment \
-        -v /etc/group:/etc/group \
-        --device=/dev/dri:/dev/dri \
-        --group-add="$(stat -c "%g" /dev/dri/render* | head -n 1)" \
-        -v /usr/bin:/usr/bin \
-        -v "${PWD}":/data/workspace \
-        -w /data/workspace openvino/ubuntu22_dev:latest
-        
-        docker exec openvino_install_gpu bash -c "./install_gpu.sh"
-
-        echo -e "\n# Create OpenVINO™ Runtime docker image with dGPU drivers" 
-        docker commit openvino_install_gpu openvino_dgpu/ubuntu22_dev:latest
-        docker stop openvino_install_gpu
-        sleep 5
-        docker rmi openvino/ubuntu22_dev
-
-        echo "$S_VALID OpenVINO™ Runtime docker image with dGPU driver installed"
-    else
-        echo "$S_VALID OpenVINO™ Runtime docker image with dGPU driver already installed"
     fi
 }
 
@@ -108,10 +77,10 @@ install_openvino_notebook_docker(){
     if ! docker images | grep openvino_notebook; then
         docker run -u root -t -d --rm --name temp_notebooks \
         -v /usr/share/keyrings/intel-graphics.gpg:/usr/share/keyrings/intel-graphics.gpg \
-        -v "${PWD}":/mnt openvino_dgpu/ubuntu22_dev:latest
+        -v "${PWD}":/mnt openvino/ubuntu24_dev:latest
         docker exec -u root temp_notebooks bash -c "apt update && apt install -y wget ffmpeg"
         docker exec -u root temp_notebooks bash -c "cd /mnt/openvino_notebooks; pip install wheel setuptools; pip install -r requirements.txt"
-        docker commit temp_notebooks openvino_notebook/ubuntu22_dev:latest
+        docker commit temp_notebooks openvino_notebook/ubuntu24_dev:latest
         docker stop temp_notebooks
     else
         echo "$S_VALID OpenVINO™ notebook docker image already installed"

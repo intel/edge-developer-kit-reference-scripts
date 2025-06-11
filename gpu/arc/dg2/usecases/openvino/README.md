@@ -24,16 +24,16 @@ During installation, it may ask you to reboot your system. Reboot the system and
 
 When you run command `docker images`, you can see the following example:
 ```
-REPOSITORY                       TAG       IMAGE ID       CREATED          SIZE
-openvino_notebook/ubuntu22_dev   latest    b6b94b1682b3   22 minutes ago   5.09GB
-openvino_dgpu/ubuntu22_dev       latest    afa9ce506097   44 minutes ago   4.7GB
+REPOSITORY                       TAG       IMAGE ID       CREATED         SIZE
+openvino_notebook/ubuntu24_dev   latest    a92b98fbd9dd   2 minutes ago   2.7GB
+openvino/ubuntu24_dev            latest    6f57c605708c   8 weeks ago     1.82GB
 ```
 
 ## Run Docker Image
 ### OpenVINO™ Toolkit
 1. Run this command to launch docker container with OpenVINO™ image and link to your working directory. For this instance, the working directory is in /home/user/workspace and it mount to container /data/workspace directory.
 ```bash
-docker run -it -d -u openvino --name openvino_app -v /etc/group:/etc/group --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v /home/user/workspace:/data/workspace -w /data/workspace openvino_dgpu/ubuntu22_dev:latest
+docker run -it -d -u openvino --name openvino_app -v /etc/group:/etc/group --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v /home/user/workspace:/data/workspace -w /data/workspace openvino/ubuntu24_dev:latest
 ```
 
 - --name: container name
