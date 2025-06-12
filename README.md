@@ -2,7 +2,7 @@
 
 This is developer kits reference setup scripts for various kind of Intel platforms and GPUs.
 
-> **Note:** The main branch of this repository contains the latest development version of the project. It may include experimental features, work in progress, or unstable code. If you are looking for the stable production version, please consider checking out the tagged releases.
+> **Note:** Main branch of this repository contains the latest development version of the project. It may include experimental features, work in progress, or unstable code.
 
 Based on the platform you are using, select the following to get started:
 
@@ -33,6 +33,8 @@ Based on the platform you are using, select the following to get started:
 7. [Smart Parking](usecases/ai/smart-parking/README.md)
 
 ## Disclaimer
-GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.
+This repository contains pre-production code and is intended for testing and evaluation purposes only. The code and features provided here are in development and may be incomplete, unstable, or subject to change without notice. Use this repository at your own risk.
 
 The reference scripts provided in this repository have been validated and tested on the hardware listed in the documentation. While we strive to ensure compatibility and performance, these scripts may not function as expected on other hardware configurations. Users may encounter issues or unexpected behavior when running the scripts on untested hardware. If you encounter any issues or have suggestions for improvements, we welcome you to open an issue.
+
+GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.
