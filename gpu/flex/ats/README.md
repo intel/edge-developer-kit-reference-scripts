@@ -24,7 +24,7 @@ cd edge-developer-kit-reference-scripts/gpu/flex/ats/
 ### 4. Run setup script
 This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceeding to the next step.
 ```bash
-./setup.sh
+sudo ./setup.sh
 ```
 During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ Platform configured
