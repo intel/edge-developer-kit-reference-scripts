@@ -4,7 +4,6 @@
 FROM debian:12-slim
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VLLM_VERSION=v0.6.6
-ARG OPENVINO_VERSION=2024.6.0
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && apt-get upgrade -y \
@@ -41,18 +40,9 @@ ENV PATH="/usr/src/.venv/bin:$PATH"
 WORKDIR /usr/src/app/vllm
 RUN git checkout ${VLLM_VERSION} \
     && python3 -m pip install --no-cache-dir --upgrade pip \
-    && python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu optimum-intel[openvino,nncf]==1.21.0 \
-        optimum==1.23.3 \
-    && python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements-build.txt \
-    && VLLM_TARGET_DEVICE="openvino" python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu . \
-    && python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch==2.6.0 \
-        torchvision==0.21.0 \
-        triton==3.2.0 \
-        optimum-intel[openvino,nncf]==1.21.0 \
-        optimum==1.23.3 \
-        transformers==4.46.3 \
-        openvino==${OPENVINO_VERSION} \
-        openvino_genai==${OPENVINO_VERSION}
+    && python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements-build.txt
+COPY --chown=intel:intel patch/openvino.txt requirements-openvino.txt
+RUN VLLM_TARGET_DEVICE="openvino" python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu .
 
 WORKDIR /usr/src/app
 RUN opt_in_out --opt_out
