@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0 
+
 # Use a minimal Debian base image for a smaller container footprint
 FROM debian:12-slim
 
