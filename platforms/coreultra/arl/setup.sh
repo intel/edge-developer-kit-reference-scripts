@@ -8,8 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="24.04"
-KERNEL_PACKAGE_NAME="linux-image-6.11-intel"
-RELEASE_VERSION=${KERNEL_PACKAGE_NAME//linux-image-/}
+KERNEL_VERSION="6.11.0-26-generic"
 
 # symbol
 S_VALID="✓"
@@ -61,15 +60,7 @@ verify_dependencies(){
 }
 
 verify_intel_gpu_package_repo(){
-    if [ ! -e /etc/apt/sources.list.d/intel-gpu-jammy.list ]; then
-        echo "Adding Intel GPU repository"
-        wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
-            gpg --yes --dearmor --output /usr/share/keyrings/intel-graphics.gpg
-        echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble client" | \
-            tee /etc/apt/sources.list.d/intel-gpu-noble.list
-        apt update
-    fi
-
+    add-apt-repository -y ppa:kobuk-team/intel-graphics
 }
 
 verify_platform() {
@@ -120,49 +111,13 @@ verify_os() {
     echo "$S_VALID OS version: $CURRENT_OS_ID $CURRENT_OS_VERSION"
 }
 
-verify_kernel_package() {
-    echo -e "## Install User Space Components"
-    apt -y update
-    apt -y upgrade
-
-    # Download Kernel
-    touch /etc/apt/sources.list.d/intel-arl.list
-    echo -e "deb https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels\n\
-    deb-src https://download.01.org/intel-linux-overlay/ubuntu noble main non-free multimedia kernels" | tee /etc/apt/sources.list.d/intel-arl.list
-
-    echo -e "### Download GPG key to /etc/apt/trusted.gpg.d/arl.gpg"
-    wget https://download.01.org/intel-linux-overlay/ubuntu/E6FA98203588250569758E97D176E3162086EE4C.gpg -O /etc/apt/trusted.gpg.d/arl.gpg
-
-    echo -e "### Set the preferred list in /etc/apt/preferences.d/intel-arl"
-    touch /etc/apt/preferences.d/intel-arl
-    echo -e "Package: *\n\
-    Pin: release o=intel-iot-linux-overlay-noble\n\
-    Pin-Priority: 2000" | tee /etc/apt/preferences.d/intel-arl
-    
-    # Install kernel
-    echo -e "## Install Kernel"
-    apt -y update
-    apt -y install linux-image-6.11-intel
-    apt -y install linux-headers-6.11-intel
-
-    echo -e "## Update grub"
-    sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT=.*$|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash i915.enable_guc=3 i915.max_vfs=7 i915.force_probe=* udmabuf.list_limit=8192"|' /etc/default/grub
-    sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.11-intel"/' /etc/default/grub
-    update-grub
-
-    CURRENT_KERNEL_VERSION_INSTALLED=$(uname -r)
-
-    echo "Running kernel version: $CURRENT_KERNEL_VERSION_INSTALLED"
-    echo "Installed kernel version: $KERNEL_PACKAGE_NAME"
-    echo "System reboot is required. Re-run the script after reboot"
-    exit 0
-}
-
 verify_kernel() {
     echo -e "\n# Verifying kernel version"
-    
-    if [[ "$RELEASE_VERSION" != $(uname -r) ]]; then
-        verify_kernel_package
+    if [[ "$KERNEL_VERSION" != $(uname -r) ]]; then
+        apt -y update
+        apt -y dist-upgrade
+        echo "System reboot is required. Re-run the script after reboot"
+        exit 0
     else
         echo "$S_VALID Kernel version: $(uname -r)"
     fi
@@ -174,13 +129,14 @@ verify_igpu_driver(){
     if [ -z "$(clinfo | grep 'Driver Version' | awk '{print $NF}')" ]; then
         verify_intel_gpu_package_repo
         IGPU_PACKAGES=(
+        software-properties-common
+        libze-intel-gpu1
         libze1
-        intel-opencl-icd
+        intel-metrics-discovery
+        intel-opencl-icd 
         intel-gsc
-        clinfo
-	    vainfo
+        vainfo
 	    hwinfo
-        intel-level-zero-gpu
         )
         install_packages "${IGPU_PACKAGES[@]}"
         FIRMWARE=(linux-firmware)
@@ -214,7 +170,7 @@ verify_igpu_driver(){
 }
 
 verify_compute_runtime(){
-    COMPUTE_RUNTIME_VER="24.52.32224.5"
+    COMPUTE_RUNTIME_VER="25.22.33944.8"
     echo -e "\n# Verifying Intel(R) Compute Runtime drivers"
 
     echo -e "Install Intel(R) Compute Runtime drivers version: $COMPUTE_RUNTIME_VER"
@@ -226,17 +182,23 @@ verify_compute_runtime(){
     echo -e "Downloading compute runtime packages"
     mkdir -p /tmp/neo_temp
     cd /tmp/neo_temp
-    wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-core-2_2.5.6+18417_amd64.deb
-    wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-opencl-2_2.5.6+18417_amd64.deb
-    wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu-dbgsym_1.6.32224.5_amd64.ddeb
-    wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu_1.6.32224.5_amd64.deb
-    wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd-dbgsym_24.52.32224.5_amd64.ddeb
-    wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd_24.52.32224.5_amd64.deb
-    wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/libigdgmm12_22.5.5_amd64.deb
+    wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.12.5/intel-igc-core-2_2.12.5+19302_amd64.deb
+    wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.12.5/intel-igc-opencl-2_2.12.5+19302_amd64.deb
+    wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/intel-ocloc-dbgsym_25.22.33944.8-0_amd64.ddeb
+    wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/intel-ocloc_25.22.33944.8-0_amd64.deb
+    wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/intel-opencl-icd-dbgsym_25.22.33944.8-0_amd64.ddeb
+    wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/intel-opencl-icd_25.22.33944.8-0_amd64.deb
+    # Skip install libigdgmm12. Causing issues with gpu drivers due to lower version.
+    #wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/libigdgmm12_22.7.0_amd64.deb
+    wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/libze-intel-gpu1-dbgsym_25.22.33944.8-0_amd64.ddeb
+    wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/libze-intel-gpu1_25.22.33944.8-0_amd64.deb
 
-    echo -e "Verify sha256 sums for packages"
-    wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/ww52.sum
-    sha256sum -c ww52.sum
+    #echo -e "Verify sha256 sums for packages"
+    #wget https://github.com/intel/compute-runtime/releases/download/25.22.33944.8/ww22.sum
+    #sha256sum -c ww22.sum
+
+    echo -e "Remove default libze-intel-gpu1 package"
+    apt remove -y libze1
 
     echo -e "\nInstalling compute runtime as root"
     dpkg -i ./*.deb
@@ -265,10 +227,9 @@ verify_npu_driver(){
         else
             mkdir /tmp/npu_temp
             cd /tmp/npu_temp
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.13.0/intel-driver-compiler-npu_1.13.0.20250131-13074932693_ubuntu24.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.13.0/intel-fw-npu_1.13.0.20250131-13074932693_ubuntu24.04_amd64.deb
-            wget https://github.com/intel/linux-npu-driver/releases/download/v1.13.0/intel-level-zero-npu_1.13.0.20250131-13074932693_ubuntu24.04_amd64.deb
-            wget https://github.com/oneapi-src/level-zero/releases/download/v1.18.5/level-zero_1.18.5+u24.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.17.0/intel-driver-compiler-npu_1.17.0.20250508-14912879441_ubuntu24.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.17.0/intel-fw-npu_1.17.0.20250508-14912879441_ubuntu24.04_amd64.deb
+            wget https://github.com/intel/linux-npu-driver/releases/download/v1.17.0/intel-level-zero-npu_1.17.0.20250508-14912879441_ubuntu24.04_amd64.deb
 
             dpkg -i ./*.deb
                                                                                                                                                                                                  
