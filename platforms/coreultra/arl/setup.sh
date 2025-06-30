@@ -8,7 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="24.04"
-KERNEL_VERSION="6.11.0-26-generic"
+KERNEL_VERSION="6.11"
 
 # symbol
 S_VALID="✓"
@@ -113,7 +113,8 @@ verify_os() {
 
 verify_kernel() {
     echo -e "\n# Verifying kernel version"
-    if [[ "$KERNEL_VERSION" != $(uname -r) ]]; then
+    CURRENT_KERNEL=$(uname -r | cut -d. -f1,2)
+    if [[ "$KERNEL_VERSION" != "$CURRENT_KERNEL" ]]; then
         apt -y update
         apt -y dist-upgrade
         echo "System reboot is required. Re-run the script after reboot"
