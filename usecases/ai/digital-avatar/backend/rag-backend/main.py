@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
+import magic
 
 from utils.prompt import RAG_PROMPT, NO_CONTEXT_FOUND_PROMPT
 from utils.chroma_client import ChromaClient
@@ -250,12 +251,16 @@ async def delete_text_embeddings(source: str):
 @app.post("/v1/rag/text_embeddings", status_code=200)
 async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[UploadFile] = [UploadFile(...)]):
     global CHROMA_CLIENT
-    ALLOWED_EXTENSIONS = ['.pdf', '.txt']
+    ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain']
     file_list = []
     processed_list = []
     for file in files:
-        if not file.filename.endswith(tuple(ALLOWED_EXTENSIONS)):
-            logger.warning(f"{file.filename} is not the supported type.")
+        # Read a small chunk to check the mime type
+        sample = await file.read(2048)
+        mime_type = magic.from_buffer(sample, mime=True)
+        await file.seek(0)  # Reset file pointer
+        if mime_type not in ALLOWED_MIME_TYPES:
+            logger.warning(f"{file.filename} is not the supported type. Detected mime: {mime_type}")
             continue
         else:
             file_list.append(file)
