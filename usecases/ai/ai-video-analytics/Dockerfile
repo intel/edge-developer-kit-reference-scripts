@@ -16,6 +16,7 @@ RUN apt-get update \
     python3.11-venv \
     libgl1-mesa-dev \
     libglib2.0-0 \
+    libmagic1 \
     && addgroup --system intel --gid 1000 \
     && adduser --system --ingroup intel --uid 1000 --home /home/intel intel \
     && echo "intel ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/intel \
@@ -55,7 +56,9 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip \
     ultralytics==8.3.9 \
     openai-clip==1.0.1 \
     moviepy==1.0.3 \
-    opencv-python==4.10.0.84 
+    opencv-python==4.10.0.84 \
+    python-magic==0.4.27 \ 
+    posthog==5.4.0
 RUN python3 -m pip install --no-cache-dir --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/ \
     torch==2.4.1 \
     torchvision==0.19.1
