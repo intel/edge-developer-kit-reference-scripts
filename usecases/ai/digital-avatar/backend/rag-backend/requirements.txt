@@ -16,6 +16,8 @@ chromadb==0.5.18
 huggingface_hub>=0.23.0
 botocore==1.34.88
 cached_path==1.6.3
+posthog==5.4.0 # posthog (used in chromadb) released their sdk v6.0.0 with breaking changes to their api
+python-magic==0.4.27
 
 # OpenVINO
 --extra-index-url https://download.pytorch.org/whl/cpu

@@ -11,7 +11,8 @@ RUN apt-get update \
         gnupg2 \
         libtbb12 \
         python3.11 \
-        python3.11-venv 
+        python3.11-venv \
+        libmagic1
 
 # Install GPU drivers
 WORKDIR /tmp/neo
