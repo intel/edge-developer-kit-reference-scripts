@@ -5,6 +5,7 @@ import os
 import shutil
 import pandas as pd
 import gradio as gr
+import magic
 
 from utils.chroma import chromaClient
 from utils.model import ImageCaptionPipeline, FaceDataPipeline
@@ -17,6 +18,12 @@ os.makedirs(VIDEO_FOLDER, exist_ok=True)
 semantic_search_client = chromaClient("video_llm")
 face_search_client = chromaClient("face_llm")
 
+def is_valid_video_file(file_path):
+    """
+    Check if the file is a valid video file based on its MIME type.
+    """
+    mime = magic.from_file(file_path, mime=True)
+    return mime.startswith('video/')
 
 def upload_and_process_video_file(files, progress=gr.Progress()):
     if not os.path.exists(VIDEO_FOLDER):
@@ -24,19 +31,26 @@ def upload_and_process_video_file(files, progress=gr.Progress()):
 
     file_paths = []
     for file in progress.tqdm(files, desc="Uploading and processing video files"):
-        shutil.copy(file, VIDEO_FOLDER)
-        video_path = os.path.join(VIDEO_FOLDER, file.name.split("/")[-1])
-        frame_data = VideoProcessor.extract_video_frames(video_path)
-        query = "A picture of"
-        result_data = image_caption_pipeline.inference(frame_data, query)
-        for data in result_data:
-            semantic_search_client.add_data(data)
+        try:
+            shutil.copy(file, VIDEO_FOLDER)
+            video_path = os.path.join(VIDEO_FOLDER, file.name.split("/")[-1])
+            if is_valid_video_file(video_path) is False:
+                gr.Warning(f"{video_path} is not a supported video file.", duration=3)
+                continue
+            frame_data = VideoProcessor.extract_video_frames(video_path)
+            query = "A picture of"
+            result_data = image_caption_pipeline.inference(frame_data, query)
+            for data in result_data:
+                semantic_search_client.add_data(data)
 
-        face_result_data = face_data_pipeline.inference(frame_data)
-        for face_data in face_result_data:
-            face_search_client.add_face_data(face_data)
+            face_result_data = face_data_pipeline.inference(frame_data)
+            for face_data in face_result_data:
+                face_search_client.add_face_data(face_data)
 
-        file_paths.append(video_path)
+            file_paths.append(video_path)
+        except Exception as e:
+            gr.Warning(f"Failed to process {file.name}: {str(e)}", duration=3)
+            continue
 
     return file_paths
 
