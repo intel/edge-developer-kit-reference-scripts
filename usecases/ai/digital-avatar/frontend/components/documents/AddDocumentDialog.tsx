@@ -16,12 +16,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { useCreateTextEmbeddings } from "@/hooks/api-hooks/use-dataset-api"
 import { CustomFile } from "@/types/dropzone"
 
 import type React from "react"
+import { useCreateTextEmbeddings } from "@/hooks/useLLM"
 
-export default function AddDocumentDialog() {
+export default function AddDocumentDialog({ refetch }: { refetch: () => void }) {
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [isUploadError, setIsUploadError] = useState<boolean>(false);
@@ -56,6 +56,7 @@ export default function AddDocumentDialog() {
                         // enqueueSnackbar(`Embedding created successfully.`, {
                         //   variant: "success",
                         // });
+                        refetch()
                         resetState();
                         setIsDialogOpen(false);
                     } else {
