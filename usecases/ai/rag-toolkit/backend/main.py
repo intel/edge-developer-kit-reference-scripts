@@ -7,6 +7,7 @@ os.environ['HF_HOME'] = "./data/huggingface"
 import io
 import time
 import uuid
+import magic
 import asyncio
 import logging
 import requests
@@ -142,14 +143,67 @@ async def delete_text_embeddings(source: str):
 async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[UploadFile] = [UploadFile(...)]):
     global CHROMA_CLIENT
     ALLOWED_EXTENSIONS = ['.pdf', '.txt']
+    ALLOWED_MIME_TYPES = {
+        'application/pdf': '.pdf',
+        'text/plain': '.txt',
+        'text/x-python': '.txt',  # Sometimes plain text files are detected as Python
+        'application/octet-stream': None  # Will need additional validation
+    }
+    
     file_list = []
     processed_list = []
+    
     for file in files:
+        # Read file content for validation
+        file_content = await file.read()
+        
+        # Reset file pointer for later use
+        await file.seek(0)
+        
+        # Basic extension check
         if not file.filename.endswith(tuple(ALLOWED_EXTENSIONS)):
-            logger.warning(f"{file.filename} is not the supported type.")
+            logger.warning(f"{file.filename} has unsupported extension.")
             continue
-        else:
+        
+        # Use python-magic to detect actual file type
+        try:
+            mime_type = magic.from_buffer(file_content, mime=True)
+            logger.info(f"Detected MIME type for {file.filename}: {mime_type}")
+            
+            # Validate MIME type
+            if mime_type not in ALLOWED_MIME_TYPES:
+                logger.warning(f"{file.filename} has unsupported MIME type: {mime_type}")
+                continue
+            
+            # Special handling for octet-stream (binary detection fallback)
+            if mime_type == 'application/octet-stream':
+                # Try to detect by content or use filename extension as fallback
+                file_magic_desc = magic.from_buffer(file_content)
+                if 'PDF' in file_magic_desc and file.filename.endswith('.pdf'):
+                    logger.info(f"{file.filename} appears to be a PDF based on content analysis")
+                elif file.filename.endswith('.txt'):
+                    # Try to decode as text to verify it's actually text
+                    try:
+                        file_content.decode('utf-8')
+                        logger.info(f"{file.filename} appears to be a text file")
+                    except UnicodeDecodeError:
+                        logger.warning(f"{file.filename} cannot be decoded as text")
+                        continue
+                else:
+                    logger.warning(f"{file.filename} could not be validated as supported file type")
+                    continue
+            
+            # Additional validation for PDF files
+            if mime_type == 'application/pdf' or (mime_type == 'application/octet-stream' and file.filename.endswith('.pdf')):
+                if not file_content.startswith(b'%PDF-'):
+                    logger.warning(f"{file.filename} does not appear to be a valid PDF file")
+                    continue
+            
             file_list.append(file)
+            
+        except Exception as e:
+            logger.error(f"Error validating file {file.filename}: {str(e)}")
+            continue
 
     if len(file_list) == 0:
         logger.error("No file is able to use to create text embeddings.")
@@ -160,9 +214,11 @@ async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[Upload
         os.makedirs(DOCSTORE_DIR, exist_ok=True)
 
     for file in file_list:
+        # Reset file pointer before reading
+        await file.seek(0)
         with open(f"{DOCSTORE_DIR}/{file.filename}", "wb") as f:
             processed_list.append(file.filename)
-            f.write(file.file.read())
+            f.write(await file.read())
 
     CHROMA_CLIENT.create_collection_data(
         processed_list, chunk_size, chunk_overlap
