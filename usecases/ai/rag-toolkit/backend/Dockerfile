@@ -17,6 +17,7 @@ RUN apt-get update \
         git \
         gpg-agent \
         software-properties-common \
+        libmagic1 \
         python3 \
         python3-venv \
     && curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key | gpg --dearmor | tee /usr/share/keyrings/intel-graphics.gpg \
@@ -71,7 +72,8 @@ RUN python3 -m pip install fastapi[all]==0.111.0 \
         chromadb==0.5.18 \
         'huggingface_hub>=0.23.0' \
         botocore==1.34.88 \
-        cached_path==1.6.3
+        cached_path==1.6.3 \
+        python-magic
 RUN python3 -m pip install --extra-index-url https://download.pytorch.org/whl/cpu \
         'torch>=2.6.0' \
         'torchaudio>=2.6.0' \
