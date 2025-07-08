@@ -3,7 +3,6 @@
 
 import time
 import openvino as ov
-import random
 import torch
 import gc
 import os
@@ -51,10 +50,7 @@ def lock_api(func):
 # Generator Class
 # -------------------------------------------------------------------------
 class Generator:
-    def __init__(self, seed=None):
-        # If no seed is provided, generate a random one
-        if seed is None:
-            seed = random.randint(0, 2**32 - 1)
+    def __init__(self, seed):
         self.generator = torch.Generator(device="cpu").manual_seed(seed)
 
     def next(self):
