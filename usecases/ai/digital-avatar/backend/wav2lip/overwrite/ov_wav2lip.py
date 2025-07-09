@@ -10,7 +10,6 @@ sys.path.append(script_folder)
 import numpy as np
 import cv2
 from .audio import load_wav, melspectrogram
-import subprocess
 from tqdm import tqdm
 from glob import glob
 import torch
@@ -25,6 +24,7 @@ import openvino.properties as props
 # from face_parsing import init_parser, swap_regions
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
+from .inference_ov import combine_audio_with_generated_video
 
 import time
 import logging
@@ -691,10 +691,8 @@ class OVWav2Lip:
 
             if out:
                 out.release()
-            command = 'ffmpeg -y -i {} -i {} -strict -2 -q:v 1 -vf "hqdn3d,unsharp=5:5:0.5" {} > /dev/null 2>&1'.format(
-            audio_path, 'wav2lip/temp/result.avi', output_path)
 
-            subprocess.call(command, shell=platform.system() != 'Windows')
+            combine_audio_with_generated_video(audio_path, output_path)
 
             return file_id, frames_generated
         
