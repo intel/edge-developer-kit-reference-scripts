@@ -13,7 +13,7 @@ from RealESRGan.inference import initialize
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi import FastAPI, UploadFile, File, APIRouter
 import tempfile
 import uvicorn
@@ -27,7 +27,6 @@ import json
 import time
 from setup.download_model import setup
 import torch
-import re
 from pydantic import BaseModel
 from typing import Literal, Optional
 import openvino as ov
@@ -51,7 +50,8 @@ CONFIG = {
     "lipsync_device": os.environ.get('DEVICE', "CPU"),
     "use_enhancer": os.environ.get('USE_ENHANCER', False),
     "enhancer_device": os.environ.get('ENHANCER_DEVICE', "xpu:0" if torch.xpu.is_available() else "cpu"),
-    "enhancer_model": os.environ.get('ENHANCER_MODEL', "RealESRGAN_x4plus_anime_6B")
+    "enhancer_model": os.environ.get('ENHANCER_MODEL', "RealESRGAN_x4plus_anime_6B"),
+    "avatar_skin": os.environ.get('AVATAR_SKIN', "default")
 }
 
 class Configurations(BaseModel):
@@ -60,6 +60,7 @@ class Configurations(BaseModel):
     use_enhancer: Optional[bool] = False
     enhancer_device: Optional[str] = 'xpu:0'
     enhancer_model: Optional[Literal[tuple(ENHANCER_MODELS)]] = 'RealESRGAN_x4plus_anime_6B'
+    avatar_skin: Optional[str] = 'default.mp4'
     
 async def remove_file(file_name):
     if os.path.exists(file_name):
@@ -74,7 +75,7 @@ def initialize_wav2lip():
     if CONFIG["use_enhancer"] is not None:
         enhancer = initialize(CONFIG["enhancer_model"], device=CONFIG["enhancer_device"])
 
-    wav2lip = OVWav2Lip(device=CONFIG["lipsync_device"], avatar_path="assets/video.mp4", enhancer=enhancer, model=CONFIG["lipsync_model"])
+    wav2lip = OVWav2Lip(device=CONFIG["lipsync_device"], avatar_path=f"assets/avatar-skins/{CONFIG['avatar_skin']}.mp4", enhancer=enhancer, model=CONFIG["lipsync_model"])
     return wav2lip    
 
 def warmup():
@@ -172,7 +173,7 @@ async def test(enhance: bool = False):
     return JSONResponse({"message": "hi"})
  
 @router.get("/config")
-async def get_current_device():
+async def get_current_config():
     global CONFIG, DEVICES
     DEVICES = get_devices()
     config = {
@@ -234,7 +235,8 @@ async def update_config(data: Configurations):
         "lipsync_device": device,
         "use_enhancer": data.use_enhancer,
         "enhancer_device": enhancer_device,
-        "enhancer_model": data.enhancer_model
+        "enhancer_model": data.enhancer_model,
+        "avatar_skin": data.avatar_skin
     }
     try:
         WAV2LIP = initialize_wav2lip()
