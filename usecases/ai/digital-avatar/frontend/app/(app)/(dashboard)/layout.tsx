@@ -15,7 +15,7 @@ import {
     SidebarInset,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Zap, Clock, User, Settings, FileText } from "lucide-react"
+import { Zap, Clock, User, Settings, FileText, Shirt } from "lucide-react"
 import Link from "next/link"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -44,6 +44,11 @@ function AppSidebar() {
                     length: "Avatar"
                 },
                 {
+                    icon: <Shirt />,
+                    url: "/avatar-skins",
+                    length: "Avatar Skins"
+                },
+                {
                     icon: <FileText />,
                     url: "/documents",
                     length: "RAG Documents"
@@ -60,8 +65,8 @@ function AppSidebar() {
             type: "group",
             items: [{
                 icon: <Clock />,
-                url: "/metric/latency",
-                length: "Latency"
+                url: "/metric/performance-results",
+                length: "Performance Results"
             }]
         }
     ]

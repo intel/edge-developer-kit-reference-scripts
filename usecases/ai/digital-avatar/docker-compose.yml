@@ -70,7 +70,7 @@ services:
       - ./data/audio:/usr/src/app/data
       - ./data/wav2lip:/usr/src/app/wav2lip/results
     # ports: # For dev only
-      # - 8011:8011
+    #   - 8011:8011
     command: "python3 main.py"
 
   frontend:
@@ -83,6 +83,7 @@ services:
         - NEXT_PUBLIC_LLM_URL=rag-backend:8012
         - NEXT_PUBLIC_STT_URL=stt_service:5996
         - NEXT_PUBLIC_LIPSYNC_URL=lipsync:8011
+        - NEXT_PUBLIC_LIVEPORTRAIT_URL=liveportrait:8016
     image: digital-avatar.frontend
     container_name: digital-avatar.frontend
     restart: always
@@ -94,6 +95,8 @@ services:
       stt_service:
         condition: service_healthy
       tts_service:
+        condition: service_healthy
+      liveportrait:
         condition: service_healthy
     networks:
       - app-network
@@ -134,6 +137,7 @@ services:
     image: stt_service
     container_name: stt_service
     restart: always
+    privileged: true
     hostname: stt_service
     group_add:
       - ${RENDER_GROUP_ID:-992}
@@ -153,7 +157,7 @@ services:
       retries: 20
       start_period: 30s
     devices:
-      - /dev/dri:/dev/dri
+      - /dev:/dev:rw
     volumes:
       - ./data:/usr/src/app/data:rw
 
@@ -226,6 +230,31 @@ services:
         condition: service_healthy
     volumes:
       - ./data:/usr/src/app/data
+  
+  liveportrait:
+    build:
+      context: .
+      dockerfile: ./backend/liveportrait/Dockerfile
+      args:
+        - RENDER_GROUP_ID=${RENDER_GROUP_ID:-992}
+    image: digital-avatar.backend.liveportrait
+    container_name: digital-avatar.backend.liveportrait
+    privileged: true
+    restart: always
+    networks:
+      - app-network
+    environment:
+      - SERVER_PORT=8016
+      - SERVER_HOST=0.0.0.0
+      - ALLOWED_CORS=["*"] # frontend url
+      - ONEAPI_DEVICE_SELECTOR=level_zero:0
+    devices:
+      - /dev:/dev:rw
+    volumes:
+      - ./assets:/usr/src/app/assets
+    # ports:
+    #   - 8016:8016
+    command: "python3 main.py"
 
   postgres:
     image: postgres:17

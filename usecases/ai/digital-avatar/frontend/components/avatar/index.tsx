@@ -1,22 +1,28 @@
 // Copyright (C) 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import useVideoQueue from '@/hooks/useVideoQueue';
+import { useGetLipsyncConfig } from '@/hooks/useLipsync';
 
 export default function Avatar() {
     const { isLoading: isFramesLoading, handleVideoLoaded, updateRefs } = useVideoQueue();
+    const { data: lipsyncConfigData } = useGetLipsyncConfig()
     const [isVertical, setIsVertical] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    const lipsyncActiveSkin = useMemo(() => {
+        return lipsyncConfigData?.selected_config.avatar_skin ?? undefined
+    }, [lipsyncConfigData])
+
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
-          const { videoWidth, videoHeight } = videoRef.current;
-          setIsVertical(videoHeight > videoWidth);
+            const { videoWidth, videoHeight } = videoRef.current;
+            setIsVertical(videoHeight > videoWidth);
         }
-      };
+    };
 
     useEffect(() => {
         if (videoRef.current && canvasRef.current) {
@@ -26,9 +32,17 @@ export default function Avatar() {
 
     useEffect(() => {
         const videoElement = videoRef.current;
-        if (videoElement)
-            videoElement.src = "/assets/video.mp4";
-    }, [])
+        if (videoElement && lipsyncActiveSkin) {
+            videoElement.src = `/api/liveportrait/v1/skin/${lipsyncActiveSkin}.mp4`;
+            videoElement.load();
+        }
+    }, [lipsyncActiveSkin])
+
+    useEffect(() => {
+        return () => {
+            updateRefs(null, null); // Clear references on unmount
+        };
+    }, []);
 
     return (
         <>
@@ -53,7 +67,6 @@ export default function Avatar() {
                 <video
                     ref={videoRef}
                     className="size-full absolute"
-                    poster="/assets/image.png"
                     style={{ visibility: 'hidden' }}
                     onLoadedData={handleVideoLoaded}
                     onLoadedMetadata={handleLoadedMetadata}

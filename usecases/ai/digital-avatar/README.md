@@ -39,6 +39,7 @@ Please ensure that you have these ports available before running the application
 | TTS          | 8013 |
 | STT          | 8014 |
 | OLLAMA       | 8015 |
+| Liveportrait | 8016 |
 | Frontend     | 80   |
 
 ## Setup
@@ -61,7 +62,7 @@ Please ensure that you have these ports available before running the application
     cd ..
     ```
 1. **Create Avatar**:
-    1. Place a `video.mp4` file in the `assets` folder. The video should feature an idle person (preferably showing at least the upper half of the body) with subtle movements like blinking or slight body motion, and **no speaking**. Ensure the file is named **`video.mp4`**.
+    1. Place a `default.mp4` file in the `assets` folder. The video should feature an idle person (preferably showing at least the upper half of the body) with subtle movements like blinking or slight body motion, and **no speaking**. Ensure the file is named **`default.mp4`**.
 
 ### Setup ENV
 1. Create a `.env` file and copy the contents from `.env.template`:
@@ -87,6 +88,7 @@ docker compose up -d
 To access the web UI and interact with the application, use the following URLs:
 - Main Web Application: http://localhost
 - PayloadCMS Dashboard: http://localhost/admin
+  - Note: Authenticate yourself at the PayloadCMS Dashboard to use the performance results features.
 
 ## Notes
 ### Device Workload Configurations
