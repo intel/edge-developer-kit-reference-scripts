@@ -172,22 +172,26 @@ export default function Chatbox() {
             startRecording()
         }
         
-        if (performanceResults.lipsync) {
-            if (configResponse?.data) {
-                const selectedConfig: SelectedPipelineConfig =  {
-                    denoiseStt: configResponse.data.denoiseStt.selected_config,
-                    llm: configResponse.data.llm.selected_config,
-                    tts: configResponse.data.tts.selected_config,
-                    lipsync: configResponse.data.lipsync.selected_config,
-                }
+        try {
+            if (performanceResults.lipsync) {
+                if (configResponse?.data) {
+                    const selectedConfig: SelectedPipelineConfig =  {
+                        denoiseStt: configResponse.data.denoiseStt.selected_config,
+                        llm: configResponse.data.llm.selected_config,
+                        tts: configResponse.data.tts.selected_config,
+                        lipsync: configResponse.data.lipsync.selected_config,
+                    }
 
-                // Save performance results + config to database
-                savePerformanceResults(performanceResults, selectedConfig).catch((error) => {
-                    console.error("Error saving performance results:", error)
-                })
+                    // Save performance results + config to database
+                    savePerformanceResults(performanceResults, selectedConfig).catch((error) => {
+                        console.error("Error saving performance results:", error)
+                    })
+                }
+                
+                setPerformanceResults({})
             }
-            
-            setPerformanceResults({})
+        } catch (error) {
+            console.log("Error saving performance results:", error)
         }
     }, [isQueueEmpty, status, isCalling, recording, sttMutation.isSuccess, sttMutation.isPending, startRecording])
 

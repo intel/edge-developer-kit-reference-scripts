@@ -3,12 +3,38 @@
 
 "use client"
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 
 import { FetchAPI } from "@/lib/api";
+import { handleAPIResponse } from "@/utils/common";
+import { LipsyncConfigApiResponse, LipsyncSelectedConfig } from "@/types/config";
 
 const LipsyncAPI = new FetchAPI(`/api/lipsync`);
-// const LipsyncAPI = new FetchAPI(`${process.env.NEXT_PUBLIC_LIPSYNC_URL}`);
+
+export const useGetLipsyncConfig = (): UseQueryResult<LipsyncConfigApiResponse, Error> => {
+    return useQuery({
+        queryKey: ['get-lipsync-config'],
+        queryFn: async () => {
+            const response = await LipsyncAPI.get('config')
+            const result = handleAPIResponse<LipsyncConfigApiResponse>(response);
+            return result ?? null;
+        },
+    });
+
+}
+
+export function useUpdateLipsyncConfig() {
+    return useMutation({
+        mutationFn: async (config: LipsyncSelectedConfig) => {
+            const response = await LipsyncAPI.post('update_config', config);
+            const result = handleAPIResponse(response);
+            if (!result) {
+                throw new Error('Failed to update configuration');
+            }
+            return result;
+        },
+    });
+}
 
 export function useGetLipsync() {
     return useMutation({

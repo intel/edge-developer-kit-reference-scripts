@@ -26,7 +26,7 @@ export class FetchAPI {
             }
             this.baseURL = new URL(`${apiVersion}/path`, baseURL).toString();
         } else {
-            if (baseURL.startsWith('/api/config')) {
+            if (baseURL.startsWith('/api/config') || baseURL.startsWith('/api/avatar-skins')) {
                 this.baseURL = baseURL;
             } else {
                 this.baseURL = `${baseURL}/${apiVersion}`;

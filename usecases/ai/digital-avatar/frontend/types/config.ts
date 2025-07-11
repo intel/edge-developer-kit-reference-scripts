@@ -143,6 +143,7 @@ export interface LipsyncSelectedConfig {
   use_enhancer: boolean;
   enhancer_device?: string;
   enhancer_model?: EnhancerModel;
+  avatar_skin: string;
 }
 
 export interface LipsyncConfigApiResponse extends LipsyncConfigOptions {

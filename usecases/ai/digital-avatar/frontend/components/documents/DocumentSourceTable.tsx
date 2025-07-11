@@ -5,7 +5,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useContext, useMemo, useState, type MouseEvent } from "react";
-
+import { toast } from "sonner"
 import { ConfirmationContext } from "@/context/ConfirmationContext";
 import { useDeleteTextEmbeddingBySource } from "@/hooks/useLLM";
 
@@ -67,15 +67,10 @@ const DocumentSourceTable = ({
                 {
                     onSuccess: (response) => {
                         if (response.status) {
-                            // enqueueSnackbar(`Source deleted successfully.`, {
-                            //   variant: "success",
-                            // });
+                            toast.success("Source deleted successfully.")
                             refetch()
                         } else {
-                            // enqueueSnackbar(
-                            //   "Failed to delete source. Please check with admin.",
-                            //   { variant: "error" }
-                            // );
+                            toast.success("Failed to delete source. Please check with admin.")
                         }
                     },
                     onSettled: () => {

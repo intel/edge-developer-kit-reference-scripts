@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/api/liveportrait/v1/:slug*',
+        destination: `http://${process.env.NEXT_PUBLIC_LIVEPORTRAIT_URL}/v1/:slug*`,
+      },
+      {
         source: '/api/lipsync/v1/:slug*',
         destination: `http://${process.env.NEXT_PUBLIC_LIPSYNC_URL}/v1/:slug*`,
       },

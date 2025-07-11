@@ -13,12 +13,12 @@ import { CreateTextBeddingsProps } from "@/types/dataset";
 
 const LLMAPI = new FetchAPI(`/api/llm`);
 
-export const useGetLLM = (): UseQueryResult<{ models: LLMModel[] }, Error> => {
+export const useGetLLM = (): UseQueryResult<{ data: LLMModel[] }, Error> => {
     return useQuery({
         queryKey: ['llm_models'],
         queryFn: async () => {
             const response = await LLMAPI.get('models')
-            const result = handleAPIResponse<{ models: LLMModel[] }>(response);
+            const result = handleAPIResponse<{ data: LLMModel[] }>(response);
             return result ?? null;
         },
     });
