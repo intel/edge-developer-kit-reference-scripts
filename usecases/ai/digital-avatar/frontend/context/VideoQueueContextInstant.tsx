@@ -17,7 +17,7 @@ export interface VideoQueueContextProps {
     popVideo: () => void;
     currentVideo: Video | undefined;
     updateVideo: (id: number, url: string, startIndex: number, reversed: boolean, duration: number) => void;
-    updateRefs: (video: HTMLVideoElement, canvas: HTMLCanvasElement) => void;
+    updateRefs: (video: HTMLVideoElement | null, canvas: HTMLCanvasElement | null) => void;
     handleVideoLoaded: () => void;
     getTotalVideoDuration: () => number;
     isQueueEmpty: boolean;
@@ -73,9 +73,13 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
         setQueue((prevQueue) => { return prevQueue.slice(1) });
     }, []);
 
-    const updateRefs = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
+    const updateRefs = useCallback((video: HTMLVideoElement | null, canvas: HTMLCanvasElement | null) => {
         videoRef.current = video;
         canvasRef.current = canvas;
+
+        if (video === null || canvas === null) {
+            setIsLoading(true);
+        }
     }, [])
 
     const currentVideo = useMemo(() => {
