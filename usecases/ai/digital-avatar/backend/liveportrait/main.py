@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 import torch
 import json
+import ffmpeg
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -110,20 +111,19 @@ def process_inference_task(sanitized_skin_name, ext, temp_path):
         else:
             dest_path = temp_path
         try:
-            import subprocess
-            result = subprocess.run([
-                'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-                '-of', 'default=noprint_wrappers=1:nokey=1', dest_path
-            ], capture_output=True, text=True)
-            duration = float(result.stdout.strip())
+            probe = ffmpeg.probe(dest_path)
+            duration = float(probe['format']['duration'])
             if duration > 5:
                 trimmed_path = dest_path + '.trimmed.mp4'
-                subprocess.run([
-                    'ffmpeg', '-y', '-i', dest_path, '-t', '5', '-c', 'copy', trimmed_path
-                ], check=True)
+                (
+                    ffmpeg
+                    .input(dest_path)
+                    .output(trimmed_path, t=5, codec='copy')
+                    .run(overwrite_output=True)
+                )
                 os.replace(trimmed_path, dest_path)
         except Exception as e:
-            logger.error(f"Video trimming with ffmpeg failed: {e}")
+            logger.error(f"Video trimming with ffmpeg-python failed: {e}")
         set_task({
             "type": "inference",
             "skin_name": sanitized_skin_name,

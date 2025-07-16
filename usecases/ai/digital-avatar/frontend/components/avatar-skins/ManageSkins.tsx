@@ -185,7 +185,7 @@ const AvatarSkinCard = ({
               </Button>
             )}
             {!progressMessage ? (
-              <Button size="sm" variant="outline" onClick={() => window.open(skin.url, "_blank")}>
+              <Button size="sm" variant="outline" onClick={() => window.open(`/api/liveportrait/v1/skin/${skin.url}`, "_blank")}>
                 <Download className="h-4 w-4" />
               </Button>
             ) : <p className="text-gray-600">{progressMessage}</p>}
