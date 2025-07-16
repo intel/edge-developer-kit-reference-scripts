@@ -16,5 +16,6 @@ scikit-image==0.24.0
 pykalman==0.9.7
 pyyaml==6.0.2
 imageio[ffmpeg]==2.36.0
+ffmpeg-python==0.2.0
 
 fastapi[standard]
