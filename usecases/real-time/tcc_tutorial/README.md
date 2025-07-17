@@ -12,7 +12,7 @@
 - DISK: 128GB
 
 ## Test Application
-This application is used to demonstrate the possible optimization steps to increase temporal isolaten between best effort and real time workloads on Linux systems. It includes a control task that performs random pointer chasing to simulate a workload and measures scheduling jitter, execution time and cache misses. The application also features a statistics handler thread that processes and logs timing information. The statistics are either output to the console via stdout or sent to Grafana via MQTT. The Grafana pipeline and an object classification model represent the best-effort workloads on the system. 
+This application is used to demonstrate the possible optimization steps to increase temporal isolaten between best effort workloads like AI for data analytics or predictive maintenance and real time workloads on Linux systems. It includes a control task that performs random pointer chasing to simulate a workload and measures scheduling jitter, execution time and cache misses. The application also features a statistics handler thread that processes and logs timing information. The statistics are either output to the console via stdout or sent to Grafana via MQTT. The Grafana pipeline and an OpenVINO AI based object classification model represent the best-effort workloads on the system.
 
 <span style="color:red"> Note: The pointer chasing buffer size should exceed the L2 cache size of your processor to see an improvment by cache partitioning described in step 2 below. You can change the buffer size in `rt_linux_tutorial.c` using `WORKLOAD_BUFFER_SIZE` definev.</span>
 
@@ -43,6 +43,7 @@ This sections outlines the steps and components required to set up the system an
 - **Telegraf**: An agent for collecting and reporting metrics and data.
 - **InfluxDB**: A time-series database designed to handle high write and query loads.
 - **Grafana**: An open-source platform for monitoring and observability that allows you to visualize data.
+- **OpenVino**: An open-source toolkit developed by Intel for optimizing and deploying deep learning inference workloads. It enables developers to accelerate AI inference on various Intel hardware, including CPUs, GPUs, and NPUs.
 
 ### Setup Steps
 
