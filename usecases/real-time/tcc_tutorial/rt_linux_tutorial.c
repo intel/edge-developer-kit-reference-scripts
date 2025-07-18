@@ -89,6 +89,7 @@ typedef struct {
     long wakeup_jitter;
     long cache_misses;
     float ipc;
+    long long time;
 } statistics_t;
 
 typedef struct {
@@ -150,7 +151,14 @@ Node* new_node(long exec_time, long wakeup_jitter, long cache_misses, float ipc)
     node->stats.wakeup_jitter = wakeup_jitter;
     node->stats.cache_misses = cache_misses;
     node->stats.ipc = ipc;
+
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    long long microseconds_since_epoch = (long long)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+    node->stats.time = microseconds_since_epoch;
+
     node->next = NULL;
+
     return node;
 }
 
@@ -457,6 +465,7 @@ char* serialize_statistics(statistics_t* stats_batch, int batch_size) {
         cJSON_AddItemToObject(json_object, "wakeup_jitter", cJSON_CreateNumber(stats_batch[i].wakeup_jitter));
         cJSON_AddItemToObject(json_object, "cache_misses", cJSON_CreateNumber(stats_batch[i].cache_misses));
         cJSON_AddItemToObject(json_object, "ipc", cJSON_CreateNumber(stats_batch[i].ipc));
+        cJSON_AddItemToObject(json_object, "timestamp", cJSON_CreateNumber((double)stats_batch[i].time));
 
         // Add the JSON object to the array
         cJSON_AddItemToArray(json_array, json_object);
