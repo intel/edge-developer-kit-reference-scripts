@@ -68,6 +68,7 @@ services:
       - ./assets:/usr/src/app/assets
       - ./weights/wav2lip_gan.pth:/usr/src/app/setup/wav2lip_gan.pth
       - ./data/audio:/usr/src/app/data
+      - ./data/enhancer:/usr/src/RealESRGan/weights
       - ./data/wav2lip:/usr/src/app/wav2lip/results
     # ports: # For dev only
     #   - 8011:8011

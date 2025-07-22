@@ -6,7 +6,7 @@
 
 import { Plus } from "lucide-react"
 import { useState } from "react"
-
+import { toast } from "sonner"
 import Dropzone from "@/components/common/Dropzone/Dropzone"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,11 +17,10 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { CustomFile } from "@/types/dropzone"
-
 import type React from "react"
 import { useCreateTextEmbeddings } from "@/hooks/useLLM"
 
-export default function AddDocumentDialog({ refetch }: { refetch: () => void }) {
+export default function AddDocumentDialog({ disabled = false, refetchTask }: { disabled?: boolean, refetchTask: () => void }) {
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [isUploadError, setIsUploadError] = useState<boolean>(false);
@@ -53,23 +52,18 @@ export default function AddDocumentDialog({ refetch }: { refetch: () => void }) 
             {
                 onSuccess: (response) => {
                     if (response.status) {
-                        // enqueueSnackbar(`Embedding created successfully.`, {
-                        //   variant: "success",
-                        // });
-                        refetch()
-                        resetState();
+                        toast.success("Started text embedding creation process...")
                         setIsDialogOpen(false);
                     } else {
-                        // enqueueSnackbar(
-                        //   `Fail to create embeddings, please contact admin.`,
-                        //   { variant: "error" }
-                        // );
-                        resetState();
+                        toast.error("Failed to create text embeddings. Please try again.");
                     }
                 },
                 onError: () => {
                     console.log("Add Document Error. Please check with admin.")
+                },
+                onSettled: () => {
                     resetState();
+                    refetchTask();
                 }
             }
         );
@@ -77,7 +71,7 @@ export default function AddDocumentDialog({ refetch }: { refetch: () => void }) 
 
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <Button className="rounded-full" onClick={() => setIsDialogOpen(!isDialogOpen)}>
+            <Button disabled={disabled} className="rounded-full" onClick={() => setIsDialogOpen(!isDialogOpen)}>
                 <Plus />
             </Button>
             <DialogContent className="sm:max-w-[425px]">
