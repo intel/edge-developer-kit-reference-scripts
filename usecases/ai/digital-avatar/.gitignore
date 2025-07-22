@@ -24,6 +24,9 @@ backend/liveportrait/templates
 !/data/audio
 /data/audio/*
 !/data/audio/.gitkeep
+!/data/enhancer
+/data/enhancer/*
+!/data/enhancer/.gitkeep
 !/data/wav2lip
 /data/wav2lip/*
 !/data/wav2lip/.gitkeep

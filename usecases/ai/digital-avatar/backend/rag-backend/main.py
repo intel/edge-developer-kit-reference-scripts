@@ -8,6 +8,7 @@ import logging
 import requests
 import numpy as np
 import multiprocessing
+import asyncio
 from contextlib import asynccontextmanager
 from typing_extensions import TypedDict, Required
 from typing import List, Union, Optional
@@ -248,12 +249,23 @@ async def delete_text_embeddings(source: str):
     return JSONResponse(content=jsonable_encoder(result))
 
 
+TASK = None  # Placeholder for task, can be set later if needed
+def set_task(task):
+    global TASK
+    TASK = task
+
 @app.post("/v1/rag/text_embeddings", status_code=200)
 async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[UploadFile] = [UploadFile(...)]):
     global CHROMA_CLIENT
     ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain']
     file_list = []
     processed_list = []
+    set_task({
+        "type": "rag_embedding",
+        "status": "IN_PROGRESS",
+        "message": "Processing file upload...",
+        "data": None
+    })
     for file in files:
         # Read a small chunk to check the mime type
         sample = await file.read(2048)
@@ -267,6 +279,12 @@ async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[Upload
 
     if len(file_list) == 0:
         logger.error("No file is able to use to create text embeddings.")
+        set_task({
+            "type": "rag_embedding",
+            "status": "FAILED",
+            "message": "No file is able to use to create text embeddings.",
+            "data": None
+        })
         raise HTTPException(
             status_code=400, detail="No file is able to use to create text embeddings.")
 
@@ -278,11 +296,52 @@ async def upload_rag_doc(chunk_size: int, chunk_overlap: int, files: List[Upload
             processed_list.append(file.filename)
             f.write(file.file.read())
 
-    CHROMA_CLIENT.create_collection_data(
-        processed_list, chunk_size, chunk_overlap
-    )
-    result = {"status": True, "data": processed_list}
-    return JSONResponse(content=jsonable_encoder(result))
+    # Start the heavy task in a background thread so event loop is not blocked
+    asyncio.create_task(asyncio.to_thread(process_rag_embedding_task, processed_list, chunk_size, chunk_overlap))
+    return JSONResponse(content=jsonable_encoder({"message": "Create RAG embedding task started"}), status_code=200)
+
+def process_rag_embedding_task(processed_list, chunk_size, chunk_overlap):
+    global CHROMA_CLIENT
+    try:
+        # Create a TaskFile object for each file
+        task_files = [
+            {
+                "filename": filename,
+                "status": "PENDING",
+                "message": "Waiting to process...",
+            }
+            for filename in processed_list
+        ]
+        def update_task():
+            set_task({
+                "type": "rag_embedding",
+                "status": "IN_PROGRESS",
+                "message": "Processing files...",
+                "data": task_files
+            })
+        update_task()
+        CHROMA_CLIENT.create_collection_data(
+            processed_list, chunk_size, chunk_overlap, progress_callback=update_task, task_files=task_files
+        )
+        set_task({
+            "type": "rag_embedding",
+            "status": "COMPLETED",
+            "message": "Text embeddings created successfully.",
+            "data": task_files
+        })
+    except Exception as e:
+        logger.error(f"Error during RAG embedding creation: {e}")
+        set_task({
+            "type": "rag_embedding",
+            "status": "FAILED",
+            "message": "Failed to create text embeddings.",
+            "data": []
+        })
+
+@app.get("/v1/rag/text_embeddings/task", status_code=200)
+async def get_rag_embedding_task():
+    global TASK
+    return JSONResponse(content=jsonable_encoder({"status": True, "data": TASK if TASK is not None else {"status": "IDLE"}}))
 
 
 # Chat completions routes

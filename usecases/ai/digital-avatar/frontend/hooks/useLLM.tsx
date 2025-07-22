@@ -57,6 +57,21 @@ export const useCreateTextEmbeddings = (): UseMutationResult<
     });
 };
 
+export function useGetTextEmbeddingTask({ enabled = false, refetchInterval = 5000 } = {}) {
+  return useQuery({
+    queryKey: ["text-embedding-task"],
+    queryFn: async () => {
+      try {
+        const response = await LLMAPI.get("rag/text_embeddings/task");
+        return response;
+      } catch (error) {
+        return { status: false, message: "Failed to get task", data: error };
+      }
+    },
+    refetchInterval: enabled ? refetchInterval : false,
+  });
+}
+
 export function useGetDatasetEmbeddings() {
   return useQuery({
       queryKey: [''],
@@ -82,7 +97,7 @@ export const getDatasetEmbeddingsAPI = async (
 
 export function useGetDatasetEmbeddingSources() {
   return useQuery({
-      queryKey: [''],
+      queryKey: ['text-embedding-sources'],
       queryFn: async () => {
           const response = await LLMAPI.get('rag/text_embedding_sources')
           return response
