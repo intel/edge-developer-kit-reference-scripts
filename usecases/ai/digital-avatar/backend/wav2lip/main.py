@@ -72,7 +72,7 @@ async def remove_file(file_name):
 def initialize_wav2lip():
     global CONFIG
     enhancer=None
-    if CONFIG["use_enhancer"] is not None:
+    if CONFIG["use_enhancer"] is not False:
         enhancer = initialize(CONFIG["enhancer_model"], device=CONFIG["enhancer_device"])
 
     wav2lip = OVWav2Lip(device=CONFIG["lipsync_device"], avatar_path=f"assets/avatar-skins/{CONFIG['avatar_skin']}.mp4", enhancer=enhancer, model=CONFIG["lipsync_model"])

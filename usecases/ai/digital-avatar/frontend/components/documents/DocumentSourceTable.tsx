@@ -8,7 +8,8 @@ import { useContext, useMemo, useState, type MouseEvent } from "react";
 import { toast } from "sonner"
 import { ConfirmationContext } from "@/context/ConfirmationContext";
 import { useDeleteTextEmbeddingBySource } from "@/hooks/useLLM";
-
+import Spinner from "../ui/spinner";
+import { toast } from "sonner"
 
 function DeleteButton({
     id,
@@ -30,15 +31,35 @@ function DeleteButton({
             <Trash2 size={20} />
         </button>
     ) : (
-        <div className="size-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center text-red-600">
+            <Spinner size={20} />
+            <span className="ml-2">Deleting...</span>
+        </div>
     );
+}
+
+interface TaskFile {
+    filename: string;
+    status: string;
+    message: string;
+    progress: {
+        current: number;
+        total: number;
+    }
 }
 
 const DocumentSourceTable = ({
     data,
+    taskData,
     refetch,
 }: {
     data: string[];
+    taskData?: {
+        type: string;
+        data: TaskFile[];
+        status: string;
+        message: string;
+    };
     refetch: () => void;
 }) => {
     const [deletingIds, setDeletingIds] = useState<string[]>([]);
@@ -67,10 +88,10 @@ const DocumentSourceTable = ({
                 {
                     onSuccess: (response) => {
                         if (response.status) {
-                            toast.success("Source deleted successfully.")
+                            toast.success(`Source "${id}" deleted successfully.`);
                             refetch()
                         } else {
-                            toast.success("Failed to delete source. Please check with admin.")
+                            toast.error(`Failed to delete source "${id}". Please try again later.`);
                         }
                     },
                     onSettled: () => {
@@ -105,7 +126,7 @@ const DocumentSourceTable = ({
                     </tr>
                 </thead>
                 <tbody>
-                    {formattedData.map((data) => (
+                    {formattedData.filter(data => !(taskData && Array.isArray(taskData.data) && taskData.data.some(task => taskData.status === "IN_PROGRESS" && task.filename === data.source))).map((data) => (
                         <tr key={data.id} className="hover:bg-gray-50">
                             <td className="py-2 px-4 border-b">{data.source}</td>
                             <td className="py-2 px-4 border-b items-center">
@@ -113,6 +134,22 @@ const DocumentSourceTable = ({
                             </td>
                         </tr>
                     ))}
+                    {taskData && taskData.status === "IN_PROGRESS" && taskData.data.length > 0 && 
+                        taskData.data.map((task) => (
+                            <tr key={task.filename} className="hover:bg-gray-50">
+                                <td className="py-2 px-4 border-b">{task.filename}</td>
+                                <td className="py-2 px-4 border-b">
+                                    <div className={`flex items-center ${task.status === "FAILED" ? "text-red-600" : "text-yellow-600"}`}>
+                                        {task.status === "IN_PROGRESS" && <Spinner size={20} />}
+                                        <span className="ml-2">
+                                            {task.progress && task.progress.total > 0 ? `[${Math.floor(task.progress.current/task.progress.total * 100)}%] ` : ""}
+                                            {task.message}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))
+                    }
                 </tbody>
             </table>
         </div>

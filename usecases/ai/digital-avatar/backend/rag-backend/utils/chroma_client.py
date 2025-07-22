@@ -136,12 +136,16 @@ class ChromaClient:
         documents = loader.load()
         return documents
 
-    def _create_text_embeddings(self, texts):
+    def _create_text_embeddings(self, texts, progress_callback=None):
         if len(texts) == 0:
             raise RuntimeError("No text chunks available.")
-
+        
+        total = len(texts)
         for i, doc in enumerate(texts):
             self.logger.info(f"Processing text chunk: {i+1}")
+            if progress_callback:
+                progress_callback("Creating", i + 1, total)
+
             if hasattr(doc, 'page_content'):
                 doc.page_content = re.sub(
                     r'\s+', ' ', doc.page_content.replace("\n", " ")).strip()
@@ -155,11 +159,15 @@ class ChromaClient:
                         doc_page = doc.metadata['page']
                         doc.page_content += f" (Page {doc_page})"
 
-    def _save_text_embeddings(self, text_chunks):
+    def _save_text_embeddings(self, text_chunks, progress_callback=None):
         try:
             ids = [str(uuid.uuid4()) for _ in text_chunks]
-            self.text_vector_store.add_documents(
-                documents=text_chunks, ids=ids)
+            total = len(text_chunks)
+            for i, chunk in enumerate(text_chunks):
+                self.text_vector_store.add_documents(
+                    documents=[chunk], ids=[ids[i]])
+                if progress_callback:
+                    progress_callback("Saving", i + 1, total)
             return True
         except Exception as error:
             self.logger.error(
@@ -259,8 +267,8 @@ class ChromaClient:
                 f"Failed to get embeddings and reranked results from vector db. Error: {error}")
             return []
 
-    def create_collection_data(self, processed_list, chunk_size, chunk_overlap):
-        for file_name in processed_list:
+    def create_collection_data(self, processed_list, chunk_size, chunk_overlap, progress_callback=None, task_files=None):
+        for i, file_name in enumerate(processed_list):
             try:
                 file_path = f"{self.db_dir}/documents/{file_name}"
                 documents = self._read_file(file_path)
@@ -271,13 +279,33 @@ class ChromaClient:
                     is_separator_regex=False
                 )
                 text_chunks = text_splitter.split_documents(documents)
-                self._create_text_embeddings(text_chunks)
-                self._save_text_embeddings(text_chunks)
+                # Per-file progress callback
+                def file_progress_callback(stage, current, total):
+                    if task_files is not None:
+                        task_files[i]["status"] = "IN_PROGRESS"
+                        task_files[i]["message"] = f"{stage} {file_name}..."
+                        task_files[i]["progress"] = {"current": current, "total": total}
+                    if progress_callback:
+                        progress_callback()
+                self._create_text_embeddings(text_chunks, file_progress_callback)
+                self._save_text_embeddings(text_chunks, file_progress_callback)
+                if task_files is not None:
+                    task_files[i]["status"] = "COMPLETED"
+                    task_files[i]["message"] = f"Completed {file_name}."
+                    task_files[i]["progress"] = {"current": 0, "total": 0}
+                if progress_callback:
+                    progress_callback()
                 self.logger.info(
                     f"Text embeddings created saved in {self.db_dir}")
             except Exception as error:
                 self.logger.error(
                     f"Failed to create collection data. Error: {error}")
+                if task_files is not None:
+                    task_files[i]["status"] = "FAILED"
+                    task_files[i]["message"] = f"Failed to process {file_name}. Error: {error}"
+                    task_files[i]["progress"] = {"current": 0, "total": 0}
+                if progress_callback:
+                    progress_callback()
                 return None
         self.logger.info(
             f"Text embeddings created successfully.")
