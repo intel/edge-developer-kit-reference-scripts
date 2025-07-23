@@ -13,7 +13,7 @@ services:
       - ${RENDER_GROUP_ID:-110}
     restart: always
     ports:
-      - 5995:5995
+      - 127.0.0.1:5995:5995
     networks:
       - app-network
     environment:
@@ -38,7 +38,7 @@ services:
     networks:
       - app-network
     ports:
-      - 5996:5996
+      - 127.0.0.1:5996:5996
     environment:
       - DEFAULT_MODEL_ID=openai/whisper-tiny 
       - STT_DEVICE=${STT_DEVICE:-CPU}
@@ -54,7 +54,7 @@ services:
     image: ghcr.io/open-webui/open-webui:main
     restart: always
     ports:
-      - 80:8080
+      - 127.0.0.1:80:8080
     depends_on:
       stt_service:
         condition: service_healthy
@@ -88,7 +88,7 @@ services:
     group_add:
       - ${RENDER_GROUP_ID:-110}
     ports:
-      - 11434:11434
+      - 127.0.0.1:11434:11434
     networks:
       - app-network
     environment:
