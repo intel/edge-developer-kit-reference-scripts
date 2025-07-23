@@ -9,7 +9,6 @@ import { toast } from "sonner"
 import { ConfirmationContext } from "@/context/ConfirmationContext";
 import { useDeleteTextEmbeddingBySource } from "@/hooks/useLLM";
 import Spinner from "../ui/spinner";
-import { toast } from "sonner"
 
 function DeleteButton({
     id,
