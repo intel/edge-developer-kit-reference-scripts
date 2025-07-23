@@ -107,7 +107,7 @@ services:
     volumes:
       - ./assets:/app/public/assets
     ports:
-      - "80:3000"
+      - "127.0.0.1:80:3000"
     command: "npm start"
 
   tts_service:
@@ -276,8 +276,8 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     volumes:
       - app-data:/var/lib/postgresql/data
 
