@@ -45,7 +45,7 @@ Please ensure that you have these ports available before running the application
 ## Setup
 
 ### Prerequisite
-1. **OS**: Ubuntu (Validated on 22.04)
+1. **OS**: Ubuntu (Validated on 24.04)
 1. **Docker and Docker Compose**: Ensure Docker and Docker Compose are installed. Refer to [Docker installation guide](https://docs.docker.com/engine/install/).
 1. **Intel GPU Drivers**:
     1. Refer to [here](../../../README.md#gpu) to install Intel GPU Drivers
@@ -62,7 +62,7 @@ Please ensure that you have these ports available before running the application
     cd ..
     ```
 1. **Create Avatar**:
-    1. Place a `default.mp4` file in the `assets` folder. The video should feature an idle person (preferably showing at least the upper half of the body) with subtle movements like blinking or slight body motion, and **no speaking**. Ensure the file is named **`default.mp4`**.
+    1. Place a `default.mp4` file in the `assets/avatar-skins` folder. The video should feature an idle person (preferably showing at least the upper half of the body) with subtle movements like blinking or slight body motion, and **no speaking**. Ensure the file is named **`default.mp4`**.
 
 ### Setup ENV
 1. Create a `.env` file and copy the contents from `.env.template`:
