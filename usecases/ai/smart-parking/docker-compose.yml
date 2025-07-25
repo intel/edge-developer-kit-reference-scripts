@@ -18,7 +18,7 @@ services:
     networks:
       - app-network
     ports:
-      - 443:443
+      - 127.0.0.1:443:443
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./data/certs:/etc/smart-parking/certs
@@ -51,7 +51,7 @@ services:
     networks:
       - app-network
     ports:
-      - 8086:8086
+      - 127.0.0.1:8086:8086
     environment:
       - INFLUXDB_DB=influx
       - INFLUXDB_ADMIN_USER=admin
