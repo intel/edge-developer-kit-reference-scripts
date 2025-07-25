@@ -8,7 +8,7 @@ set -e
 # BKC
 OS_ID="ubuntu"
 OS_VERSION="24.04"
-KERNEL_VERSION="6.11"
+KERNEL_VERSION="6.14"
 
 # symbol
 S_VALID="✓"
