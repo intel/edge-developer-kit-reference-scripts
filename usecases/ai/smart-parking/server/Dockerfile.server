@@ -52,8 +52,8 @@ RUN mkdir -p /usr/src \
     && chown -R openvino:openvino /usr/src \
     && mkdir -p /usr/src/app/data \
     && chown -R openvino:openvino /usr/src/app/data \
-    && mkdir -p /usr/src/model \
-    && chown -R openvino:openvino /usr/src/model
+    && mkdir -p /usr/src/app/model \
+    && chown -R openvino:openvino /usr/src/app/model
 
 USER openvino
 WORKDIR /usr/src/app
