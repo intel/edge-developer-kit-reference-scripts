@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     let message = '';
     const punctuations = ',.!?;:';
     const data = new StreamData()
-    const result = await streamText({
+    const result = streamText({
         model: openai(modelID),
         messages: conversationMessages,
         maxTokens,
