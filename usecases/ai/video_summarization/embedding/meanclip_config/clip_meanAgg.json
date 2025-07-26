@@ -1,0 +1,10 @@
+{
+    "clip_backbone": "ViT-B/32",
+    "sim_header": "meanP",
+    "frame_agg": "mean",
+    "max_txt_len": 64,
+    "max_img_size": 224,
+    "num_frm": 64,
+    "sampling": "uniform",
+    "img_tmpl": "image_{:05d}.jpg"
+}

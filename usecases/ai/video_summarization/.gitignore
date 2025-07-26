@@ -1,0 +1,7 @@
+*/__pycache__/*
+*/save_quantized_model/*
+*/MiniCPM*/
+*/backup/
+*/cache/
+*.pyc
+*.env
