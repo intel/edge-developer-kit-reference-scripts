@@ -27,6 +27,8 @@ from utils.prompt import RAG_PROMPT, NO_CONTEXT_FOUND_PROMPT
 from utils.chroma_client import ChromaClient
 import openvino as ov
 
+from urllib.parse import urlparse
+
 logger = logging.getLogger('uvicorn.error')
 
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:8012/v1")
@@ -83,7 +85,7 @@ class Configurations(BaseModel):
     use_rag: Optional[bool] = False
     embedding_device: Optional[str] = EMBEDDING_DEVICE
     reranker_device: Optional[str] = RERANKER_DEVICE
-
+    
 def get_available_devices():
     devices = []
     core = ov.Core()
@@ -102,7 +104,8 @@ def get_models():
     if "/v1" in base_url:
         base_url = base_url.replace("/v1", "")
     try:
-        response = requests.get(f"{base_url}/api/tags")
+        url = urlparse(f"{base_url}/api/tags")
+        response = requests.get(url)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -115,6 +118,14 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing server services ...")
     DEVICES = get_available_devices()
     if (CONFIG['use_rag']):
+        # Validate embedding_device and reranker_device
+        device_values = [d['value'] for d in DEVICES]
+        if CONFIG["embedding_device"] not in device_values:
+            logger.error(f"Embedding device {CONFIG['embedding_device']} not found in available devices: {device_values}")
+            raise HTTPException(status_code=400, detail=f"Embedding device {CONFIG['embedding_device']} not available.")
+        if CONFIG["reranker_device"] not in device_values:
+            logger.error(f"Reranker device {CONFIG['reranker_device']} not found in available devices: {device_values}")
+            raise HTTPException(status_code=400, detail=f"Reranker device {CONFIG['reranker_device']} not available.")
         CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, CONFIG["embedding_device"], CONFIG["reranker_device"])
 
     # Check if LLM model exist in list of models
@@ -202,6 +213,14 @@ async def update_config(data: Configurations):
     }
 
     if (CONFIG['use_rag']):
+        # Validate embedding_device and reranker_device
+        device_values = [d['value'] for d in DEVICES]
+        if data.embedding_device not in device_values:
+            logger.error(f"Embedding device {data.embedding_device} not found in available devices: {device_values}")
+            raise HTTPException(status_code=400, detail=f"Embedding device {data.embedding_device} not available.")
+        if data.reranker_device not in device_values:
+            logger.error(f"Reranker device {data.reranker_device} not found in available devices: {device_values}")
+            raise HTTPException(status_code=400, detail=f"Reranker device {data.reranker_device} not available.")
         CHROMA_CLIENT = ChromaClient(VECTORDB_DIR, data.embedding_device, data.reranker_device)
 
     result = {"status": True, "data": None}
@@ -222,8 +241,9 @@ async def pull_model(data: IModel):
     #             yield chunk
     
     # return StreamingResponse(stream_response(), media_type="application/json")
+    url = urlparse(f"{base_url}/api/pull")
 
-    response = requests.post(f"{base_url}/api/pull", json={"model": model, "stream": False})
+    response = requests.post(url, json={"model": model, "stream": False})
     return JSONResponse(content=jsonable_encoder({"status": True, "data": response.json()}))
 
 @app.delete("/v1/rag/text_embeddings/{uuid}", status_code=200)

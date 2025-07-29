@@ -55,7 +55,8 @@ export const VideoQueueProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateVideo = async (id: number, url: string, startIndex: number, reversed: boolean, duration: number) => {
-        const response = await fetch(`/api/lipsync/v1/video/${url}`);
+        const fullURL = new URL(`/api/lipsync/v1/video/${url}`, window.location.origin)
+        const response = await fetch(fullURL);
         const blob = await response.blob();
         const objectURL = URL.createObjectURL(blob);
 

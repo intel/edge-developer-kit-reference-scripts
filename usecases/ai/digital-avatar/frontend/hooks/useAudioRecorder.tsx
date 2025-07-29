@@ -251,7 +251,7 @@ export default function useAudioRecorder() {
 
         if (typeof window !== 'undefined' && !mediaRecorder && !initialLoad) {
             setInitialLoad(true);
-            void loadRecorder()
+            loadRecorder()
         }
     }, [mediaRecorder, initialLoad, initiateMediaRecoder]);
 

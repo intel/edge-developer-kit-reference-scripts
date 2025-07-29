@@ -245,7 +245,8 @@ export default function Chatbox() {
                 const reversed = false
 
                 // Lipsync
-                const { data: lipsyncData } = await getLipsync.mutateAsync({ data: { filename: ttsData.filename }, startIndex: startIndex.toString(), reversed: reversed ? "1" : "0" })
+                // const { data: lipsyncData } = await getLipsync.mutateAsync({ data: { filename: ttsData.filename }, startIndex: startIndex.toString(), reversed: reversed ? "1" : "0" })
+                const { data: lipsyncData } = await getLipsync.mutateAsync({ data: { filename: ttsData.filename }, startIndex: startIndex.toString(), reversed: "0"})
                 updateVideo(index, lipsyncData.url, startIndex, reversed, ttsData.duration)
 
                 setPerformanceResults(prev => {

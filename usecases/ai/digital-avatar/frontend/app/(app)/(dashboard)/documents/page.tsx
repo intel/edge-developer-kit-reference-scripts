@@ -68,7 +68,7 @@ export default function DocumentList() {
             </div>
             {source?.data && taskStatus ? (
                 (source.data && source.data.length > 0) || (taskStatus === "IN_PROGRESS") ? (
-                    <DocumentSourceTable data={status ? source?.data ?? [] : []} taskData={taskData?.data} refetch={refetchTextEmbeddingSources} />
+                    <DocumentSourceTable data={status ? source.data ?? [] : []} taskData={taskData?.data} refetch={refetchTextEmbeddingSources} />
                 ) : (
                     <div className="p-4 md:p-6">No RAG documents found.</div>
                 )
