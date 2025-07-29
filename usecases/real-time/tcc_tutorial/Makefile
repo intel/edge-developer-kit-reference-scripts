@@ -29,7 +29,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ####################################################################################
 CC=gcc
-CFLAGS=-Wall -Wextra -O2 -I/usr/local/include
+CFLAGS=-Wall -Wextra -fcf-protection=full -Wformat -Wmissing-field-initializers -Wformat-security -fPIC -fPIE -pie -D_FORTIFY_SOURCE=3 -D_GLIBCXX_ASSERTIONS -fstack-protector -O2 -I/usr/local/include
 LDFLAGS=-L/usr/local/lib -lpaho-mqtt3c -lcjson
 TARGET=rt_linux_tutorial
 OBJ=rt_linux_tutorial.o pointer_chasing.o
