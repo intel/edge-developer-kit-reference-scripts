@@ -37,11 +37,11 @@ export class FetchAPI {
     private async request(method: HttpMethod, url: string, config: RequestConfig = {}): Promise<APIResponse | Response> {
         try {
             const { data, tags, revalidate, headers, raw_response } = config;
-            let fullURL = this.baseURL
+            let fullURL: URL
             if (!this.baseURL.startsWith('/')) {
-                fullURL = new URL(url, this.baseURL).toString();
+                fullURL = new URL(url, this.baseURL);
             } else {
-                fullURL = path.join(this.baseURL, url);
+                fullURL = new URL(path.join(this.baseURL, url), window.location.origin)
             }
             const options: RequestInit = {
                 method,

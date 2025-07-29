@@ -22,7 +22,7 @@ export function useGetSTT(): UseMutationResult<Record<string, any>, Error, { dat
                 
                 // add httpLatency to the response data.metrics
                 const responseJson = await response.json();
-                const httpLatency = totalLatency - (responseJson?.metrics?.denoise_latency + responseJson?.metrics?.stt_latency);
+                const httpLatency = totalLatency - (responseJson.metrics?.denoise_latency + responseJson.metrics?.stt_latency);
                 responseJson.metrics = {
                     ...responseJson.metrics,
                     http_latency: httpLatency,

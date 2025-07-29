@@ -23,13 +23,13 @@ import { ConfigSection } from "@/components/config/ConfigSection";
 import { SelectedPipelineConfig } from "@/types/config";
 import { PerformanceResultsMetadata } from "@/types/performanceResults";
 
-const chartModuleConfig: Record<string, string> = {
-    denoise: "Denoise",
-    stt: "STT",
-    llm: "LLM",
-    tts: "TTS",
-    lipsync: "Lipsync",
-}
+const chartModuleConfig: Record<string, string>[] = [
+    { type: "denoise", name: "Denoise" },
+    { type: "stt", name: "STT" },
+    { type: "llm", name: "LLM" },
+    { type: "tts", name: "TTS" },
+    { type: "lipsync", name: "Lipsync" },
+];
 
 const defaultChartConfig: Record<string, { label: string; color: string }> = {
     config1: {
@@ -47,9 +47,15 @@ const defaultChartConfig: Record<string, { label: string; color: string }> = {
 } satisfies ChartConfig
 
 const generateRandomColor = () => {
-    const hue = Math.floor(Math.random() * 360); // Random hue value between 0 and 360
-    const saturation = Math.floor(Math.random() * 50) + 50; // Saturation between 50% and 100%
-    const lightness = Math.floor(Math.random() * 30) + 40; // Lightness between 40% and 70%
+    // Use cryptographically secure random number generator
+    const getRandom = (range: number) => {
+        const randomArray = new Uint32Array(1);
+        window.crypto.getRandomValues(randomArray);
+        return Math.floor((randomArray[0] / (2 ** 32)) * range);
+    };
+    const hue = getRandom(360); // Random hue value between 0 and 360
+    const saturation = getRandom(50) + 50; // Saturation between 50% and 100%
+    const lightness = getRandom(30) + 40; // Lightness between 40% and 70%
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
 
@@ -64,20 +70,19 @@ export default function LatencyDashboard() {
         return config satisfies ChartConfig;
     }, {});
 
-    const overviewChartData = Object.keys(chartModuleConfig).map((moduleKey) => {
-        const moduleData: { module: string;[key: string]: number | string } = { module: chartModuleConfig[moduleKey] };
-
+    const overviewChartData = chartModuleConfig.map((module) => {
+        const moduleData: { module: string; [key: string]: number | string } = { module: module.name };
         data?.docs.forEach((result) => {
             let value = 0;
 
-            if (moduleKey === "denoise") {
-                value = result[moduleKey]?.inferenceLatency || 0;
-            } else if (moduleKey === "stt") {
-                value = (result[moduleKey]?.inferenceLatency || 0) + (result[moduleKey]?.httpLatency || 0);
-            } else if (moduleKey === "llm") {
-                value = result[moduleKey]?.totalLatency + result[moduleKey]?.ttft || 0;
-            } else if (moduleKey === "tts" || moduleKey === "lipsync") {
-                const results = result[moduleKey] || [];
+            if (module.type === "denoise") {
+                value = result[module.type]?.inferenceLatency || 0;
+            } else if (module.type === "stt") {
+                value = (result[module.type]?.inferenceLatency || 0) + (result[module.type]?.httpLatency || 0);
+            } else if (module.type === "llm") {
+                value = result[module.type]?.totalLatency + result[module.type]?.ttft || 0;
+            } else if (module.type === "tts" || module.type === "lipsync") {
+                const results = result[module.type] || [];
                 value = results.reduce((acc, item) => acc + (item.httpLatency || 0) + (item.inferenceLatency || 0), 0);
             }
 

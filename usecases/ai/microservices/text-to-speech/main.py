@@ -15,6 +15,8 @@ from contextlib import asynccontextmanager
 from starlette.background import BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
+from pathlib import Path
+
 import nltk
 import openvino as ov
 from melo.api import TTS
@@ -87,7 +89,7 @@ def load_model():
 def optimize_model(model):
     global LOGGER, MODEL_PATH, BERT_DEVICE, USE_INT8, LANGUAGE
     if not os.path.exists(MODEL_PATH):
-        os.makedirs(MODEL_PATH, exist_ok=True)
+        os.makedirs(Path(MODEL_PATH), exist_ok=True)
 
     if BERT_DEVICE.upper() == "NPU":
         if not USE_INT8:
@@ -144,7 +146,7 @@ def startup():
     global AUDIO_SAVE_PATH, TTS_MODEL
     _verify_device()
     if not os.path.exists(AUDIO_SAVE_PATH):
-        os.makedirs(AUDIO_SAVE_PATH)
+        os.makedirs(Path(AUDIO_SAVE_PATH))
 
     download_nltk_packages()
     TTS_MODEL = load_model()

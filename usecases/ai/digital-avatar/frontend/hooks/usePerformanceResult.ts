@@ -8,7 +8,7 @@ export const usePerformanceResults = () => {
     queryKey: ["performance-results"],
     queryFn: async () => {
       // Simulate a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise<void>((resolve) => setTimeout(()=>{resolve()}, 1000))
 
       const response = await fetch("/api/performance-results?limit=0")
       if (!response.ok) {
@@ -54,7 +54,8 @@ export const useDeletePerformanceResult = () => {
 
   return useMutation({
     mutationFn: async (performanceResultId: number) => {
-      const response = await fetch(`/api/performance-results/${performanceResultId}`, {
+      const url = new URL(`/api/performance-results/${performanceResultId}`, window.location.origin)
+      const response = await fetch(url, {
         method: "DELETE"
       })
 
