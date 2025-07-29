@@ -30,10 +30,11 @@ export async function DELETE(request: NextRequest) {
     }
     const skinsDir = path.join(process.cwd(), "public/assets/avatar-skins")
     const filePath = path.join(skinsDir, `${skinName}.mp4`)
-    if (!fs.existsSync(filePath)) {
+    const fileURL = new URL(`file://${filePath}`)
+    if (!fs.existsSync(fileURL)) {
       return NextResponse.json({ success: false, error: "Skin not found" }, { status: 404 })
     }
-    fs.unlinkSync(filePath)
+    fs.unlinkSync(fileURL)
     return NextResponse.json({ success: true, message: "Skin deleted" })
   } catch (error) {
     console.error("Error deleting avatar skin:", error)

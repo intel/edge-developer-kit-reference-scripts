@@ -20,8 +20,16 @@ logger = logging.getLogger('uvicorn.error')
 
 class OptimumCLI:
     def run_export(model_name_or_path, output_dir):
-        command = f"optimum-cli export openvino --trust-remote-code --model {model_name_or_path} {output_dir}"
-        subprocess.run(shlex.split(command))  # nosec
+        # Build the command as a list to avoid shell injection
+        command = [
+            "optimum-cli",
+            "export",
+            "openvino",
+            "--trust-remote-code",
+            "--model", model_name_or_path,
+            output_dir
+        ]
+        subprocess.run(command)
 
 
 def download_default_model(model_name_or_path, output_dir):

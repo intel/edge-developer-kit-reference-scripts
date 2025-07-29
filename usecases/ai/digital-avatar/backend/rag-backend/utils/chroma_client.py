@@ -21,7 +21,7 @@ from langchain_community.embeddings import OpenVINOBgeEmbeddings
 from langchain_community.document_compressors.openvino_rerank import OpenVINOReranker
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain_chroma import Chroma
-
+from pathlib import Path
 
 class ChromaClient:
     def __init__(self, db_dir, embedding_device="CPU", reranker_device="CPU") -> None:
@@ -30,7 +30,7 @@ class ChromaClient:
         if not os.path.isdir(db_dir):
             self.logger.warning(
                 f"No chromaDB is found in {db_dir}. Creating a directory to store all the embeddings.")
-            os.makedirs(db_dir, exist_ok=True)
+            os.makedirs(Path(db_dir), exist_ok=True)
 
         self.db_dir = db_dir
 

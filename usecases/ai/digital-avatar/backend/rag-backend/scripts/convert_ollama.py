@@ -7,6 +7,7 @@ import argparse
 
 from transformers import AutoTokenizer
 from template import ollama_template
+from pathlib import Path
 
 MODELFILE_TEMPLATE = '''FROM ../llm
 
@@ -14,13 +15,14 @@ TEMPLATE """{chat_template}"""
 '''
 
 def create_modelfile(model_path, save_path):
-    with open(f"{model_path}/config.json", 'r') as f:
+    config_path = Path(model_path) / "config.json"
+    with open(config_path, 'r') as f:
         _data = f.read()
         model_data = json.loads(_data)
 
     chat_template = ollama_template[model_data['model_type']]
     data = MODELFILE_TEMPLATE.format(chat_template=chat_template)
-    with open(save_path, "w") as f:
+    with open(Path(save_path), "w") as f:
         f.write(data)
 
 if __name__ == "__main__":
