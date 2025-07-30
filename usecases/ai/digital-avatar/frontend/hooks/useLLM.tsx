@@ -7,18 +7,18 @@ import { useMutation, UseMutationResult, useQuery, UseQueryResult } from "@tanst
 
 import { FetchAPI } from "@/lib/api";
 import { APIResponse } from "@/types/api";
-import { LLMModel } from "@/types/model";
+import { LLMModelsResponse } from "@/types/model";
 import { constructURL, handleAPIResponse } from "@/utils/common";
 import { CreateTextBeddingsProps } from "@/types/dataset";
 
 const LLMAPI = new FetchAPI(`/api/llm`);
 
-export const useGetLLM = (): UseQueryResult<{ data: LLMModel[] }, Error> => {
+export const useGetLLM = (): UseQueryResult<LLMModelsResponse, Error> => {
     return useQuery({
         queryKey: ['llm_models'],
         queryFn: async () => {
             const response = await LLMAPI.get('models')
-            const result = handleAPIResponse<{ data: LLMModel[] }>(response);
+            const result = handleAPIResponse<LLMModelsResponse>(response);
             return result ?? null;
         },
     });
