@@ -11,12 +11,14 @@ export interface ModelDetails {
 }
 
 export interface LLMModel {
-    id: string;
-    created: number;
-    object: string;
-    owened_by: string;
+    name: string;
+    model: string;
+    modified_at: string;
+    size: number;
+    digest: string;
+    details: ModelDetails;
 }
 
 export interface LLMModelsResponse {
-    data: LLMModel[];
+    models: LLMModel[];
 }
