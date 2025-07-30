@@ -38,6 +38,10 @@ Please ensure that you have these ports available before running the application
 ```
 ./setup.sh
 ```
+
+### 4. Access the App
+Navigate to http://localhost:8010
+
 </details>
 
 <details><summary>Windows 11</summary>
