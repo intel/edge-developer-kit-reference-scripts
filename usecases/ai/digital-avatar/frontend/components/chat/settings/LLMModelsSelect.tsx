@@ -26,7 +26,7 @@ import { useGetLLM, usePullLLM } from "@/hooks/useLLM"
 import { cn } from "@/lib/utils"
 
 export function LLMModelsSelect({ value, updateValue }: { value: string; updateValue: (value: string) => void }) {
-    const { data: llmModelData } = useGetLLM()
+    const { data: llmModelData, refetch } = useGetLLM()
     const [searchValue, setSearchValue] = useState("")
     const [open, setOpen] = useState(false)
 
@@ -37,7 +37,7 @@ export function LLMModelsSelect({ value, updateValue }: { value: string; updateV
     const pullLLM = usePullLLM()
 
     const llmModels = useMemo(() => {
-        return llmModelData?.data ?? []
+        return llmModelData?.models ?? []
     }, [llmModelData])
 
     const handlePullLLM = () => {
@@ -45,6 +45,7 @@ export function LLMModelsSelect({ value, updateValue }: { value: string; updateV
             if (response.data.error) {
                 toast.error(response.data.error)
             } else {
+                refetch()
                 toast.success("Model Pulled Successfully")
             }
         })
@@ -60,7 +61,7 @@ export function LLMModelsSelect({ value, updateValue }: { value: string; updateV
                     className="w-[200px] justify-between"
                 >
                     {value && llmModels
-                        ? llmModels.find((models) => models.id === (value.includes(":") ? value : `${value}:latest`))?.id
+                        ? llmModels.find((models) => models.name === (value.includes(":") ? value : `${value}:latest`))?.name
                         : "Select Model"}
                     <ChevronsUpDown className="opacity-50" />
                 </Button>
@@ -87,7 +88,7 @@ export function LLMModelsSelect({ value, updateValue }: { value: string; updateV
                         </CommandEmpty>
                         <CommandGroup>
                             {llmModels && llmModels.map((model) => {
-                                const modelName = model.id;
+                                const modelName = model.name;
                                 return (
                                     <CommandItem
                                         key={modelName}

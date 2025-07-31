@@ -68,7 +68,7 @@ DEVICES = []
 EMBEDDING_DEVICE = os.environ.get('EMBEDDING_DEVICE', "CPU")
 RERANKER_DEVICE = os.environ.get('RERANKER_DEVICE', "CPU")
 CONFIG = {
-    "llm_model": os.environ.get('LLM_MODEL', "qwen2.5"),
+    "llm_model": os.environ.get('LLM_MODEL', "qwen2.5:latest"),
     "system_prompt": os.environ.get('SYSTEM_PROMPT', "You are a helpful assistant. Always reply in English. Summarize content to be 100 words"),
     "temperature": 1,
     "max_tokens": 2048,
@@ -104,7 +104,7 @@ def get_models():
     if "/v1" in base_url:
         base_url = base_url.replace("/v1", "")
     try:
-        url = urlparse(f"{base_url}/api/tags")
+        url = urlparse(f"{base_url}/api/tags").geturl()
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
@@ -229,7 +229,7 @@ async def update_config(data: Configurations):
 @app.post("/v1/pull", status_code=200)
 async def pull_model(data: IModel):
     model = data['model']
-    base_url = os.environ.get("OPENAI_BASE_URL", "http://localhost:8012/v1")
+    base_url = os.environ.get("OPENAI_BASE_URL", "http://localhost:8015/v1")
     if "/v1" in base_url:
         base_url = base_url.replace("/v1", "")
         
@@ -241,7 +241,7 @@ async def pull_model(data: IModel):
     #             yield chunk
     
     # return StreamingResponse(stream_response(), media_type="application/json")
-    url = urlparse(f"{base_url}/api/pull")
+    url = urlparse(f"{base_url}/api/pull").geturl()
 
     response = requests.post(url, json={"model": model, "stream": False})
     return JSONResponse(content=jsonable_encoder({"status": True, "data": response.json()}))
