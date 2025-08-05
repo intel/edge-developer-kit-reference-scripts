@@ -82,6 +82,7 @@ edge-developer-kit-reference-scripts/
 5. [Digital Avatar](usecases/ai/digital-avatar/README.md)
 6. [Time Coordinated Computing (TCC)](usecases/real-time/tcc_tutorial/README.md)
 7. [Smart Parking](usecases/ai/smart-parking/README.md)
+8. [Video Summarization & Visual RAG](usecases/ai/video_summarization)
 
 ## Troubleshooting
 
