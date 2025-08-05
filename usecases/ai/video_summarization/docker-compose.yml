@@ -1,0 +1,156 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+   vlm_api_service:
+      build:
+         context: .
+         dockerfile: ./docker/base_ov_image/Dockerfile
+         args:
+           - RENDER_GROUP_ID=${RENDER_GROUP_ID:-992}
+           #- HTTPS_PROXY=${HTTPS_PROXY}
+           #- HTTP_PROXY=${HTTP_PROXY}
+           #- NO_PROXY=localhost,127.0.0.1
+      image: vidsumm_base_image
+      container_name: vlm.api.server
+      environment:
+       - DEVICE=GPU
+       - FAKE_VLM=0
+      privileged: true
+      restart: always
+      devices:
+       - /dev/dri
+      volumes:
+       - ../chunks:/usr/src/app/chunks
+       - ../MiniCPM_INT8:/usr/src/app/MiniCPM_INT8
+      #networks:
+      # - app-network
+      network_mode: host
+      #ports:
+      # - 8000:8000
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+        interval: 30s
+        timeout: 10m
+        retries: 20
+        start_period: 30s
+      command: "python3 -m uvicorn api.app:app"
+      #command: "tail -f"
+
+   rag_api_service:
+      build:
+         context: .
+         dockerfile: ./docker/base_ov_image/Dockerfile
+         args:
+           - RENDER_GROUP_ID=${RENDER_GROUP_ID:-992}
+           #- HTTPS_PROXY=${HTTPS_PROXY}
+           #- HTTP_PROXY=${HTTP_PROXY}
+           #- NO_PROXY=localhost,127.0.0.1
+      image: vidsumm_base_image
+      container_name: rag.api.server
+      #privileged: true
+      restart: always
+      #devices:
+      # - /dev/dri
+      volumes:
+       - ./chunks:/usr/src/app/chunks
+       #- /home/demo/dummy/MiniCPM_INT8-ov:/usr/src/app/MiniCPM_INT8
+      #networks:
+      # - app-network
+      network_mode: host
+      depends_on:
+        vector_store:
+          condition: service_healthy
+      #ports:
+      # - 8001:8000
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+        interval: 30s
+        timeout: 10m
+        retries: 20
+        start_period: 30s
+      command: "python3 -m uvicorn api.retriever_api:app --port 8001"
+      #command: "tail -f"
+  
+   vector_store:
+      image: intellabs/vdms:latest
+      container_name: vector.db
+      restart: always
+      ports:
+       - 127.0.0.1:55555:55555
+      #network_mode: host
+      networks:
+       - app-network
+       
+   rtmp_server:
+     image: bluenviron/mediamtx:latest
+     container_name: media_server
+     volumes:
+      - ./config/mediamtx/mediamtx.yml:/mediamtx.yml
+     ports:
+      - 127.0.0.1:8554:8554
+     networks:
+      - app-network
+     #network_mode: host
+
+   summarizer_ui:
+      build:
+         context: .
+         dockerfile: ./docker/base_ov_image/Dockerfile
+         args:
+           - RENDER_GROUP_ID=${RENDER_GROUP_ID:-992}
+           #- HTTPS_PROXY=${HTTPS_PROXY}
+           #- HTTP_PROXY=${HTTP_PROXY}
+           #- NO_PROXY=localhost,127.0.0.1
+      image: vidsumm_base_image
+      volumes:
+       - ./chunks:/usr/src/app/chunks
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8888/"]
+        interval: 30s
+        timeout: 10m
+        retries: 20
+        start_period: 30s
+      network_mode: host
+      depends_on:
+        vector_store:
+          condition: service_healthy
+        vlm_api_service:
+          condition: service_healthy
+        rag_api_service:
+          condition: service_healthy
+        #rtmp_server:
+        #  condition: service_healthy
+      command: "python -m streamlit run app_ov_test.py --server.port 8888 --server.address 127.0.0.1"
+      
+   retriever_ui:
+      build:
+         context: .
+         dockerfile: ./docker/base_ov_image/Dockerfile
+         args:
+           - RENDER_GROUP_ID=${RENDER_GROUP_ID:-992}
+           #- HTTPS_PROXY=${HTTPS_PROXY}
+           #- HTTP_PROXY=${HTTP_PROXY}
+           #- NO_PROXY=localhost,127.0.0.1
+      image: vidsumm_base_image
+      volumes:
+       - ./chunks:/usr/src/app/chunks
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9999/"]
+        interval: 30s
+        timeout: 10m
+        retries: 20
+        start_period: 30s
+      network_mode: host
+      depends_on:
+        vector_store:
+          condition: service_healthy
+        vlm_api_service:
+          condition: service_healthy
+        rag_api_service:
+          condition: service_healthy
+      command: "python -m streamlit run app_rag.py --server.port 9999 --server.address 127.0.0.1"
+      
+networks:
+  app-network:
+    driver: bridge
