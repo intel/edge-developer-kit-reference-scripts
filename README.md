@@ -1,32 +1,32 @@
 # Edge Developer Kit Reference Scripts
 
-This is a simplified developer kits reference setup scripts for various kind of Intel platforms and GPUs.
+This repository provides simplified developer kit reference setup scripts for various Intel platforms and GPUs.
 
-> **Note:** Main branch of this repository contains the latest development version of the project. It may include experimental features, work in progress, or unstable code.
+> **Note:** The main branch contains the latest development version of the project. It may include experimental features, work in progress, or unstable code.
+
+## Table of Contents
+
+- [Recommended Edge Design Support](#recommended-edge-design-support)
+- [Architecture Overview](#architecture-overview)
+- [System Requirements](#system-requirements)
+- [Quick Start](#quick-start)
+- [Use Cases](#use-cases)
+- [Troubleshooting](#troubleshooting)
+- [Support](#support)
+- [Disclaimer](#disclaimer)
 
 ## Recommended Edge Design Support
 
-| Edge Design | Product Line | Product Name | Installer Support | Validated Hardware |
-|-------------|--------------|--------------|-------------------|--------------------|
-| **Scalable Graphics**| Arc B-series | B60 | ❌ Future Support | |
-| | Arc B-series | B580 | ✅ Supported  | |
-| | Arc A-Series | A770 | ✅ Supported  | |
-| **Efficiency Optimized AI** | Core Ultra Processor Series 2 5/7/9 | Arrow Lake (ARL) | ✅ Supported | [Innodisk AXMB-D150 Arrow Island](https://www.innodisk.com/en/blog/intel-core-ultra-series2-reference-kit)<br>[IEI TANK-XM813](https://www.ieiworld.com/tw/product/model.php?II=1099)<br>[AAEON UP Xtreme ARL](https://up-board.org/up-xtreme-arl/)<br>[ASRock Industrial NUC BOX-255H](https://www.asrockind.com/en-gb/NUC%20BOX-255H) |
-| | Core Ultra Processor 5/7/9 | Meteor Lake (MTL) | ✅ Supported | [Seavo* PIR-1014A AIoT Developer Kit](https://www.seavo.com/en/pir_devkit/)<br>[AAEON* UP Xtreme i14](https://up-board.org/up-xtreme-i14/)<br>[ASRock Industrial* NUC BOX-155H](https://www.asrockind.com/en-gb/NUC%20BOX-155H)<br>[Asus* NUC 14 Pro](https://www.asus.com/displays-desktops/nucs/nuc-mini-pcs/asus-nuc-14-pro/)
-| **Mainstream** | Core Processors Series 2 |  Bartlett Lake (BTL) |  Future Support |
-| | Core Processors Series |  Raptor Lake Refresh (RPL) | ✅ Supported | [IEI* TANK-XM811AI-RPL AIoT Developer Kit](https://www.ieiworld.com/en/product-ns/model.php?II=8)<br>[ASRock Industrial* iEPF-9030S-EW4](https://www.asrockind.com/iEPF-9030S-EW4) |
-| **Entry** | Processor Series | Twin Lake (TWL) | ✅ Supported | AAEON RS-UPN-ADLN355-A10-0864 |
-
-## Validated Hardware Matrix
-
-**Below are the Validated Edge Design Combinations:**
-
-| Edge Design | CPU Platform | GPU Configuration | Verification Date |
-|-------------|--------------|-------------------|-------------------|
-| **Efficiency Optimized AI** | **Arrow Lake (ARL)** | Arc B60 (dGPU) | ❌ Future Support |
-| | | Arc B580 (dGPU) | ✅ July 2025 |
-| | | Arc A770 (dGPU) | ✅ July 2025 |
-| **Mainstream** |  Bartlett Lake (BTL) | Arc B60 | ❌ Future Support |
+| Product Collection | Code Name | Support | Validated Hardware |
+|--------------|--------------|-------------------|--------------------|
+| Intel® Arc™ Pro B-Series Graphics | Products formerly Battlemage | 📋 Planned | |
+| Intel® Arc™ B-Series Graphics | Products formerly Battlemage | ✅ Supported  | |
+| Intel® Arc™ A-Series Graphics | Products formerly Alchemist | ✅ Supported  | |
+| Intel® Core™ Ultra Processors (Series 2) | Products formerly Arrow Lake | ✅ Supported | [Innodisk Intel® Core™ Ultra Series 2 Reference Kit](https://www.innodisk.com/en/blog/intel-core-ultra-series2-reference-kit)<br>[IEI TANK-XM813](https://www.ieiworld.com/tw/product/model.php?II=1099)<br>[AAEON UP Xtreme ARL](https://up-board.org/up-xtreme-arl/)<br>[ASRock Industrial NUC BOX-255H](https://www.asrockind.com/en-gb/NUC%20BOX-255H) |
+| Intel® Core™ Ultra processors (Series 1) | Products formerly Meteor Lake | ✅ Supported | [Seavo* PIR-1014A AIoT Developer Kit](https://www.seavo.com/en/pir_devkit/)<br>[AAEON* UP Xtreme i14](https://up-board.org/up-xtreme-i14/)<br>[ASRock Industrial* NUC BOX-155H](https://www.asrockind.com/en-gb/NUC%20BOX-155H)<br>[Asus* NUC 14 Pro](https://www.asus.com/displays-desktops/nucs/nuc-mini-pcs/asus-nuc-14-pro/) |
+| Intel® Core™ processors (Series 2) | Products formerly Bartlett Lake | 📋 Planned | |
+| Intel® Core™ processors (Series 1) | Products formerly Raptor Lake | ✅ Supported | |
+| Intel® Core™ Processor N-series | Products formerly Twin Lake | ✅ Supported | AAEON RS-UPN-ADLN355-A10-0864 |
 
 ## Architecture Overview
 
@@ -35,20 +35,20 @@ edge-developer-kit-reference-scripts/
 ├── main_installer.sh              # Main entry point
 ├── platform_detection.sh          # Platform and hardware detection
 ├── npu_installer.sh               # NPU drivers (Core Ultra)
+├── gpu_installer.sh               # GPU drivers and tools
 ├── openvino_installer.sh          # OpenVINO and camera use cases
-├── camera_installer.sh            # Camera drivers and tools
 ├── print_summary_table.sh         # Summarize post installation
 └── usecases/                      # Reference implementation 
 ```
 
 ## System Requirements
 
-- **OS**: Ubuntu 24.04 LTS only
-- **Kernel**: Script will auto install HWE kernel
-- **Privileges**: Must run with sudo/root
-- **Internet**: Required for package downloads
-- **Edge Design Platform**: All
-- **GPU**: iGPU or/and dGPU of the setup
+- **Operating System:** Ubuntu 24.04 LTS (Desktop)
+- **Kernel:** HWE kernel (auto-installed by script)
+- **User Privileges:** Requires sudo/root access
+- **Internet Connection:** Needed for package installation
+- **Graphics:** Integrated (iGPU) and/or discrete (dGPU) GPU
+
 
 ## Quick Start
 
@@ -57,24 +57,30 @@ edge-developer-kit-reference-scripts/
 
 2. **Run Setup Script**
 
-   This step will configure the basic setup of the platform. Ensure all of the requirements have been met before proceeding to the next step.
+   This step will configure the basic setup of the platform. Ensure all requirements have been met before proceeding.
 
    ```bash
    git clone https://github.com/intel/edge-developer-kit-reference-scripts.git
    cd edge-developer-kit-reference-scripts
    sudo ./main_installer.sh
    ```
-   After finished installation, it may ask you to reboot your system. Reboot the system.
-   Installation is completed when you see this message:
-   > ✓ Platform configured
 
+   After installation finishes, you may be asked to reboot your system. Reboot when prompted.
+   Installation is completed when you see this message:
+   
+   > ✓ Platform configured
+   > 
    > System reboot is required.
 
 3. **Re-run the Installer**
+
+   After rebooting, run the installer again to complete the setup:
+   
    ```bash
    sudo ./main_installer.sh
    ```
 ## Use Cases
+
 1. [Intel® Distribution of OpenVINO™ Toolkit](usecases/ai/openvino/README.md)
 2. [Open WebUI with Ollama](usecases/ai/openwebui-ollama/README.md)
 3. [LLM RAG Toolkit](usecases/ai/rag-toolkit/README.md)
@@ -82,7 +88,7 @@ edge-developer-kit-reference-scripts/
 5. [Digital Avatar](usecases/ai/digital-avatar/README.md)
 6. [Time Coordinated Computing (TCC)](usecases/real-time/tcc_tutorial/README.md)
 7. [Smart Parking](usecases/ai/smart-parking/README.md)
-8. [Video Summarization & Visual RAG](usecases/ai/video_summarization)
+8. [Video Summarization & Visual RAG](usecases/ai/video_summarization/README.md)
 
 ## Troubleshooting
 
@@ -100,40 +106,45 @@ Please install HWE kernel: sudo apt install linux-generic-hwe-24.04
 ✗ This script must be run with sudo or as root user
 ```
 
-### Log Files
-Installation logs are displayed in real-time. For troubleshooting, check:
-- System package manager logs: `/var/log/apt/`
-- Docker logs: `docker logs [container_name]`
+### Platform-Specific Issues
 
-- NPU logs: `/var/log/intel-npu.log`
-- Installation logs: Terminal output
-
-## Troubleshooting
-
-### Platform Not Detected
+**Platform Not Detected:**
 - Check `/sys/class/dmi/id/product_name`
 - Add to appropriate platform list
 
-### NPU Not Available
-- Verify Core Ultra platform
-- Check if NPU device exists: `ls /dev/intel-npu*`
-- May require system reboot
+**NPU Not Detected:**
+- Confirm you are using a Core Ultra platform
+- Check for NPU device: `ls /dev/intel-npu*`
+- If missing, reboot the system and rerun the installer
 
-### GPU Issues
-- Run standalone GPU installer: `../gpu/setup.sh`
-- Check GPU detection: `lspci | grep -i vga`
+**GPU Issues:**
+- Run the GPU installer separately: `./gpu_installer.sh`
+- Verify GPU detection: `lspci | grep -i vga`
+- If issues persist, check for error messages in the terminal and review relevant log files
+- Reboot the system after driver installation if prompted
 
-## Support
+### Log Files & Troubleshooting Steps
 
-For issues and questions:
-- Check logs and error messages
-- Verify platform compatibility
-- Test individual components
-- Report bugs with platform details in here https://github.com/intel/edge-developer-kit-reference-scripts/issues
+During installation, logs are displayed in real time. For deeper troubleshooting, consult these sources:
+
+- **APT Package Logs:** `/var/log/apt/`
+- **Docker Logs:** `docker logs [container_name]`
+- **NPU Driver Logs:** `/var/log/intel-npu.log`
+- **Installer Output:** Review terminal messages for errors or warnings
+
+**Troubleshooting Checklist:**
+- Review relevant log files for error details
+- Confirm your hardware matches the supported platforms
+- Test individual installer scripts (e.g., `gpu_installer.sh`, `npu_installer.sh`)
+- Search for known issues in [GitHub Issues](https://github.com/intel/edge-developer-kit-reference-scripts/issues)
+- When reporting a bug, include platform model, OS version, and log excerpts
+
+For further assistance, open an issue on GitHub with detailed information.
 
 ## Disclaimer
+
 This repository contains pre-production code and is intended for testing and evaluation purposes only. The code and features provided here are in development and may be incomplete, unstable, or subject to change without notice. Use this repository at your own risk.
 
 The reference scripts provided in this repository have been validated and tested on the hardware listed in the documentation. While we strive to ensure compatibility and performance, these scripts may not function as expected on other hardware configurations. Users may encounter issues or unexpected behavior when running the scripts on untested hardware. If you encounter any issues or have suggestions for improvements, we welcome you to open an issue.
 
-GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses.  Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.
+**GStreamer License Notice:** GStreamer* is an open source framework licensed under LGPL. See https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html. You are solely responsible for determining if your use of GStreamer requires any additional licenses. Intel is not responsible for obtaining any such licenses, nor liable for any licensing fees due, in connection with your use of GStreamer.
