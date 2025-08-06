@@ -318,12 +318,9 @@ jobs:
       # Notes:
       # - [required] please REPLACE with your own Coverity Stream name
       COV_STREAM_NAME: devkit-main-stream
-      COV_ANALYSIS_VERSION: 2024.6.1
-      COV_REPORT_VERSION: 2024.6.1
-      COV_AUTH_KEY_NAME: "coverity_auth_key"
-      COV_REPORT_NAME: "coverity_report"
-      COV_SECURITY_REPORT_NAME: "coverity_security_report"
-      COV_CVSS_REPORT_NAME: "coverity_cvss_report"
+      COV_ANALYSIS_VERSION: 2025.3.0
+      COV_PREPARED_BY: "CASE CICD"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -367,11 +364,13 @@ jobs:
           reports-version: ${{ env.COV_REPORT_VERSION }}
 
       - name: Execute Coverity Analysis
-        uses: intel-innersource/frameworks.actions.coverity-analysis@v4
+        uses: intel-sandbox/frameworks.actions.coverity-analysis.casecicd@main
         id: cov-analysis
         with:
           compiler-type: |
             python
+            javascript
+          analysis-version: ${{ env.COV_ANALYSIS_VERSION }}
           source: '${{ env.STEP_PACKAGE_NAME }}'
           url: ${{ env.COV_SERVER_URL }}
           project: ${{ env.COV_PROJECT_NAME }}
