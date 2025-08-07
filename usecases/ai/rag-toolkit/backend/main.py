@@ -4,11 +4,8 @@
 import os
 os.environ['HF_HOME'] = "./data/huggingface"
 
-import io
-import time
-import uuid
+import json
 import magic
-import asyncio
 import logging
 import requests
 import numpy as np
@@ -79,12 +76,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+allowed_cors = json.loads(os.getenv("ALLOWED_CORS", '["http://localhost:8010"]'))
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_cors,
     allow_credentials=True,
     allow_methods=['*'],
-    allow_headers=['*']
+    allow_headers=['*'],
 )
 
 
