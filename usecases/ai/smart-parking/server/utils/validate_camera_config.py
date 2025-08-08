@@ -2,10 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-import sys
 import json
-import logging as log
-from argparse import ArgumentParser
 
 
 class ConfigException(Exception):
@@ -34,7 +31,7 @@ def read_config(config_path):
     """
     Read configuration file and sanitize it
     """
-    if not  os.path.isfile(config_path):
+    if not os.path.isfile(config_path):
         raise ConfigException(f'Config file not found: {config_path}')
     with open(config_path, 'r') as conf:
         try:
@@ -85,31 +82,3 @@ def read_config(config_path):
             if not os.path.exists(cam_detail['bboxes']):
                 raise ConfigException(f'Source path `{cam_detail["bboxes"]}` does not exists. Check config file.')
     return num_ch, conf_data, list(set(given_devices))
-
-
-if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument("-c", "--config_path",
-                        help="Path to camera config file",
-                        required=False, type=str, default='../camera_config.json')
-    parser.add_argument("-vp_proc", "--vp_proc",
-                        help="Path to model_proc file",
-                        required=False, type=str, default='./resources/model_proc.json')
-    args = parser.parse_args()
-    try:
-        this_dir = os.path.dirname(__file__)
-        if not args.config_path.startswith(this_dir):
-            config_path = os.path.join(this_dir, f"{args.config_path}")
-        else:
-            config_path = f"{args.config_path}"
-        num_ch, conf_data, given_devices = read_config(config_path)
-        print('Valid config file.')
-        if not args.vp_proc.startswith(this_dir):
-            vp_proc = os.path.join(this_dir, f"{args.vp_proc}")
-        else:
-            vp_proc = f"{args.vp_proc}"
-        proc_data = read_model_proc(vp_proc)
-        print('Valid model proc file.')
-    except ConfigException as err:
-        log.error(str(err))
-        sys.exit(-1)

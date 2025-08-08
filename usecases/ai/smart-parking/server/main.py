@@ -342,7 +342,7 @@ def main():
     args = get_args()
     APP_LOGGER.log('debug', f'Arguments: {args}')
     validate_args(args)
-    init_all(args, over_write=True)
+    init_all(args.config_path, over_write=True)
 
     camera_src_list = get_camera_input(CONF_DATA)
     APP_LOGGER.log(
