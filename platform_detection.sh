@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (C) 2025 Intel Corporation
 
-# Status indicators
-S_ERROR="❌"
+# Status indicators - using ASCII for better compatibility
+S_ERROR="[ERROR]"
 
 # Global variables
 PLATFORM_FAMILY=""

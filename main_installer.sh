@@ -16,10 +16,10 @@ set -e
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Status indicators
-S_ERROR="❌"
-S_VALID="✅"
-S_WARNING="⚠️"
+# Status indicators - using ASCII for better compatibility
+S_ERROR="[ERROR]"
+S_VALID="[✓]"
+S_WARNING="[!]"
 
 # Default values
 export INSTALL_CAMERA=false
@@ -73,10 +73,6 @@ usage() {
     echo ""
     echo "Supported OS: Ubuntu 24.04 LTS with kernel 6.11.x (HWE) only"
     echo ""
-    echo "Installation Flow:"
-    echo "  Xeon:       Skip setup → Ubuntu 24 Server guide"
-    echo "  Core Ultra: NPU → GPU (if Arc GPU present) → OpenVINO"
-    echo "  Atom/Core:  GPU (if Arc GPU present) → OpenVINO"
 }
 
 # Check if running with appropriate privileges
@@ -85,6 +81,55 @@ check_privileges() {
         echo "$S_ERROR This script must be run with sudo or as root user"
         exit 1
     fi
+}
+
+download_scripts() {
+    local REPO_OWNER="intel"
+    local REPO_NAME="edge-developer-kit-reference-scripts"
+    local BRANCH="main"
+    local BASE_URL="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/refs/heads/${BRANCH}"
+    local DOWNLOAD_DIR
+    DOWNLOAD_DIR="$(pwd)"
+
+    local REQUIRED_SCRIPTS=(
+        "gpu_installer.sh"
+        "npu_installer.sh"
+        "openvino_installer.sh"
+        "platform_detection.sh"
+        "print_summary_table.sh"
+    )
+
+    # Download scripts
+    mkdir -p "$DOWNLOAD_DIR"
+    for script in "${REQUIRED_SCRIPTS[@]}"; do
+        local url="$BASE_URL/$script"
+        local path="$DOWNLOAD_DIR/$script"
+        if curl -fsSL "$url" -o "$path"; then
+            echo "Downloaded: $script"
+        else
+            echo "Failed to download: $script"
+            return 1
+        fi
+    done
+
+    # Check scripts
+    for script in "${REQUIRED_SCRIPTS[@]}"; do
+        local path="$DOWNLOAD_DIR/$script"
+        if [[ ! -f "$path" ]]; then
+            echo "Missing script: $script"
+            return 1
+        fi
+    done
+    echo "All scripts downloaded successfully"
+
+    # Change permissions
+    for script in "${REQUIRED_SCRIPTS[@]}"; do
+        local path="$DOWNLOAD_DIR/$script"
+        if [[ -f "$path" ]]; then
+            chmod +x "$path"
+            echo "Set executable: $script"
+        fi
+    done
 }
 
 # Verify Ubuntu 24.04 LTS with Canonical kernel
@@ -114,20 +159,25 @@ verify_ubuntu_24() {
    kernel_major=$(uname -r | cut -d'.' -f1)
    kernel_minor=$(uname -r | cut -d'.' -f2)
 
-   # Check if HWE stack is installed
+   # Check for supported kernel versions (6.11.x or 6.14.x)
    if ! { [ "$kernel_major" = "6" ] && { [ "$kernel_minor" = "11" ] || [ "$kernel_minor" = "14" ]; }; }; then
       echo "$S_WARNING Unsupported kernel version: $(uname -r)"
-      echo "This installer requires kernel 6.11.x or 6.14.x (HWE)"
-      echo "If you have a non-HWE kernel installed, HWE kernel will be installed now."
-      echo "Attempting to install HWE kernel (linux-generic-hwe-24.04)..."
-      apt update
-      apt install -y linux-generic-hwe-24.04
+      echo "This installer requires Ubuntu 24.04 LTS with kernel 6.11.x or 6.14.x"
+      
+      # Check HWE support status if command is available
+      if command -v hwe-support-status >/dev/null 2>&1; then
+         echo "Checking HWE support status..."
+         hwe-support-status --verbose
+      fi
+      
+      # Install HWE kernel regardless of hwe-support-status result
+      echo "Installing HWE kernel..."
+      apt update && apt install -y linux-generic-hwe-24.04
       echo "$S_VALID HWE kernel installed. Please reboot and run this installer again."
       exit 0
    fi
 
-   echo "$S_VALID Ubuntu 24.04 LTS with kernel 6.11.x or 6.14.x detected"
-   echo "$S_VALID Ubuntu 24.04 LTS with Canonical kernel verified"
+   echo "$S_VALID Ubuntu 24.04 LTS with supported kernel $(uname -r) detected"
 }
 
 # Install NPU drivers (Core Ultra only)
@@ -138,9 +188,9 @@ install_npu_drivers() {
     install_npu
 }
 
-# Check for Intel Arc GPU presence
+# Check for GPU presence
 check_intel_arc_gpu() {
-    echo "# Checking for Intel Arc GPU..."
+    echo "# Checking for GPU devices..."
     
     # Check if lspci is available
     if ! command -v lspci >/dev/null 2>&1; then
@@ -148,58 +198,136 @@ check_intel_arc_gpu() {
         apt-get update && apt-get install -y pciutils
     fi
     
-    # Intel Arc GPU PCI IDs (BMG/DG2)
-    local arc_pci_ids=(
-        # Battlemage (BMG)
-        "8086:e20b" "8086:e20c" "8086:5690" "8086:e211"
-        # Alchemist (DG2, Xe-HPG)
-        "8086:5690" "8086:5691" "8086:5696" "8086:5692" "8086:5697"
-        "8086:5693" "8086:5694" "8086:56a0" "8086:56a1" "8086:56a2"
-        "8086:56a5" "8086:56a6" "8086:56b3" "8086:56b2" "8086:56b1"
-        "8086:56b0" "8086:56ba" "8086:56bc" "8086:56bd" "8086:56bb"
-    )
-    
-    # Find Intel VGA/DISPLAY devices
+    # Find any VGA/DISPLAY devices
     local lspci_output
-    lspci_output=$(lspci -nn | grep -Ei 'VGA|DISPLAY' | grep Intel)
+    lspci_output=$(lspci -nn | grep -Ei 'VGA|DISPLAY')
     
-    if [ -z "$lspci_output" ]; then
-        echo "$S_WARNING No Intel GPU devices detected"
-        return 1
-    fi
-    
-    # Check for Intel Arc GPUs specifically
-    local found_arc_gpu=false
-    while IFS= read -r line; do
-        for pci_id in "${arc_pci_ids[@]}"; do
-            if echo "$line" | grep -q "$pci_id"; then
-                echo "$S_VALID Intel Arc GPU detected: $pci_id"
-                found_arc_gpu=true
-                break
-            fi
-        done
-    done <<< "$lspci_output"
-    
-    if [ "$found_arc_gpu" = true ]; then
-        echo "$S_VALID Intel Arc GPU found - GPU drivers will be installed"
+    if [ -n "$lspci_output" ]; then
+        echo "GPU devices detected:"
+        echo "$lspci_output"
+        echo "$S_VALID GPU found - proceeding with Intel GPU driver installation"
         return 0
     else
-        echo "$S_WARNING No Intel Arc GPU detected - only iGPU present"
+        echo "$S_WARNING No GPU devices detected"
         echo "GPU driver installation will be skipped"
         return 1
     fi
 }
 
-# Install GPU drivers (DG2/BMG cards) - only if Arc GPU is present
+# Install GPU drivers - only if any GPU is present
 install_gpu_drivers() {
     if check_intel_arc_gpu; then
-        echo "Installing GPU drivers (DG2/BMG cards)..."
+        echo "Installing Intel GPU drivers..."
         # shellcheck disable=SC1091
         source "$SCRIPT_DIR/gpu_installer.sh"
         echo "$S_VALID GPU drivers installed"
+        
+        # Verify OpenCL setup after installation
+        # verify_opencl_setup
     else
-        echo "$S_WARNING Skipping GPU driver installation - no Intel Arc GPU detected"
-        echo "System will use integrated graphics (iGPU) only"
+        echo "$S_WARNING Skipping GPU driver installation - no GPU devices detected"
+    fi
+}
+
+# Verify OpenCL setup for both iGPU and dGPU
+verify_opencl_setup() {
+    echo "# Verifying OpenCL setup..."
+    
+    # Wait a moment for drivers to load
+    sleep 3
+    
+    # Check system-level GPU detection first
+    echo "System GPU detection:"
+    echo "1. PCI devices:"
+    lspci -nn | grep -Ei 'VGA|DISPLAY' | grep -i intel | while IFS= read -r line; do
+        echo "   $line"
+    done
+    
+    echo "2. DRM devices:"
+    if ls /dev/dri/ 2>/dev/null; then
+        for drm_device in /dev/dri/card* /dev/dri/render*; do
+            if [ -e "$drm_device" ]; then
+                ls -la "$drm_device"
+            fi
+        done
+    else
+        echo "   No DRM devices found"
+    fi
+    
+    echo "3. GPU kernel modules:"
+    lsmod | grep -E "i915|xe" || echo "   No Intel GPU modules loaded"
+    
+    if command -v clinfo >/dev/null 2>&1; then
+        echo "4. OpenCL platform detection:"
+        if clinfo -l 2>/dev/null; then
+            # Count detected devices
+            local platform_count device_count
+            platform_count=$(clinfo -l 2>/dev/null | grep -c "Platform" || echo "0")
+            device_count=$(clinfo -l 2>/dev/null | grep -c "Device" || echo "0")
+            
+            echo "$S_VALID OpenCL setup verified:"
+            echo "  Platforms: $platform_count"
+            echo "  Devices: $device_count"
+            
+            # Show detailed device information
+            echo "5. Detailed OpenCL device information:"
+            clinfo 2>/dev/null | grep -E "Platform|Device Name|Device Type|Driver Version" | head -10 || echo "   Failed to get detailed info"
+            
+            if [ "$device_count" -ge 2 ]; then
+                echo "$S_VALID Both iGPU and dGPU should be available"
+            elif [ "$device_count" -eq 1 ]; then
+                echo "$S_WARNING Only one GPU device detected"
+                echo "This might be normal if only iGPU or dGPU is functional"
+            else
+                echo "$S_WARNING No OpenCL devices detected despite installation"
+            fi
+        else
+            echo "$S_WARNING clinfo failed to list OpenCL devices"
+            echo "This indicates missing or incorrect OpenCL drivers"
+            
+            # Enhanced diagnostic commands
+            echo "# Enhanced Troubleshooting:"
+            echo "1. OpenCL ICD files:"
+            if ls /etc/OpenCL/vendors/ 2>/dev/null; then
+                ls -la /etc/OpenCL/vendors/
+                echo "   ICD file contents:"
+                for icd_file in /etc/OpenCL/vendors/*.icd; do
+                    if [ -f "$icd_file" ]; then
+                        echo "   $(basename "$icd_file"): $(cat "$icd_file" 2>/dev/null || echo 'unreadable')"
+                    fi
+                done
+            else
+                echo "   No OpenCL vendor files found"
+            fi
+            
+            echo "2. Intel OpenCL packages:"
+            dpkg -l | grep -E "intel.*opencl|intel.*level.*zero|libze" | head -10
+            
+            echo "3. Library dependencies:"
+            if [ -f "/usr/lib/x86_64-linux-gnu/libOpenCL.so.1" ]; then
+                echo "   libOpenCL.so.1: Found"
+            else
+                echo "   libOpenCL.so.1: Missing"
+            fi
+            
+            echo "4. User groups:"
+            echo "   Current user groups: $(groups)"
+            
+            echo ""
+            echo "# Common fixes to try:"
+            echo "1. Reboot the system: sudo reboot"
+            echo "2. Add user to groups: sudo usermod -aG video,render \$USER"
+            echo "3. Reinstall OpenCL: sudo apt reinstall intel-opencl-icd intel-level-zero-gpu"
+            echo "4. Check dmesg for GPU errors: dmesg | grep -i 'i915\\|gpu\\|drm'"
+            echo "5. Re-run GPU installer: sudo ./gpu_installer.sh"
+            
+            return 1
+        fi
+        
+    else
+        echo "$S_ERROR clinfo not available after GPU driver installation"
+        echo "This indicates the clinfo package was not properly installed"
+        return 1
     fi
 }
 
@@ -257,6 +385,20 @@ summary(){
       source "$SCRIPT_DIR/print_summary_table.sh"
 }
 
+# Install essential development tools
+install_build_essentials() {
+   echo "# Installing essential development tools..."
+   
+   apt-get update
+   
+   if apt-get install -y build-essential gcc g++ make cmake pkg-config git curl wget; then
+      echo "$S_VALID Build essentials installed successfully"
+   else
+      echo "$S_ERROR Failed to install build essentials"
+      return 1
+   fi
+}
+
 # Main execution flow
 main() {
     check_privileges
@@ -265,22 +407,26 @@ main() {
     echo "Intel Platform Installer"
     echo "========================"
     echo ""
-    
+    download_scripts
     # 1. Verify Ubuntu 24.04 LTS with Canonical kernel
     verify_ubuntu_24
     echo ""
     
-    # 2. Load platform detection
+    # 2. Install essential development tools
+    install_build_essentials
+    echo ""
+    
+    # 3. Load platform detection
     # shellcheck disable=SC1091
     source "$SCRIPT_DIR/platform_detection.sh"
     
-    # 3. Detect platform and OS
+    # 4. Detect platform and OS
     echo "# Detecting platform and OS..."
     detect_platform
     detect_os
     echo ""
     
-    # 4. Platform Installation Flow
+    # 5. Platform Installation Flow
     echo "# Platform Installation Flow..."
     echo "$S_VALID Platform detected: $CPU_MODEL"
     
@@ -295,10 +441,10 @@ main() {
     elif is_coreultra; then
         echo "# Core Ultra platform detected"
         echo "Installation sequence: NPU → GPU (if present) → OpenVINO"
-        
         # Core Ultra flow: NPU → GPU (conditional) → OpenVINO
-        install_npu_drivers
+        #install_npu_drivers
         install_gpu_drivers  # Will check for Arc GPU presence first
+        install_npu_drivers
         
         # Install OpenVINO with error handling
         if ! install_openvino; then
@@ -322,25 +468,15 @@ main() {
         fi
     fi
     
-   #  # 5. Optional camera installation
-   #  if [ "$INSTALL_CAMERA" = true ]; then
-   #      echo ""
-   #      echo "# Installing camera drivers..."
-   #      # shellcheck source=$SCRIPT_DIR/camera_installer.sh
-   #      source "$SCRIPT_DIR/camera_installer.sh"
-   #      install_camera_drivers
-   #  fi  
-   #  echo ""
-   #  echo "$S_VALID Platform installation completed - Done"
-   #  echo "System reboot may be required for all changes to take effect"
-   summary
+    # Run installation summary
+    summary
    
-   # Log completion
-   echo ""
-   echo "========================================================================"
-   echo "Installation completed: $(date '+%Y-%m-%d %H:%M:%S')"
-   echo "Log file saved: $LOG_FILE"
-   echo "========================================================================"
+    # Log completion
+    echo ""
+    echo "========================================================================"
+    echo "Installation completed: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "Log file saved: $LOG_FILE"
+    echo "========================================================================"
 }
 
 # Execute main function with all arguments
