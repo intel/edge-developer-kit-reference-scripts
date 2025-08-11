@@ -60,25 +60,56 @@ edge-developer-kit-reference-scripts/
    This step will configure the basic setup of the platform. Ensure all requirements have been met before proceeding.
 
    ```bash
-   git clone https://github.com/intel/edge-developer-kit-reference-scripts.git
-   cd edge-developer-kit-reference-scripts
-   sudo ./main_installer.sh
+   sudo bash -c "$(wget -qLO - https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/refs/heads/main/main_installer.sh)"
    ```
 
-   After installation finishes, you may be asked to reboot your system. Reboot when prompted.
+
+
+   During the installation process, you may be asked to reboot your system. Reboot when prompted.
    Installation is completed when you see this message:
-   
-   > ✓ Platform configured
-   > 
-   > System reboot is required.
 
-3. **Re-run the Installer**
-
-   After rebooting, run the installer again to complete the setup:
-   
-   ```bash
-   sudo ./main_installer.sh
    ```
+   ========================================================================
+   Running Installation Summary
+
+   ==================== System Installation Summary ====================
+   Item                      | Value
+   ------------------------ -+-----------------------------------------
+   Kernel Version            | 6.14.0-27-generic
+   HWE Stack                 | Installed
+   Ubuntu Version            | Ubuntu 24.04.3 LTS
+   NPU Status                | Detected
+   NPU Package               | intel-level-zero-npu
+   NPU Version               | 1.19.0.20250707-16111289554
+   intel-driver-compiler-npu | 1.19.0.20250707-16111289554
+   intel-fw-npu              | 1.19.0.20250707-16111289554
+   intel-level-zero-npu      | 1.19.0.20250707-16111289554
+   level-zero                | 1.22.4
+   GPU Type                  | Intel
+   GPU Count                 | 4 Intel graphics device(s) detected
+   GPU Driver                | i915 (loaded)
+   GPU Device 1              | 00:02.0 VGA compatible controller: Intel Corporation Arrow Lake-U [Intel Graphics] (rev 06)
+   GPU Device 2              | 03:00.0 VGA compatible controller: Intel Corporation Device e20b
+   GPU Device 3              | 08:00.0 VGA compatible controller: Intel Corporation Device e20b
+   GPU Device 4              | 80:14.5 Non-VGA unclassified device: Intel Corporation Device 7f2f (rev 10)
+   ------------------------ -+-----------------------------------------
+   Intel Graphics Packages   |
+   ------------------------ -+-----------------------------------------
+   i965-va-driver:amd64      | 2.4.1+dfsg1-1build2
+   intel-gsc                 | 0.9.5-0ubuntu1~24.04~ppa1
+   intel-media-va-driver-non-free:amd64 | 25.3.1-0ubuntu1~24.04~ppa1
+   intel-opencl-icd          | 25.27.34303.9-1~24.04~ppa1
+   libegl-mesa0:amd64        | 25.0.7-0ubuntu0.24.04.1
+   ------------------------ -+-----------------------------------------
+   Platform Status           | [✓] Platform is configured
+   =====================================================================
+
+   ========================================================================
+   Installation completed: 2025-08-11 10:11:54
+   Log file saved: /var/log/intel-platform-installer.log
+   ========================================================================
+   ```
+
 ## Use Cases
 
 1. [Intel® Distribution of OpenVINO™ Toolkit](usecases/ai/openvino/README.md)
