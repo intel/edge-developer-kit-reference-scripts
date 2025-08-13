@@ -211,6 +211,7 @@ remove_conflicting_packages() {
    echo -e "\n# Removing conflicting GPU packages"
    
    local conflicting_packages=(
+      "level-zero"
       "intel-graphics-compiler"
       "intel-compute-runtime"
       "intel-media-driver"

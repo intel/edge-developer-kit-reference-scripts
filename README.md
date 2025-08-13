@@ -19,7 +19,7 @@ This repository provides simplified developer kit reference setup scripts for va
 
 | Product Collection | Code Name | Support | Validated Hardware |
 |--------------|--------------|-------------------|--------------------|
-| Intel® Arc™ Pro B-Series Graphics | Products formerly Battlemage | 📋 Planned | |
+| Intel® Arc™ Pro B-Series Graphics | Products formerly Battlemage | ✅ Supported | |
 | Intel® Arc™ B-Series Graphics | Products formerly Battlemage | ✅ Supported  | |
 | Intel® Arc™ A-Series Graphics | Products formerly Alchemist | ✅ Supported  | |
 | Intel® Core™ Ultra Processors (Series 2) | Products formerly Arrow Lake | ✅ Supported | [Innodisk Intel® Core™ Ultra Series 2 Reference Kit](https://www.innodisk.com/en/blog/intel-core-ultra-series2-reference-kit)<br>[IEI TANK-XM813](https://www.ieiworld.com/tw/product/model.php?II=1099)<br>[AAEON UP Xtreme ARL](https://up-board.org/up-xtreme-arl/)<br>[ASRock Industrial NUC BOX-255H](https://www.asrockind.com/en-gb/NUC%20BOX-255H) |
