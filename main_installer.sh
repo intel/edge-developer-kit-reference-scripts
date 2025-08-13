@@ -100,6 +100,7 @@ download_scripts() {
     )
 
     # Download scripts
+    apt install -y curl
     mkdir -p "$DOWNLOAD_DIR"
     for script in "${REQUIRED_SCRIPTS[@]}"; do
         local url="$BASE_URL/$script"
