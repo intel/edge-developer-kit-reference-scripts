@@ -2,19 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 FROM intel/oneapi-basekit:2025.1.1-0-devel-ubuntu24.04
-ARG IPEX_LLM_VERSION=2.3.0b20250520
+ARG IPEX_LLM_VERSION=2.3.0b20250629
 
-WORKDIR /neo
-RUN curl -LO https://github.com/intel/intel-graphics-compiler/releases/download/v2.11.7/intel-igc-core-2_2.11.7+19146_amd64.deb \
-    && curl -LO https://github.com/intel/intel-graphics-compiler/releases/download/v2.11.7/intel-igc-opencl-2_2.11.7+19146_amd64.deb \
-    && curl -LO https://github.com/intel/compute-runtime/releases/download/25.18.33578.6/intel-ocloc-dbgsym_25.18.33578.6-0_amd64.ddeb \
-    && curl -LO https://github.com/intel/compute-runtime/releases/download/25.18.33578.6/intel-ocloc_25.18.33578.6-0_amd64.deb \
-    && curl -LO https://github.com/intel/compute-runtime/releases/download/25.18.33578.6/intel-opencl-icd-dbgsym_25.18.33578.6-0_amd64.ddeb \
-    && curl -LO https://github.com/intel/compute-runtime/releases/download/25.18.33578.6/intel-opencl-icd_25.18.33578.6-0_amd64.deb \
-    && curl -LO https://github.com/intel/compute-runtime/releases/download/25.18.33578.6/libigdgmm12_22.7.0_amd64.deb \
-    && curl -LO https://github.com/intel/compute-runtime/releases/download/25.18.33578.6/libze-intel-gpu1-dbgsym_25.18.33578.6-0_amd64.ddeb \
-    && curl -LO https://github.com/intel/compute-runtime/releases/download/25.18.33578.6/libze-intel-gpu1_25.18.33578.6-0_amd64.deb \
-    && dpkg -i *.deb
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common
+RUN add-apt-repository -y ppa:kobuk-team/intel-graphics
+
+RUN apt-get install -y --no-install-recommends libze-intel-gpu1 libze1 intel-metrics-discovery intel-opencl-icd clinfo intel-gsc
+RUN apt-get install -y --no-install-recommends intel-media-va-driver-non-free libmfx-gen1 libvpl2 libvpl-tools libva-glx2 va-driver-all vainfo
+RUN apt-get install -y --no-install-recommends git build-essential cmake libcurl4-openssl-dev
 
 WORKDIR /opt/intel/llm-app
 RUN apt update \

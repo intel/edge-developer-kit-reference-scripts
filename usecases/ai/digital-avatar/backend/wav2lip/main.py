@@ -158,7 +158,12 @@ async def inference(bg_task: BackgroundTasks, starting_frame: int, reversed: str
         temp_audio_path = temp_audio.name
         with open(temp_audio_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
-            result, _ = WAV2LIP.inference(temp_audio_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=CONFIG["use_enhancer"])
+        
+        # Check if the temporary file is a symbolic link
+        if os.path.islink(temp_audio_path):
+            return JSONResponse(content=jsonable_encoder({"message": "symbolic links are not allowed"}), status_code=403)
+            
+        result, _ = WAV2LIP.inference(temp_audio_path, reversed=True if reversed == "1" else False, starting_frame=starting_frame, enhance=CONFIG["use_enhancer"])
     print(result, flush=True)
     result = f"wav2lip/results/{result}.mp4"
     return FileResponse(result, media_type="video/mp4", background=bg_task.add_task(remove_file,result ))
@@ -196,6 +201,10 @@ async def inference(data: dict, starting_frame: int, reversed: str, bg_task: Bac
     file_path=os.path.join(DATA_DIRECTORY, filename)
     if not os.path.exists(file_path):
         return JSONResponse(content=jsonable_encoder({"message": "file does not exist"}))
+
+    # Check if the file is a symbolic link
+    if os.path.islink(file_path):
+        return JSONResponse(content=jsonable_encoder({"message": "symbolic links are not allowed"}), status_code=403)
 
     start_time = time.time()
     with tempfile.NamedTemporaryFile(suffix=".wav") as temp_file:
@@ -253,6 +262,10 @@ async def get_video(id: str, bg_task: BackgroundTasks):
     # Verify file exists
     if not os.path.exists(video_path):
         return JSONResponse(content=jsonable_encoder({"message": "file does not exist"}))
+    
+    # Check if file is a symbolic link
+    if os.path.islink(video_path):
+        return JSONResponse(content=jsonable_encoder({"message": "symbolic links are not allowed"}), status_code=403)
     
     return FileResponse(video_path)
 
