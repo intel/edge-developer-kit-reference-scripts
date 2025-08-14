@@ -65,6 +65,18 @@ router = APIRouter(prefix="/v1",
                    responses={404: {"description": "Unable to find route"}})
 
 def process_inference_task(sanitized_skin_name, ext, temp_path):
+    # Check if the uploaded file is a symbolic link
+    if os.path.islink(temp_path):
+        os.remove(temp_path)
+        set_task({
+            "type": "inference",
+            "skin_name": sanitized_skin_name,
+            "url": None,
+            "status": "FAILED",
+            "message": "Symbolic links are not allowed as source files.",
+        })
+        return
+        
     set_task({
         "type": "inference",
         "skin_name": sanitized_skin_name,
@@ -187,6 +199,10 @@ async def get_video(name: str):
     # Verify file exists
     if not os.path.exists(video_path):
         return JSONResponse(content=jsonable_encoder({"message": "file does not exist"}))
+    
+    # Check if file is a symbolic link
+    if os.path.islink(video_path):
+        return JSONResponse(content=jsonable_encoder({"message": "symbolic links are not allowed"}), status_code=403)
     
     return FileResponse(video_path)
 

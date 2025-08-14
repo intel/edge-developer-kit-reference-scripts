@@ -1,6 +1,7 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 import os
 os.environ['HF_HOME'] = "./data/huggingface"
 
@@ -141,11 +142,11 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Stopping server services ...")
 
-
+allowed_cors =  json.loads(os.getenv("ALLOWED_CORS", '["http://localhost"]'))
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_cors,
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*']
