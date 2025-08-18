@@ -8,23 +8,23 @@
 ## Prerequisites
 
 - Camera hardware and BIOS configured. Refer to [BIOS Setup for MTL GMSL D457](./BIOS_README.md)
-- Ubuntu* 22.04 or Ubuntu 24.04* installed.
+- Ubuntu* 22.04 or Ubuntu* 24.04 installed.
 
 ## Quick Start
 
-The steps below are tested for Ubuntu 24.04*. 
+The steps below are tested for Ubuntu* 24.04. 
 
-If you are using Ubuntu 22.04* refer to [ECI 3.3 Release for GMSL on MTL](https://eci.intel.com/docs/3.3/development/tutorials/enable-gmsl.html#intel-gmsl-intel-ipu6-debian-kernel-modules-dkms) to get started.
+If you are using Ubuntu 22.04 refer to [ECI 3.3 Release for GMSL on MTL](https://eci.intel.com/docs/3.3/development/tutorials/enable-gmsl.html#intel-gmsl-intel-ipu6-debian-kernel-modules-dkms) to get started.
 
 1. Download the [GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB](https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB) and [GPG-PUB-KEY-INTEL-ECI.gpg](https://eci.intel.com/repos/gpg-keys/GPG-PUB-KEY-INTEL-ECI.gpg)
 
-2. Run below script to install IPU6 DKMS via ECI. 
+2. Run the script below to install the IPU6 DKMS via ECI. 
    ```
    cd edge-developer-kit-reference-scripts/platforms/coreultra/mtluh/camera/d457
    ./gmsl.sh
    ```
 
-3. Run below command after installation completed. 
+3. Run the command below after the installation is completed. 
    ```
    source /opt/ros/jazzy/setup.bash
    ```
@@ -49,7 +49,7 @@ If you are using Ubuntu 22.04* refer to [ECI 3.3 Release for GMSL on MTL](https:
    ```
    ![binded](./images/binded.png)
 
-7. Run rs-multicam for streaming. 
+7. Run the rs-multicam for streaming. 
    ```
    rs-multicam
    ```

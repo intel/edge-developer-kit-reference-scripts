@@ -24,7 +24,7 @@ A digital avatar that utilizes Text To Speech, Speech To Text, and LLM to create
 ## Requirements
 
 ### Minimum
-- CPU: 13th generations of Intel Core i5 and above
+- CPU: 13th generations of Intel® Core™ i5 and above
 - GPU: Intel® Arc™ A770 graphics (16GB)
 - RAM: 32GB
 - DISK: 256GB
@@ -78,7 +78,7 @@ Please ensure that you have these ports available before running the application
 docker compose build
 ```
 
-### Start Docker container
+### Start Docker Container
 ```bash
 export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
 docker compose up -d

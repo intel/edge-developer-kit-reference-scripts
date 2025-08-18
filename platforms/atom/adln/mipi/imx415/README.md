@@ -13,7 +13,7 @@ Ensure that your system is set up properly.
 - [AAEON UP Squared Pro 7000 (UPN-ADLNI3-A10-1664)](https://www.aaeon.com/en/p/up-board-up-squared-pro-7000)
 - [LEOPARD IMX415 MIPI](https://leopardimaging.com/product/robotics-cameras/cis-2-mipi-modules/i-pex-mipi-camera-modules/rolling-shutter-mipi-cameras/8-4mp-imx415/li-imx415-mipi-081h/)
 
-## Go to specific setup directory
+## Go to the Specific Setup Directory
 
 This step will redirect user to the current platform setup directory
 
@@ -22,7 +22,7 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/imx415
 ```
 
 ## System Kernel Change
-1. Run below command to install pre-built kernel v5.15.137.
+1. Run the command below to install the pre-built kernel v5.15.137.
    ```
    cd <zip_package_from_leopard>/imx415
    sudo dpkg -i linux-*.deb
@@ -32,19 +32,19 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/imx415
 
 2.	Once the system reboots, choose and select **Kernel 5.15.137** under **‘Advanced Options for Ubuntu’**.
 
-## Install IPU libraries
-1. Run below script to install userspace IPU libraries. 
+## Install the IPU Libraries
+1. Run the script below to install the userspace IPU libraries. 
    ```
    cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/imx415/scripts
    ./install_ipu.sh
    ```
 
-2. After installing userspace IPU libraries, run below script to setup userspace IPU libraries. The system reboots after this command.
+2. After installing the userspace IPU libraries, run the script below to setup userspace IPU libraries. The system reboots after this command.
    ```
    ./setup_ipu.sh
    ```
 
-3. Run below to copy necessary drivers and packages from **Section: Requirements , Step 3** onto ADL-N board.
+3. Run the command below to copy the necessary drivers and packages from **Section: Requirements , Step 3** onto ADL-N board.
    ```
    cd <zip_package_from_leopard>/ISP/
    cp camera/IMX415_TGL_10bits.aiqb /usr/share/defaults/etc/camera/ipu_adl/
@@ -53,7 +53,7 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/imx415
    cp camera/gcss/graph_settings_imx415.xml /usr/share/defaults/etc/camera/ipu_adl/gcss/
    ```
 
-## Validate IMX415 driver
+## Validate IMX415 Driver
  
 1. To ensure IPU FW is probed and loaded properly, run this command.
    ```
@@ -71,7 +71,7 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/imx415
    ```
    ![detect_sensor](./images/media_ctl.png)
 
-### Streaming the camera
+### Streaming the Camera
 
 1. Set environment variables with following commands.
    ```
@@ -80,17 +80,17 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/imx415
    ```
 
 2. Launch the following command to see 
-      #### Single camera stream
+      #### Single Camera Stream
       ```
       sudo -E gst-launch-1.0 icamerasrc device-name=imx415 printfps=true ! video/x-raw,format=NV12,width=3840,height=2160 ! videoconvert ! xvimagesink
       ```
 
-      #### Dual camera stream
+      #### Dual Camera Stream
       ```
       sudo -E gst-launch-1.0 icamerasrc device-name=imx415 printfps=true ! video/x-raw,format=NV12,width=3840,height=2160 ! videoconvert ! xvimagesink icamerasrc device-name=imx415-2 printfps=true ! video/x-raw,format=NV12,width=3840,height=2160  ! videoconvert ! xvimagesink
       ```
 
-#### Stream output
+#### Stream Output
 The images below shows the output for 2 IMX415 camera streams.
 
 ![video_output](./images/output_video.png)

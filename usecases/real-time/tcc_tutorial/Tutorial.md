@@ -72,7 +72,7 @@ Let's take a look at how Intel® Cache Allocation Technology (CAT) can help miti
 </p>
 
 #### Execution and Analysis
-1. Start the real-time application if it is not already running, and output the statistics to the Grafana dashboard. Monitor the statistics and start in a second terminal the AI object classification demo from OpenVINO model zoo.
+1. Start the real-time application if it is not already running, and output the statistics to the Grafana dashboard. Monitor the statistics and start in a second terminal the AI object classification demo from OpenVINO™ model zoo.
 
   ```sh
   sudo ./rt_linux_tutorial -i 1000 -s 1
@@ -90,7 +90,7 @@ You can use the following command as an alternative to the AI object classificat
     -vm-bytes 128M: This parameter specifies the amount of memory each virtual memory stressor instance should allocate. In this case, each of the 8 instances will allocate 128 megabytes of memory.
     -fork 4: This parameter specifies that 4 child processes should be forked. Each child process will execute the stress test independently.
   ```
-2. Partition the Last Level Cache (LLC) and assign an exclusive portion of the cache to the real-time test application, as demonstrated for the Intel® Core™ i5-1350PE above. Here is how the LLC can be partitioned using the Linux `msr-tools`:
+2. Partition the Last Level Cache (LLC) and assign an exclusive portion of the cache to the real-time test application, as demonstrated for the Intel® Core™ i5-1350PE above. Here is how the LLC can be partitioned using the Linux* `msr-tools`:
   ```sh
     #define LLC Core Masks
     wrmsr 0xc90 0x30 # best effort mask
@@ -103,7 +103,7 @@ You can use the following command as an alternative to the AI object classificat
     wrmsr -a 0xc8f 0x0 # assign all cores to the CLOS0 
     wrmsr -p 3 0xc8f 0x100000000 # assign real-time core to CLOS1
 
-    #There is also the pqos Linux command-line utility which is part of the intel-cmt-cat package which can be used.
+    #There is also the pqos Linux* command-line utility which is part of the intel-cmt-cat package which can be used.
   ```
   
 Alternatively, you can use the script with the `rt_optimized` option to partition the cache as demonstrated above, or with the `default` option for flat partitioning.
@@ -120,13 +120,13 @@ As demonstrated in the second step of the measurement, applying cache partitioni
 
 As demonstrated, partitioning the cache using Intel® Cache Allocation Technology (CAT) is a straightforward way to improve temporal isolation between real-time and best-effort workloads.
 
-This is just an example, and the configuration needs to be adjusted to your specific use case and processor. You can determine the cache topology, including the size and number of ways supported for a particular processor, by using the CPUID leaf "Deterministic Cache Parameters Leaf - 0x4." Additionally, Linux utilities like lstopo are very useful for getting an overview of the cache topology of a processor. Here are some references if you need more information about CAT ...
+This is just an example, and the configuration needs to be adjusted to your specific use case and processor. You can determine the cache topology, including the size and number of ways supported for a particular processor, by using the CPUID leaf "Deterministic Cache Parameters Leaf - 0x4." Additionally, Linux* utilities like lstopo are very useful for getting an overview of the cache topology of a processor. Here are some references if you need more information about CAT ...
   
   - Public Intel® Time Coordinated Computing (TCC) User Guide - RDC #[831067](https://cdrdv2.intel.com/v1/dl/getContent/831067)
   - Intel® Resource Director Technology (Intel® RDT) Architecture Specification - RDC #[789566](https://cdrdv2.intel.com/v1/dl/getContent/789566)
   - Intel® 64 and IA-32 Architectures Software Developer’s Manual - RDC#[671200](https://cdrdv2.intel.com/v1/dl/getContent/671200)
   
-### 3. Intel® Speed Shift technology for Edge Computing
+### 3. Intel® Speed Shift Technology for Edge Computing
 
 In the third and final step of this tutorial, let's examine another aspect of power management: Performance states, or P-States. P-States enable the scaling of the processor's frequency and voltage to reduce CPU power consumption. They are part of Dynamic Voltage and Frequency Scaling (DVFS) features such as Intel® Speed Step, Speed Shift, and Turbo Boost Technology. Speed Step and Speed Shift adjust the processor's voltage and frequency within these P-States to balance power efficiency and performance, while Turbo Boost allows the processor to temporarily exceed the highest P-State to provide additional performance during demanding tasks.
 
@@ -142,7 +142,7 @@ More information about HWP and the MSR can be found in the Intel® 64 and IA-32 
 
 #### Execution and Analysis
 
-1.  Start the real-time application if it is not already running, and output the statistics to the Grafana dashboard. Monitor the statistics and start in a second terminal the AI object classification demo from OpenVINO model zoo.
+1.  Start the real-time application if it is not already running, and output the statistics to the Grafana dashboard. Monitor the statistics and start in a second terminal the AI object classification demo from OpenVINO™ model zoo.
   ```sh
   sudo ./rt_linux_tutorial -i 1000 -s 1
   ```
@@ -205,7 +205,7 @@ As you can see, locking the core frequency of the core running the real-time app
 
 ### Conclusion
 
-In this tutorial, three easy-to-use features of the Intel TCC toolbox, along with some kernel command line parameters, were introduced to optimize real-time performance. These features and techniques help system integrators quickly tune the system for specific real-time use cases:
+In this tutorial, three easy-to-use features of the Intel® TCC toolbox, along with some kernel command line parameters, were introduced to optimize real-time performance. These features and techniques help system integrators quickly tune the system for specific real-time use cases:
 - TCC Mode: Optimizes firmware for low latency with a single configuration knob.
 - Cache Allocation Technology (CAT): Enables quick partitioning of the cache to improve temporal isolation.
 - Speed Shift for Edge Computing: Can be used to boost single-threaded performance.
@@ -272,13 +272,13 @@ As demonstrated in the second step of the measurement, applying cache partitioni
 
 As demonstrated, partitioning the cache using Intel® Cache Allocation Technology (CAT) is a straightforward way to improve temporal isolation between real-time and best-effort workloads.
 
-This is just an example, and the configuration needs to be adjusted to your specific use case and processor. You can determine the cache topology, including the size and number of ways supported for a particular processor, by using the CPUID leaf "Deterministic Cache Parameters Leaf - 0x4." Additionally, Linux utilities like lstopo are very useful for getting an overview of the cache topology of a processor. Here are some references if you need more information about CAT ...
+This is just an example, and the configuration needs to be adjusted to your specific use case and processor. You can determine the cache topology, including the size and number of ways supported for a particular processor, by using the CPUID leaf "Deterministic Cache Parameters Leaf - 0x4." Additionally, Linux* utilities like lstopo are very useful for getting an overview of the cache topology of a processor. Here are some references if you need more information about CAT ...
   
   - Public Intel® Time Coordinated Computing (TCC) User Guide - RDC #[831067](https://cdrdv2.intel.com/v1/dl/getContent/831067)
   - Intel® Resource Director Technology (Intel® RDT) Architecture Specification - RDC #[789566](https://cdrdv2.intel.com/v1/dl/getContent/789566)
   - Intel® 64 and IA-32 Architectures Software Developer’s Manual - RDC#[671200](https://cdrdv2.intel.com/v1/dl/getContent/671200)
 
- ### 3. Intel® Speed Shift technology for Edge Computing
+ ### 3. Intel® Speed Shift Technology for Edge Computing
 
 In the third and final step of this tutorial, let's examine another aspect of power management: Performance states, or P-States. P-States enable the scaling of the processor's frequency and voltage to reduce CPU power consumption. They are part of Dynamic Voltage and Frequency Scaling (DVFS) features such as Intel® Speed Step, Speed Shift, and Turbo Boost Technology. Speed Step and Speed Shift adjust the processor's voltage and frequency within these P-States to balance power efficiency and performance, while Turbo Boost allows the processor to temporarily exceed the highest P-State to provide additional performance during demanding tasks.
 
@@ -294,7 +294,7 @@ More information about HWP and the MSR can be found in the Intel® 64 and IA-32 
 
 #### Execution and Analysis
 
-1.  Start the real-time application if it is not already running, and output the statistics to the Grafana dashboard. Monitor the statistics and start in a second terminal the AI object classification demo from OpenVINO model zoo.
+1.  Start the real-time application if it is not already running, and output the statistics to the Grafana dashboard. Monitor the statistics and start in a second terminal the AI object classification demo from OpenVINO™ model zoo.
   ```sh
   sudo ./rt_linux_tutorial -i 1000 -s 1
   ```
@@ -357,11 +357,12 @@ As you can see, locking the core frequency of the core running the real-time app
 
 ### Conclusion
 
-In this tutorial, three easy-to-use features of the Intel TCC toolbox, along with some kernel command line parameters, were introduced to optimize real-time performance. These features and techniques help system integrators quickly tune the system for specific real-time use cases:
+In this tutorial, three easy-to-use features of the Intel® TCC toolbox, along with some kernel command line parameters, were introduced to optimize real-time performance. These features and techniques help system integrators quickly tune the system for specific real-time use cases:
 - TCC Mode: Optimizes firmware for low latency with a single configuration knob.
 - Cache Allocation Technology (CAT): Enables quick partitioning of the cache to improve temporal isolation.
 - Speed Shift for Edge Computing: Can be used to boost single-threaded performance.
 
 By leveraging these tools, system integrators can efficiently enhance the performance and reliability of their real-time applications.
+
 
 <span style="color:red"> Note: Please keep in mind that performance varies by use, configuration and other factors. Learn more at www.Intel.com/PerformanceIndexPerformance results are based on testing as of dates shown in configurations and may not reflect all publicly available updates.  No product or component can be absolutely secure</span> 

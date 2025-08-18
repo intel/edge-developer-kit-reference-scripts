@@ -1,4 +1,4 @@
-# VLLM OpenVINO
+# VLLM OpenVINO™
 
 ## Requirements
 
@@ -10,23 +10,23 @@
 
 ## Quick Start
 
-### 1. Install Operating System
+### 1. Install the Operating System
 Install the latest [Ubuntu 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to the [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
-### 2. Install GPU Driver (Optional)
+### 2. Install the GPU Driver (Optional)
 If you plan to use a GPU for inference, install the appropriate GPU driver:
 - **Intel® Arc™ A-Series Graphics:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
 - **Intel® Data Center GPU Flex Series:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
 
-### 3. Set Up Docker
+### 3. Set Up the Docker
 Follow the instructions [here](https://docs.docker.com/engine/install/) to install Docker and Docker Compose.
 
-### 4. Build the OpenVINO VLLM Docker Image
+### 4. Build the OpenVINO™ VLLM Docker Image
 ```bash
 docker build -t ov-vllm .
 ```
 
-### 5. Run the OpenVINO VLLM container
+### 5. Run the OpenVINO™ VLLM Container
 By default, on the container launch, it 
 * **CPU**
 ```bash
@@ -62,7 +62,7 @@ docker run -it --rm \
     ov-vllm
 ```
 
-### 6. Test the OpenVINO VLLM with chat completion API
+### 6. Test the OpenVINO™ VLLM with Chat Completion API
 ```bash
 curl "http://localhost:8000/v1/chat/completions" \
     -H "Content-Type: application/json" \
@@ -85,7 +85,7 @@ curl "http://localhost:8000/v1/chat/completions" \
 
 ## FAQs
 ### 1. How can I replace or use my own model?
-1. Convert the model into OpenVINO format. Refer to this [link](https://docs.openvino.ai/2024/learn-openvino/llm_inference_guide/genai-model-preparation.html) for more information.
+1. Convert the model into OpenVINO™ format. Refer to this [link](https://docs.openvino.ai/2024/learn-openvino/llm_inference_guide/genai-model-preparation.html) for more information.
 2. After the model convertion steps, place the model in the following following file structures.
 ```bash
 .

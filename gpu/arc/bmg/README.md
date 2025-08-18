@@ -9,13 +9,13 @@
 - Enable resizable bar option in BIOS settings
 
 ## Quick Start
-### 1. Install operating system
+### 1. Install the Operating System
 Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
 > **Note**
 > Please ensure that your display cable is connected to the dgpu
 
-### 2. Download and run setup script
+### 2. Download and Run Setup Script
 This step will download and run the setup script to your current directory
 ```bash
 sudo bash -c "$(wget -qLO - https://raw.githubusercontent.com/intel/edge-developer-kit-reference-scripts/refs/heads/main/gpu/arc/bmg/setup.sh)"

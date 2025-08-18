@@ -3,7 +3,7 @@
 ## Requirements
 
 ### Validated Hardware Requirements
-- **CPU:** 13th generation Intel Core processors or newer
+- **CPU:** 13th generation Intel® Core™ processors or newer
 - **GPU:** Intel® Arc™ graphics
 - **RAM:** 32GB (may vary based on model size)
 - **Disk:** 128GB (may vary based on model size)
@@ -14,10 +14,10 @@
 * NPU
 
 ## Quick Start
-### 1. Install Operating System
+### 1. Installing Operating System
 Install the latest [Ubuntu 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to the [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
-### 2. Install GPU Driver (Optional)
+### 2. Installing GPU Driver (Optional)
 If you plan to use a GPU for inference, install the appropriate GPU driver:
 - **Intel® Arc™ A-Series Graphics:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
 - **Intel® Data Center GPU Flex Series:** [Installation Guide](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
@@ -30,7 +30,7 @@ Follow the instructions [here](https://docs.docker.com/engine/install/) to insta
 docker build -t automatic-speech-recognition .
 ```
 
-### 5. Run the Automatic Speech Recognition container
+### 5. Run the Automatic Speech Recognition Container
 * **CPU**
 ```bash
 docker run -it --rm \

@@ -5,7 +5,7 @@
 - [Supermicro SYS-111E-FWTR](https://www.supermicro.com/en/products/system/iot/1u/sys-111e-fwtr)
 
 ## Quick Start
-### 1. Install operating system
+### 1. Install the Operating System
 Install the latest [Ubuntu* 22.04 LTS Server](https://releases.ubuntu.com/jammy/). Refer to the [Ubuntu Server installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-server#1-overview) if needed.
 
 ## Next Steps

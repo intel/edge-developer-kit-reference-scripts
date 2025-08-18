@@ -1,4 +1,4 @@
-# Intel® Distribution of OpenVINO™ toolkit
+# Intel® Distribution of OpenVINO™ Toolkit
 
 ## Requirement
 ### Validated Hardware
@@ -10,20 +10,20 @@
 - Docker version 24 or later installed
 
 ## Quick Start
-### 1. Go to OpenVINO™ usecase directory
+### 1. Go to OpenVINO™ Usecase Directory
 ```bash
 cd edge-developer-kit-reference-scripts/platforms/coreultra/arl/usecases/openvino
 ```
 
-### 2. Run the setup script
+### 2. Run the Setup Script
 This script will create 2 docker images: OpenVINO™ docker image and OpenVINO™ Notebooks docker image.
 ```bash
 ./setup.sh
 ```
-During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+During the installation, you may be required to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ OpenVINO™ use case Installed
 
-When you run command `docker images`, you can see the following docker images:
+When you run the command `docker images`, you can see the following docker images:
 ```
 REPOSITORY                       TAG       IMAGE ID       CREATED          SIZE
 openvino_notebook/ubuntu24_dev   latest    395f953d68de   47 seconds ago   5.68GB
@@ -33,7 +33,7 @@ openvino_npu/ubuntu24_dev        latest    25f526e2ce28   10 minutes ago   4.93G
 
 ## Run Docker Image
 ### OpenVINO™ with NPU (Intel® AI Boost)
-1. Run this command to launch docker container with OpenVINO™ image and link to your working directory. For this example, the working directory is in /home/user/workspace and it mount to container /data/workspace directory.
+1. Run this command to launch the docker container with OpenVINO™ image and link to your working directory. For this example, the working directory is in /home/user/workspace and it mount to container /data/workspace directory.
 
 ```bash
 docker run -it -d --name openvino_app -u root -v /etc/group:/etc/group --device=/dev/dri --device=/dev/accel --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v /home/user/workspace:/data/workspace -w /data/workspace openvino_npu/ubuntu24_dev:latest
@@ -45,7 +45,7 @@ docker run -it -d --name openvino_app -u root -v /etc/group:/etc/group --device=
 - --group-add: Add additional groups
 - -w: The default working directory inside the container
 
-2. Run following command to login into container:
+2. Run the following command to login into container:
 ```bash
 docker exec -it openvino_app /bin/bash
 ```

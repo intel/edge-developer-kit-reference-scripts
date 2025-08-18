@@ -1,4 +1,4 @@
-# Intel® Distribution of OpenVINO™ toolkit
+# Intel® Distribution of OpenVINO™ Toolkit
 
 ## Requirement
 ### Validated Hardware
@@ -19,10 +19,10 @@ This script will create 2 docker images: OpenVINO™ docker image and OpenVINO�
 ```bash
 ./setup.sh
 ```
-During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+During the installation, you may be required to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ OpenVINO™ use case Installed
 
-When you run command `docker images`, you can see the following example:
+When you run the command `docker images`, you can see the following example:
 ```
 REPOSITORY                       TAG       IMAGE ID       CREATED         SIZE
 openvino_notebook/ubuntu24_dev   latest    a92b98fbd9dd   2 minutes ago   2.7GB

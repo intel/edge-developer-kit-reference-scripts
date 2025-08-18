@@ -14,16 +14,16 @@ This repository provides detailed instructions and steps to successfully run Ope
 * DISK: 128GB
 
 ## Prerequisite
-### 1. Install operating system
+### 1. Install the operating system
 Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
 ### 2. Docker Setup
 Docker and docker compose should be setup before running the commands below. Refer to [here](https://docs.docker.com/engine/install/) to setup docker.
 
-### 3. Install necessary GPU drivers.
+### 3. Install the necessary GPU drivers.
    - Refer to [here](../../../gpu/arc/dg2/README.md) to setup GPU drivers
 
-## Application ports
+## Application Ports
 Please ensure that you have these ports available before running the applications.
 | Apps       | Port |
 |------------|------|
@@ -71,7 +71,7 @@ docker compose up -d
 * After signing up as the default admin user, you will be automatically redirected to the home page.
 ![Alt Text](./assets/signup.png)
 
-### 5. Configure OpenAI, TTS and STT API Link
+### 5. Configure OpenAI, TTS, and STT API Link
 * Open the Admin Panel from the top left corner.
 * Click on `Settings`
 * Replace OpenAI API link:

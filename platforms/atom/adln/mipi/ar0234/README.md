@@ -12,7 +12,7 @@ Ensure that your system is set up properly.
 - [AAEON UP Squared Pro 7000 (UPN-ADLNI3-A10-1664)](https://www.aaeon.com/en/p/up-board-up-squared-pro-7000)
 - [D3 AR0234 MIPI](https://www.d3engineering.com/product/ar0234-medium-fov-samtec-mipi-unsealed/)
 
-## Go to specific setup directory
+## Go to the Specific Setup Directory
 
 This step will redirect user to the current platform setup directory
 
@@ -20,8 +20,8 @@ This step will redirect user to the current platform setup directory
 cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234
 ```
 
-## Install IPU libraries
-1. Run below script to install userspace IPU libraries. 
+## Install IPU Libraries
+1. Run the script below to install the userspace IPU libraries. 
    ```
    cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234/scripts
    ./install_ipu.sh
@@ -49,13 +49,13 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234
    ![detect_sensor](./images/new-media-ctl.png)
 
 ### Video Loopback Setup
-1. In order to use v412 API with AR0234 MIPI camera, run following commands
+1. In order to use v412 API with AR0234 MIPI camera, run the following commands.
    ```
    sudo modprobe v4l2loopback devices=2
    ```
    > devices=x (number of AR0234 cameras connected)
 
-2. You will get the video device name by running following command.
+2. You will get the video device name by running the following command.
    ```
    ls -1 /sys/devices/virtual/video4linux
    ```
@@ -66,7 +66,7 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234
    sudo bash
    ```
 
-3. Set environment variables with following commands.
+3. Set the environment variables with the following commands.
    ```
    cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234/scripts
    source setup_camera_env.sh
@@ -76,17 +76,17 @@ cd edge-developer-kit-reference-scripts/platforms/atom/adln/mipi/ar0234
 
 #### Using icamerasrc
 1. Launch the following command to see 
-      #### Single camera stream
+      #### Single Camera Stream
       ```
       gst-launch-1.0 icamerasrc device-name=ar0234 printfps=true ! video/x-raw,format=NV12,width=1280,height=960 ! videoconvert ! xvimagesink
       ```
 
-      #### Dual camera stream
+      #### Dual Camera Stream
       ```
       gst-launch-1.0 icamerasrc device-name=ar0234 printfps=true ! video/x-raw,format=NV12,width=1280,height=960 ! videoconvert ! xvimagesink icamerasrc device-name=ar0234-2 printfps=true ! video/x-raw,format=NV12,width=1280,height=960 ! videoconvert ! xvimagesink
       ```
 
-#### Stream output
+#### Stream Output
 The images below shows the output for 2 AR0234 camera streams.
 
 ![video_output](./images/output-video.png)

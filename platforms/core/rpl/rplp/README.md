@@ -5,28 +5,28 @@
 - [Seavo* RKI-V60 AIoT Developer Kit](https://www.seavo.com/en/rki_devkit/)
 
 ## Quick Start
-### 1. Install operating system
+### 1. Install the Operating System
 Install the latest [Ubuntu* 22.04 LTS Desktop for Intel IoT platforms](https://ubuntu.com/download/iot/intel-iot). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
-### 2. Download scripts
+### 2. Download Scripts
 This step will download all reference scripts from the repository.
 ```bash
 sudo apt install git
 git clone https://github.com/intel/edge-developer-kit-reference-scripts
 ```
 
-### 3. Go to specific setup directory
+### 3. Go to the Specific Setup Directory
 This step will redirect user to the current platform setup directory
 ```bash
 cd edge-developer-kit-reference-scripts/platforms/core/rpl/rplp
 ```
 
-### 4. Run setup script
+### 4. Run the Setup Script
 This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceeding to the next step.
 ```bash
 sudo ./setup.sh
 ```
-During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+During the installation, you may be required to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ Platform configured
 
 ## Next Steps

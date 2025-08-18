@@ -1,4 +1,4 @@
-# Intel® Distribution of OpenVINO™ toolkit
+# Intel® Distribution of OpenVINO™ Toolkit
 
 ## Requirement
 ### Validated Hardware
@@ -14,15 +14,15 @@
 cd edge-developer-kit-reference-scripts/arc/bmg/usecases/openvino
 ```
 
-### 2. Run the setup script
+### 2. Run the Setup Script
 This script will create 2 docker images: OpenVINO™ docker image and OpenVINO™ Notebooks docker image.
 ```bash
 ./setup.sh
 ```
-During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+During the installation, you maybe required to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ OpenVINO™ use case Installed
 
-When you run command `docker images`, you can see the following example:
+When you run the command `docker images`, you can see the following example:
 ```
 REPOSITORY                       TAG       IMAGE ID       CREATED              SIZE
 openvino_notebook/ubuntu24_dev   latest    f22588c53ada   About a minute ago   5.56GB

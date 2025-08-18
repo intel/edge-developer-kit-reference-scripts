@@ -10,8 +10,8 @@ Meteor Lake | Intel® Core™ Ultra 7 155H
 
 Model | Format | Device
 --- | --- | ---
-ResNet50 | OpenVINO IR | CPU, GPU, NPU
-MobileNetv2 | OpenVINO IR | CPU, GPU, NPU
+ResNet50 | OpenVINO™ IR | CPU, GPU, NPU
+MobileNetv2 | OpenVINO™ IR | CPU, GPU, NPU
 
 ## Software Ingredient 
 
@@ -27,9 +27,9 @@ opencv-python | 4.10.0.84
 
 - Optional: [GPU Driver](https://github.com/intel/edge-developer-kit-reference-scripts/blob/main/gpu/arc/dg2/usecases/openvino/install_gpu.sh)
 
-## Prepare model
+## Prepare Model
 
-- Install OpenVINO Development Tools
+- Install OpenVINO™ Development Tools
 
   ```
   python3 -m venv env
@@ -40,7 +40,7 @@ opencv-python | 4.10.0.84
   pip install -r requirements.txt
   ```
 
-- Install Open Model Zoo
+- Install the Open Model Zoo
 
   ```
   rm -rf /tmp/open_model_zoo
@@ -80,7 +80,7 @@ opencv-python | 4.10.0.84
           └── resnet-50-pytorch.bin
   ```
 
-## Prepare and run docker images 
+## Prepare and run Docker Images 
 
 - Download docker image 
 

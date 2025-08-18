@@ -5,7 +5,7 @@ The smart parking application is an AI-based solution to monitor individual car 
 ![demo](./docs/demo.gif)
 
 ## Requirements
-### Validated hardware
+### Validated Hardware
 * CPU: 13th generations of Intel Core processors and above
 * GPU: Intel® Arc™ graphics
 * RAM: 32GB
@@ -14,20 +14,20 @@ The smart parking application is an AI-based solution to monitor individual car 
 ## Setup
 
 ### Prequisite
-* **OS**: Ubuntu (Validated on 22.04)
+* **OS**: Ubuntu* (Validated on 22.04)
 
 * **Docker and Docker Compose**: Ensure Docker and Docker Compose are installed. Refer to [Docker installation guide](https://docs.docker.com/engine/install/).
 
 * **Intel GPU Drivers**:
-Refer to [here](../../../README.md#gpu) to install Intel GPU Drivers
+Refer to [here](../../../README.md#gpu) to install Intel® GPU Drivers
 
-### Generate SSL certs
+### Generate SSL Certs
 
 ```
 bash setup/generate-certs.sh
 ```
 
-### Download sample video 
+### Download Sample Video 
 
 ```
 wget https://videos.pexels.com/video-files/30937634/13228649_1920_1080_30fps.mp4 -O server/resources/carpark_video_1.mp4
@@ -39,19 +39,19 @@ wget https://videos.pexels.com/video-files/30937634/13228649_1920_1080_30fps.mp4
 docker compose build
 ```
 
-### Start containers
+### Start Containers
 
 ```
 docker compose up -d
 ```
 
-### Stop containers
+### Stop Containers
 
 ```
 docker compose down
 ```
 
-### Access streams
+### Access Streams
 
 * View all camera streams: https://localhost/camera/all
 
@@ -61,7 +61,7 @@ docker compose down
 
   ![one_cam](./docs/one_cam.png)
 
-### Grafana dashboard
+### Grafana Dashboard
 
 **Recommended web browser: Firefox**
 

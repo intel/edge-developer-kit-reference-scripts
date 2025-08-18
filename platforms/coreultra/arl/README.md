@@ -10,11 +10,11 @@
 
 ## Quick Start
 
-### 1. Install operating system
+### 1. Install the Operating System
 
 Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble/). Refer to the [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop) if needed.
 
-### 2. Download scripts
+### 2. Download the Scripts
 
 This step will download all reference scripts from the repository.
 
@@ -23,7 +23,7 @@ sudo apt install git
 git clone https://github.com/intel/edge-developer-kit-reference-scripts
 ```
 
-### 3. Go to specific setup directory
+### 3. Go to the Specific Setup Directory
 
 This step will redirect user to the current platform setup directory
 
@@ -31,14 +31,14 @@ This step will redirect user to the current platform setup directory
 cd edge-developer-kit-reference-scripts/platforms/coreultra/arl
 ```
 
-### 4. Run setup script
+### 4. Run the Setup Script
 
 This step will configure the basic setup of the platform. Make sure all of the requirements have been met before proceeding to the next step.
 
 ```bash
 sudo ./setup.sh
 ```
-During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
+During the installation,you may be required to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ Platform configured
 
 ## Next Step

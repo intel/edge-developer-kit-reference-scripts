@@ -2,7 +2,7 @@
 
 ## Overview
 
-Object detection microservice that interacts with YOLO models using OpenVINO™ Model Server(OVMS) to perform object detection tasks.
+Object detection microservice that interacts with YOLO models using OpenVINO™ Model Server (OVMS) to perform object detection tasks.
 
 ## Model Validated
 
@@ -68,7 +68,7 @@ grpcio | 1.69.0
     ```
 
 
-## Prepare image data for inference
+## Prepare Image Data for Inference
 
 -   The data to be inferenced can be stored in this folder:
     ```bash
@@ -83,9 +83,9 @@ grpcio | 1.69.0
     wget https://storage.openvinotoolkit.org/repositories/openvino_notebooks/data/data/image/coco_bike.jpg
     ```
 
-## Run server
+## Run Server
 
-### Local environment
+### Local Environment
 
 1.  Install OpenVINO™ Development Tools and other dependencies
 

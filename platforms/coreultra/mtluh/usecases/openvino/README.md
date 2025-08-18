@@ -1,4 +1,4 @@
-# Intel® Distribution of OpenVINO™ toolkit
+# Intel® Distribution of OpenVINO™ Toolkit
 
 ## Requirement
 ### Validated Hardware
@@ -9,12 +9,12 @@
 - Docker version 24 or later installed
 
 ## Quick Start
-### 1. Go to OpenVINO™ usecase directory
+### 1. Go to OpenVINO™ Usecase Directory
 ```bash
 cd edge-developer-kit-reference-scripts/platforms/coreultra/mtluh/usecases/openvino
 ```
 
-### 2. Run the setup script
+### 2. Run the Setup Script
 This script will create 2 docker images: OpenVINO™ docker image and OpenVINO™ Notebooks docker image.
 ```bash
 ./setup.sh
@@ -22,7 +22,7 @@ This script will create 2 docker images: OpenVINO™ docker image and OpenVINO�
 During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ OpenVINO™ use case Installed
 
-When you run command `docker images`, you can see the following docker images:
+When you run the command `docker images`, you can see the following docker images:
 ```
 REPOSITORY                       TAG       IMAGE ID       CREATED        SIZE
 openvino_notebook/ubuntu22_dev   latest    71a34103833a   24 hours ago   4.69GB
@@ -43,7 +43,7 @@ docker run -it -d --name openvino_app -u root -v /etc/group:/etc/group --device=
 - --group-add: Add additional groups
 - -w: The default working directory inside the container
 
-2. Run following command to login into container:
+2. Run the following command to login into container:
 ```bash
 docker exec -it openvino_app /bin/bash
 ```

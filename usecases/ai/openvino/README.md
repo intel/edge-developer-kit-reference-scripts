@@ -1,4 +1,4 @@
-# Intel® Distribution of OpenVINO™ toolkit
+# Intel® Distribution of OpenVINO™ Toolkit
 
 ## Requirement
 ### Validated Hardware
@@ -17,7 +17,7 @@ This script will create 2 docker images: OpenVINO™ docker image and OpenVINO�
 During installation, it may ask you to reboot your system. Reboot the system and run `./setup.sh` again. Installation is completed when you see this message:
 > ✓ OpenVINO™ use case Installed
 
-When you run command `docker images`, you can see the following example:
+When you run the command `docker images`, you can see the following example:
 ```
 REPOSITORY                                  TAG       IMAGE ID       CREATED          SIZE
 openvino_notebooks                          latest    5d337de8990a   46 minutes ago   6.46GB
@@ -37,7 +37,7 @@ docker run -it -d --name openvino_app -v /etc/group:/etc/group --device=/dev/dri
 - --group-add: Add additional groups
 - -w: The default working directory inside the container
 
-2. Run following command to login into container:
+2. Run the following command to login into container:
 ```bash
 docker exec -it openvino_app /bin/bash
 ```

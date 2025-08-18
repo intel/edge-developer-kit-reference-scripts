@@ -4,17 +4,17 @@ The Deployment Toolkit is a sophisticated Language Model (LLM) application desig
 ![LLM Deployment Toolkit](./assets/ui.gif)
 
 ## Requirements
-### Validated hardware
-* CPU: 13th generations of Intel Core processors and above
+### Validated Hardware
+* CPU: 13th generations of Intel® Core™ processors and above
 * GPU: Intel® Arc™ graphics
 * RAM: 32GB
 * DISK: 128GB
 
-### Validated software version
-* OpenVINO: 2024.6.0
+### Validated Software Version
+* OpenVINO™: 2024.6.0
 * NodeJS: v22.13.0 LTS
 
-### Application ports
+### Application Ports
 Please ensure that you have these ports available before running the applications.
 | Apps                   | Port |
 |------------------------|------|
@@ -25,16 +25,16 @@ Please ensure that you have these ports available before running the application
 | Speech to Text Service | 8014 |
 
 ## Quick Start
-<details open><summary>Ubuntu 22.04 LTS / Ubuntu 24.04 LTS</summary>
+<details open><summary>Ubuntu* 22.04 LTS / Ubuntu 24.04 LTS</summary>
 
-### 1. Install prerequisite
+### 1. Install the Prerequisite
 - [Docker](https://docs.docker.com/engine/install/)
 
-### 2. Install GPU driver
+### 2. Install the GPU Driver
 - [Intel® Arc™ A-Series Graphics](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
 - [Intel® Data Center GPU Flex Series](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
 
-### 3. Run Script to Setup and Install Docker
+### 3. Run the Script to Setup and Install Docker
 ```
 ./setup.sh
 ```
@@ -46,12 +46,12 @@ Navigate to http://localhost:8010
 
 <details><summary>Windows 11</summary>
 
-### 1. Install prerequisite
+### 1. Install the Prerequisite
 - [Python 3.11.9 (64-bit)](https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe)
 - [Intel® oneAPI Base Toolkit version 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html)
 - [Node.js v22.12.0](https://nodejs.org/en/download/package-manager)
 
-### 2. Install GPU driver
+### 2. Install the GPU Driver
 - [Intel® Arc™ & Iris® Xe Graphics - Windows](https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html) 
 - [Intel® Data Center GPU Flex Series - Windows](https://www.intel.com/content/www/us/en/download/780185/intel-data-center-gpu-flex-series-windows.html)
 
@@ -60,21 +60,21 @@ Navigate to http://localhost:8010
 - Text to speech: [doc](../microservices/speech-to-text/windows/README.md)
 - Speech to text: [doc](../microservices/text-to-speech/windows/README.md)
 
-### 4. Install RAG Toolkit 
-#### 4.1 Install backend
+### 4. Install the RAG Toolkit 
+#### 4.1 Install the backend
 Double click on the `install-backend.bat`
 
 #### 4.2 Install UI
 Double click on the `install-ui.bat`
 
-### 5. Run application
+### 5. Run the Application
 #### 5.1 Start Ollama by following the [doc](../microservices/ollama/windows/README.md)
 
 #### 5.2 Start Text to speech by following the [doc](../microservices/speech-to-text/windows/README.md)
 
 #### 5.3 Start Speech to text by following the [doc](../microservices/text-to-speech/windows/README.md)
 
-#### 5.4 Start RAG Toolkit
+#### 5.4 Start the RAG Toolkit
 Double click on the `run.bat`
 
 </details>

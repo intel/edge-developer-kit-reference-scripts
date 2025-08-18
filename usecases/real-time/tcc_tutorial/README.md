@@ -1,12 +1,12 @@
-# Exploring 3 Fundamentals of Intel TCC
+# Exploring 3 Fundamentals of Intel® TCC
 
 ## Key Takeaways of this Tutorial
 - **Intel® TCC Mode in BIOS/SBL**
-- **Linux Kernel Command-line tuning**
+- **Linux Kernel Command-line Tuning**
 - **Cache Partitioning - Intel® CAT**
 - **Boost RT Performance - Intel® Speed Shift for Edge**
 
-## Validated hardware
+## Validated Hardware
 - CPU: Intel® Core™ i5-1350PE processors
 - RAM: 16GB
 - DISK: 128GB
@@ -16,7 +16,7 @@ This application is used to demonstrate the possible optimization steps to incre
 
 <span style="color:red"> Note: The pointer chasing buffer size should exceed the L2 cache size of your processor to see an improvment by cache partitioning described in step 2 below. You can change the buffer size in `rt_linux_tutorial.c` using `WORKLOAD_BUFFER_SIZE` definev.</span>
 
-## High-level Design of the test application
+## High-level Design of the Test Aplication
 
 <p align="center">
   <img src="images/rt_app.png" alt="High-level design of rt app" style="width: 70%;" />
@@ -47,7 +47,7 @@ This sections outlines the steps and components required to set up the system an
 
 ### Setup Steps
 
-#### Install Ubuntu OS
+#### Install Ubuntu* OS
 a. Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
 b. Install Ubuntu real-time kernel. Real-time Ubuntu is available via Ubuntu Pro. A free [Ubuntu Pro account](https://ubuntu.com/pro/dashboard) is available for personal and small-scale commercial use. With an free Ubuntu Pro subscription you have up to five personal token for up to five machines. The kernel can simply installed by ...
@@ -93,7 +93,7 @@ If you are running Docker on a remote server, replace localhost with the server'
 You should see a similar dashboard like the screenshot above. If the dashboard is not visible per default you should find `rt_linux_tutorial` dashboard under the `Provisioned Dashboards`in the Dashboards menu.
 
 ----
-#### Build the docker image for the RT Linux Tutorial
+#### Build the Docker Image for the RT Linux* Tutorial
 To build the Docker image, run the following command in the directory containing your Dockerfile:
 
 ```bash
@@ -108,7 +108,7 @@ Run the Docker container in interactive mode, to start the rt_linux_tutorial app
 
  ```
  -----
-#### Build the docker image for the AI Object Classification Demo from OpenVINO Model Zoo
+#### Build the docker image for the AI Object Classification Demo from OpenVINO™ Model Zoo
 To build the Docker image, run the following command in the directory containing your Dockerfile:
 
 ```bash

@@ -35,7 +35,7 @@ to save more time and design efforts :)
 | -                        | ✔ Complete Users Flows                                                       |
 | -                        | ✔ Premium Technical Support                                                  |
 
-## Quick start
+## Quick Start
 
 - Clone the repo: `git clone https://github.com/devias-io/material-kit-react.git`
 - Make sure your Node.js and npm versions are up to date
