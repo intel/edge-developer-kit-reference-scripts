@@ -19,14 +19,26 @@ This repository provides simplified developer kit reference setup scripts for va
 
 | Product Collection | Code Name | Support | Validated Hardware |
 |--------------|--------------|-------------------|--------------------|
-| Intel® Arc™ Pro B-Series Graphics | Products formerly Battlemage | ✅ Supported | |
+| Intel® Arc™ Pro B-Series Graphics | Products formerly Battlemage | ✅ Supported | [Intel Arc Pro B60 Creator 24GB](https://www.asrock.com/Graphics-Card/Intel/Intel%20Arc%20Pro%20B60%20Creator%2024GB/) |
 | Intel® Arc™ B-Series Graphics | Products formerly Battlemage | ✅ Supported  | |
 | Intel® Arc™ A-Series Graphics | Products formerly Alchemist | ✅ Supported  | |
 | Intel® Core™ Ultra Processors (Series 2) | Products formerly Arrow Lake | ✅ Supported | [Innodisk Intel® Core™ Ultra Series 2 Reference Kit](https://www.innodisk.com/en/blog/intel-core-ultra-series2-reference-kit)<br>[IEI TANK-XM813](https://www.ieiworld.com/tw/product/model.php?II=1099)<br>[AAEON UP Xtreme ARL](https://up-board.org/up-xtreme-arl/)<br>[ASRock Industrial NUC BOX-255H](https://www.asrockind.com/en-gb/NUC%20BOX-255H) |
 | Intel® Core™ Ultra processors (Series 1) | Products formerly Meteor Lake | ✅ Supported | [Seavo* PIR-1014A AIoT Developer Kit](https://www.seavo.com/en/pir_devkit/)<br>[AAEON* UP Xtreme i14](https://up-board.org/up-xtreme-i14/)<br>[ASRock Industrial* NUC BOX-155H](https://www.asrockind.com/en-gb/NUC%20BOX-155H)<br>[Asus* NUC 14 Pro](https://www.asus.com/displays-desktops/nucs/nuc-mini-pcs/asus-nuc-14-pro/) |
-| Intel® Core™ processors (Series 2) | Products formerly Bartlett Lake | 📋 Planned | |
+| Intel® Core™ processors (Series 2) | Products formerly Bartlett Lake | ✅ Supported | [ASRock Industrial* iEPF-100000S Series](https://www.asrockind.com/en-gb/iEPF-10000S%20Series) |
 | Intel® Core™ processors (Series 1) | Products formerly Raptor Lake | ✅ Supported | |
 | Intel® Core™ Processor N-series | Products formerly Twin Lake | ✅ Supported | AAEON RS-UPN-ADLN355-A10-0864 |
+
+## Edge Design Combinations Matrix
+
+The following table lists the validated hardware combinations using Developer Kit Reference Scripts.
+
+| CPU | GPU Configuration | Support |
+|--------------|-------------------|---------|
+| **Arrow Lake (ARL)** | Arc B60 (dGPU) | ✅ Supported |
+| **Arrow Lake (ARL)** | Arc B580 (dGPU) | ✅ Supported |
+| **Arrow Lake (ARL)** | Arc A770 (dGPU) | ✅ Supported |
+| **Bartlett Lake (BTL)** | Arc B60 (dGPU) | ✅ Supported |
+| **Bartlett Lake (BTL)** | 2 x Arc B60 (dGPU) | ✅ Supported |
 
 ## Architecture Overview
 

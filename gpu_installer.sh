@@ -344,20 +344,48 @@ verify_drivers() {
    fi
 }
 
+
+# Temporary fix for Intel Core Series 2 + Arc B60
+apply_arc_b60_fix() {
+   local cpu gpu
+   cpu=$(grep -m1 'model name' /proc/cpuinfo | grep -oP 'Intel\(R\) Core\(TM\) [0-9] \K2')
+   gpu=$(lspci -nn | grep -i 'VGA' | grep 'e211')
+
+   if [ -n "$cpu" ] && [ -n "$gpu" ]; then
+      log_info "Detected Intel Core Series 2 CPU with Arc B60 GPU. Applying kernel command line fix."
+      local grub_file="/etc/default/grub"
+      local param="xe.force_probe=e211 i915.force_probe=!e211"
+      if grep -q "GRUB_CMDLINE_LINUX" "$grub_file"; then
+         if ! grep -q "$param" "$grub_file"; then
+            sed -i "/^GRUB_CMDLINE_LINUX=/ s/\"$/ $param\"/" "$grub_file"
+            log_success "Added '$param' to GRUB_CMDLINE_LINUX. Updating GRUB. Please reboot after installation."
+            update-grub
+         else
+            log_info "Kernel parameters already present in GRUB_CMDLINE_LINUX."
+         fi
+      else
+         log_info "GRUB_CMDLINE_LINUX not found in $grub_file. Skipping fix."
+      fi
+   fi
+}
+
 # Main function
 main() {
    local verify_only=0
    check_privileges
-   
+
    echo "Intel GPU Driver Installation Script"
    echo "Supports: Intel Arc discrete GPU and Intel integrated GPU"
    echo "========================================================="
-   
+
    verify_platform
    detect_gpu
    verify_os
    verify_kernel
-   
+
+   # Apply temporary fix for Arc B60 on Series 2 CPUs
+   apply_arc_b60_fix
+
    if [ "$verify_only" -eq 1 ]; then
       verify_drivers
    else
