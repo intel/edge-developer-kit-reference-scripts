@@ -184,9 +184,9 @@ verify_ubuntu_24() {
 # Install NPU drivers (Core Ultra only)
 install_npu_drivers() {
     echo "Installing NPU drivers for Core Ultra..."
+    # Execute the script instead of sourcing it to avoid context issues
     # shellcheck disable=SC1091
-    source "$SCRIPT_DIR/npu_installer.sh"
-    install_npu
+    bash "$SCRIPT_DIR/npu_installer.sh"
 }
 
 # Check for GPU presence
@@ -219,8 +219,9 @@ check_intel_arc_gpu() {
 install_gpu_drivers() {
     if check_intel_arc_gpu; then
         echo "Installing Intel GPU drivers..."
+        # Execute the script instead of sourcing it to avoid context issues
         # shellcheck disable=SC1091
-        source "$SCRIPT_DIR/gpu_installer.sh"
+        bash "$SCRIPT_DIR/gpu_installer.sh"
         echo "$S_VALID GPU drivers installed"
         
         # Verify OpenCL setup after installation
@@ -382,8 +383,9 @@ install_openvino(){
 
 summary(){
       echo "Running Installation Summary"
+      # Execute the script instead of sourcing it to avoid context issues
       # shellcheck disable=SC1091
-      source "$SCRIPT_DIR/print_summary_table.sh"
+      bash "$SCRIPT_DIR/print_summary_table.sh"
 }
 
 # Install essential development tools
@@ -441,9 +443,6 @@ main() {
         
     elif is_coreultra; then
         echo "# Core Ultra platform detected"
-        echo "Installation sequence: NPU → GPU (if present) → OpenVINO"
-        # Core Ultra flow: NPU → GPU (conditional) → OpenVINO
-        #install_npu_drivers
         install_gpu_drivers  # Will check for Arc GPU presence first
         install_npu_drivers
         
@@ -456,9 +455,6 @@ main() {
         
     else
         echo "# Atom/Core platform detected"
-        echo "Installation sequence: GPU (if present) → OpenVINO"
-        
-        # Atom/Core flow: GPU (conditional) → OpenVINO
         install_gpu_drivers  # Will check for Arc GPU presence first
         
         # Install OpenVINO with error handling
