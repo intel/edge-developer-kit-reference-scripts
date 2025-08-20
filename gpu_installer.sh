@@ -348,8 +348,8 @@ verify_drivers() {
 # Temporary fix for Intel Core Series 2 + Arc B60
 apply_arc_b60_fix() {
    local cpu gpu
-   cpu=$(grep -m1 'model name' /proc/cpuinfo | grep -oP 'Intel\(R\) Core\(TM\) [0-9] \K2')
-   gpu=$(lspci -nn | grep -i 'VGA' | grep 'e211')
+   cpu=$(grep -m1 'model name' /proc/cpuinfo | grep -oP 'Intel\(R\) Core\(TM\) [0-9] \K2' || true)
+   gpu=$(lspci -nn | grep -i 'VGA' | grep 'e211' || true)
 
    if [ -n "$cpu" ] && [ -n "$gpu" ]; then
       log_info "Detected Intel Core Series 2 CPU with Arc B60 GPU. Applying kernel command line fix."
@@ -370,8 +370,8 @@ apply_arc_b60_fix() {
 }
 
 # Main function
+
 main() {
-   local verify_only=0
    check_privileges
 
    echo "Intel GPU Driver Installation Script"
@@ -386,13 +386,9 @@ main() {
    # Apply temporary fix for Arc B60 on Series 2 CPUs
    apply_arc_b60_fix
 
-   if [ "$verify_only" -eq 1 ]; then
-      verify_drivers
-   else
-      install_gpu_drivers
-      verify_drivers
-      echo -e "\n# $S_VALID GPU installation completed. Please reboot your system."
-   fi
+   install_gpu_drivers
+   verify_drivers
+   echo -e "\n# $S_VALID GPU installation completed. Please reboot your system."
 }
 
 # Execute main function
