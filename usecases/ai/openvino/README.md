@@ -20,15 +20,15 @@ During installation, it may ask you to reboot your system. Reboot the system and
 When you run the command `docker images`, you can see the following example:
 ```
 REPOSITORY                                  TAG       IMAGE ID       CREATED          SIZE
-openvino_notebooks                          latest    5d337de8990a   46 minutes ago   6.46GB
-openvino/ubuntu22_dev                       latest    d283c46d13e2   7 weeks ago      3.92GB
+openvino_notebooks                          latest    b4c066785455   16 seconds ago   3.82GB
+openvino/ubuntu24_dev                       latest    6eb9d3681ea9   2 months ago     1.85GB
 ```
 
 ## Run Docker Image
 ### OpenVINO™ Toolkit
 1. Run this command to launch docker container with OpenVINO™ image and link to your working directory. For this instance, the working directory is in /home/user/workspace and it mount to container /data/workspace directory.
 ```bash
-docker run -it -d --name openvino_app -v /etc/group:/etc/group --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v /home/user/workspace:/data/workspace -w /data/workspace openvino/ubuntu22_dev:latest
+docker run -it -d --name openvino_app -v /etc/group:/etc/group --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -v /usr/bin:/usr/bin -v /home/user/workspace:/data/workspace -w /data/workspace openvino/ubuntu24_dev:latest
 ```
 
 - --name: container name
@@ -37,7 +37,9 @@ docker run -it -d --name openvino_app -v /etc/group:/etc/group --device=/dev/dri
 - --group-add: Add additional groups
 - -w: The default working directory inside the container
 
-2. Run the following command to login into container:
+> For Intel® Core™ Ultra platform, add option `--device=/dev/accel` for running in NPU
+
+2. Run following command to login into container:
 ```bash
 docker exec -it openvino_app /bin/bash
 ```
