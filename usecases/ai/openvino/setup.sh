@@ -45,8 +45,8 @@ verify_dependencies(){
 install_openvino_docker(){
 
     echo -e "\n# Install OpenVINO™ Runtime docker image"
-    if ! docker images | grep openvino/ubuntu22_dev; then
-        docker pull openvino/ubuntu22_dev:latest
+    if ! docker images | grep openvino/ubuntu24_dev; then
+        docker pull openvino/ubuntu24_dev:latest
     else
         echo "$S_VALID OpenVINO™ Runtime docker image already installed"
     fi
