@@ -21,6 +21,7 @@ import { Box } from '@mui/system';
 import { visuallyHidden } from '@mui/utils';
 
 import { type TableHeaderProps, type TableProps } from '@/types/table';
+import { sanitizeCellValue, isSafeReactElement } from '@/utils/sanitization';
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T): number {
   if (b[orderBy] < a[orderBy]) {
@@ -159,7 +160,7 @@ function EnhancedTableData(props: EnhancedTableDataProps): React.JSX.Element {
   return (
     <TableRow
       hover={enableCheckbox}
-      onClick={(event) => {
+      onClick={(event: React.MouseEvent<unknown>) => {
         if (rowClicked) rowClicked(data.id as number | string);
         if (enableCheckbox) handleClick(event, data.id as number);
       }}
@@ -187,10 +188,24 @@ function EnhancedTableData(props: EnhancedTableDataProps): React.JSX.Element {
         </TableCell>
       ) : null}
 
+      {/*
+        SECURITY: Enhanced sanitization using sanitizeCellValue to prevent XSS attacks.
+        This addresses CID 2372868: DOM-based cross-site scripting (DOM_XSS)
+        Only primitive values (string, number, boolean) are rendered after sanitization.
+      */}
       {headers.map((header, idx) => {
-        return <TableCell key={`Cell_${index}_${idx}`}>{data[header.id]}</TableCell>;
+        const safeValue = sanitizeCellValue(data[header.id]);
+        return <TableCell key={`Cell_${index}_${idx}`}>{safeValue}</TableCell>;
       })}
-      {enableActions ? <TableCell align="center">{data.actions}</TableCell> : null}
+      {enableActions ? (
+        <TableCell align="center">
+          {/*
+            SECURITY: Enhanced validation using isSafeReactElement to prevent XSS via untrusted React elements.
+            This addresses CID 2372868: DOM-based cross-site scripting (DOM_XSS)
+          */}
+          {isSafeReactElement(data.actions) ? data.actions : null}
+        </TableCell>
+      ) : null}
     </TableRow>
   );
 }
@@ -202,7 +217,7 @@ export default function TableTemplate({
   handleDeleteSelected,
   rowClicked,
   enablePagination = false, //this is only enabled if all data are passed without pagination on server side
-}: TableProps): React.JSX.Element {
+}: Omit<TableProps, 'data'> & { data?: Record<string, any>[] }): React.JSX.Element {
   const [order, setOrder] = useState<Order>('asc');
   const [orderBy, setOrderBy] = useState<string>('id');
   const [selected, setSelected] = useState<number[]>([]);
@@ -223,7 +238,7 @@ export default function TableTemplate({
       if (selected.length > 0) {
         setSelected([]);
       } else {
-        const newSelected = data.map((d) => d.id as number);
+        const newSelected = data.map((d: Record<string, any>) => d.id as number);
         setSelected(newSelected);
         return;
       }
@@ -281,7 +296,7 @@ export default function TableTemplate({
             />
             <TableBody>
               {filteredData.length > 0 ? (
-                filteredData.map((d, index) => {
+                filteredData.map((d: Record<string, any>, index: number) => {
                   const isItemSelected = isSelected(d.id as number);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
@@ -318,10 +333,10 @@ export default function TableTemplate({
           count={data.length}
           rowsPerPage={rowsPerPage}
           page={page - 1}
-          onPageChange={(_, pageNumber) => {
+          onPageChange={(_: React.MouseEvent<HTMLButtonElement> | null, pageNumber: number) => {
             setPage(pageNumber + 1);
           }}
-          onRowsPerPageChange={(e) => {
+          onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setPage(1);
             setRowsPerPage(Number(e.target.value));
           }}

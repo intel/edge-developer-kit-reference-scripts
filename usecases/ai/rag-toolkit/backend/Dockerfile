@@ -65,7 +65,7 @@ RUN python3 -m pip install fastapi[all]==0.111.0 \
         numpy==1.26.4 \
         openai==1.56.2 \
         pyyaml==6.0.1 \
-        pypdf==5.0.0 \
+        pypdf==6.0.0 \
         langchain==0.3.8 \
         langchain-chroma==0.1.4 \
         langchain-community===0.3.8 \
