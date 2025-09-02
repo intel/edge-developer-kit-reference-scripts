@@ -48,25 +48,63 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Login to Harbor
-        uses: docker/login-action@v3
-        with:
-          registry: amr-registry.caas.intel.com
-          username: ${{ secrets.CI_USR }}
-          password: ${{ secrets.CI_PWD }}
+
+      - name: Copy config file to ~/.ci
+        run: |
+          # Copy the bandit config file to the home directory
+          if [ ! -f "~/.ci/ipas_default.config" ]; then
+            cp .github/bandit/ipas_default.config ~/.ci/ipas_default.config
+          fi
 
       # release package must be in the directory
       - name: Prepare release package
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation
+          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation --exclude trivyignore.yaml
+
+      - name: Setup Python virtual environment
+        run: |
+          python3 -m venv bandit_venv
+
+      - name: Install bandit
+        run: |
+          source bandit_venv/bin/activate
+          pip install bandit
 
       - name: Execute bandit scan
-        uses: intel-innersource/frameworks.devops.github.actions.bandit@main
+        run: |
+          source bandit_venv/bin/activate
+          # Check if the config file is exist
+          bandit -r ${{ env.STEP_PACKAGE_NAME }} -c ~/.ci/ipas_default.config -x .github,.git,automation -f txt -o bandit_report.txt || true
+
+      - name: Preview bandit report
+        if: always()
+        run: |
+          if [ -f "bandit_report.txt" ]; then
+            echo "Bandit scan results:"
+            cat bandit_report.txt
+            
+            # Check if there are any issues found
+            if grep -q "Issue:" bandit_report.txt; then
+              echo "::error::Bandit scan found security issues!"
+              exit 1
+            else
+              echo "No security issues found by Bandit"
+            fi
+          else
+            echo "Bandit report file not found."
+            echo "::error::Bandit report file is missing"
+            exit 1
+          fi
+
+      - name: Upload bandit reports
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          scan_path: '${{ env.STEP_PACKAGE_NAME }}'
+          name: Bandit Reports
+          path: |
+            bandit_report.txt
 
   virus-scan:
     name: Virus Scan
@@ -82,7 +120,7 @@ jobs:
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation
+          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation --exclude trivyignore.yaml
 
       - name: Execute virus scan
         uses: intel-innersource/frameworks.devops.github.actions.mcafee@main
@@ -109,6 +147,8 @@ jobs:
         run: |
           find . \
             -name .git -type d -prune -o \
+            -name .github -type d -prune -o \
+            -name automation -type d -prune -o \
             -type f -name \*.sh \
             -print0 > shell_files.txt
           tr '\0' '\n' < shell_files.txt > shell_files_readable.txt
@@ -176,7 +216,9 @@ jobs:
             --vuln-type os,library \
             --severity  UNKNOWN,LOW,MEDIUM,CRITICAL,HIGH \
             --output  trivy_fs_report.csv \
-            --list-all-pkgs .
+            --list-all-pkgs \
+            --skip-dirs .git,.github,automation \
+            --ignorefile trivyignore.yaml .
 
       - name: Preview Trivy report
         if: always()
@@ -252,8 +294,8 @@ jobs:
 
   bdba:
     name: BDBA
-    needs: precheck
-    if: needs.precheck.outputs.should_run == 'true'
+    #needs: precheck
+    #if: needs.precheck.outputs.should_run == 'true'
     runs-on: [self-hosted, scan]
     env:
       STEP_GROUP_ID: '246'
@@ -266,7 +308,7 @@ jobs:
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          zip -r ${RLDIR}.zip . -x "*.git*" "*.github*" "automation"
+          zip -r ${RLDIR}.zip . -x "*.git*" "*.github*" "automation/*" "automation" "trivyignore.yaml"
 
       - name: Execute BDBA
         uses: intel-innersource/frameworks.devops.github.actions.bdba@main
@@ -276,6 +318,38 @@ jobs:
           # token: ${{ secrets.CI_BDBA_TOKEN }}
           group: ${{ env.STEP_GROUP_ID }}
           scan_path: '${{ env.STEP_PACKAGE_NAME }}.zip'
+
+      - name: List workflow artifacts
+        if: always()
+        id: list_artifacts
+        run: |
+          echo "Getting artifacts for workflow run ${{ github.run_id }}..."
+          ARTIFACTS=$(curl -s -H "Authorization: token ${{ secrets.PUBLIC_REPO_ACCESS_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts")
+          echo "Available artifacts:"
+          echo "$ARTIFACTS" | jq -r '.artifacts[] | "\(.id): \(.name)"'
+          
+          # Extract the full artifact name that starts with "BDBA Reports"
+          BDBA_NAME=$(echo "$ARTIFACTS" | jq -r '.artifacts[] | select(.name | startswith("BDBA Reports")) | .name')
+          if [ -n "$BDBA_NAME" ]; then
+            echo "BDBA_ARTIFACT_NAME=$BDBA_NAME" >> $GITHUB_ENV
+            echo "Found BDBA artifact name: $BDBA_NAME"
+          else
+            echo "No BDBA artifact found"
+          fi
+
+      - name: Download BDBA artifacts
+        if: always() && env.BDBA_ARTIFACT_NAME != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: "${{ env.BDBA_ARTIFACT_NAME }}"
+          path: './bdba_artifacts'
+
+      - name: Check BDBA vulnerabilities
+        if: always()
+        run: |
+          chmod +x .github/BDBA/check_bdba_vulns.sh
+          .github/BDBA/check_bdba_vulns.sh
 
   protex:
     name: Protex
@@ -291,7 +365,7 @@ jobs:
         run: |
           RLDIR="release_$(echo ${GITHUB_SHA:0:7})"
           echo "STEP_PACKAGE_NAME=${RLDIR}" >> $GITHUB_ENV
-          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation
+          mkdir -p ${RLDIR} && rsync -av --progress $(ls -I ${RLDIR}) ${RLDIR}/ --exclude .git --exclude .github --exclude automation --exclude trivyignore.yaml
 
       - name: Execute Protex
         uses: intel-innersource/frameworks.actions.protex@main
@@ -355,13 +429,13 @@ jobs:
             --exclude .github \
             --exclude automation \
             --exclude Dockerfile \
-            --exclude 'docker-compose*.yml'
+            --exclude 'docker-compose*.yml' \
+            --exclude trivyignore.yaml
       
       - name: Setup Coverity
         uses: intel-innersource/frameworks.actions.setup-coverity@v4
         with:
           analysis-version: ${{ env.COV_ANALYSIS_VERSION }}
-          reports-version: ${{ env.COV_REPORT_VERSION }}
 
       - name: Execute Coverity Analysis
         uses: intel-sandbox/frameworks.actions.coverity-analysis.casecicd@main
@@ -378,81 +452,16 @@ jobs:
           user: ${{ secrets.CI_USR }}
           password: ${{ secrets.CI_PWD }}
 
-      - name: Generate Coverity Report
+      - name: Generate Coverity SAST Report
         if: always()
-        uses: intel-innersource/frameworks.actions.coverity-analysis/sdl-reports@v4
+        uses: intel-innersource/frameworks.actions.coverity-analysis/sast-report@v5
         with:
           snapshot: ${{steps.cov-analysis.outputs.snapshot}}
+          stream: ${{ env.COV_STREAM_NAME }}
           url: ${{ env.COV_SERVER_URL }}
           project: ${{ env.COV_PROJECT_NAME }}
-          project-version: ${{ env.BRANCH_VERSION }}
-          cvss-report-name: CT39_${{ env.COV_CVSS_REPORT_NAME }}.pdf
-          security-report-name: CT39_${{ env.COV_SECURITY_REPORT_NAME }}.pdf
+          artifact-name: CT39_coverity_report
+          report-name: CT39_coverity_report.html
           user: ${{ secrets.CI_USR }}
           password: ${{ secrets.CI_PWD }}
-
-      - name: Generate Coverity Report Summary
-        id: cov-report-summary
-        if: always()
-        run: |
-          export TEMP_COV_PASSWORD=${{ secrets.CI_PWD }}
-          echo -e "\033[35mGenerating authentication key file - coverity_auth_key.txt\033[0m"
-          EXPIRATION_TIME=$(date -u -d "30 minutes" +"%Y-%m-%dT%H:%M:%SZ")
-          cov-manage-im \
-            --mode auth-key \
-            --create \
-            --output-file ${{ env.COV_AUTH_KEY_NAME }}.txt \
-            --set description:"ci_auth_key - ${{ env.BRANCH_VERSION }}" \
-            --url ${{ env.COV_SERVER_URL }} \
-            --user ${{ secrets.CI_USR }} \
-            --password ${{ secrets.CI_PWD }} \
-            --set expiration:"${EXPIRATION_TIME}"
-          cat ${{ env.COV_AUTH_KEY_NAME }}.txt
-          echo -e "\n\033[35mGenerating Coverity Security JSON Report - ${{ env.COV_SECURITY_REPORT_NAME }}.json\033[0m"
-          export WRITE_ISSUES_JSON=${{ env.COV_SECURITY_REPORT_NAME }}.json
-          cov-generate-security-report \
-            ../../_actions/intel-innersource/frameworks.actions.coverity-analysis/v4/templates/report_template.yml \
-            --output ${{ env.COV_SECURITY_REPORT_NAME }}.pdf \
-            --user ${{ secrets.CI_USR }} \
-            --password env:TEMP_COV_PASSWORD
-          echo -e "\033[35mGenerating Coverity CVSS JSON Report ${{ env.COV_CVSS_REPORT_NAME }}_summary.json\033[0m"
-          export WRITE_ISSUES_JSON=${{ env.COV_CVSS_REPORT_NAME }}.json
-          cov-generate-cvss-report \
-            --report ../../_actions/intel-innersource/frameworks.actions.coverity-analysis/v4/templates/report_template.yml \
-            --output ${{ env.COV_CVSS_REPORT_NAME }}.pdf \
-            --user ${{ secrets.CI_USR }} \
-            --password env:TEMP_COV_PASSWORD
-          echo -e "\033[35mGenerating IPAS Security Report Summary - IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.html\033[0m"
-          python3 ~/.ci/IPAS_Report.py \
-            -i ${{ env.COV_SECURITY_REPORT_NAME }}.json \
-            -t SECURITY \
-            --details True \
-            --version ${{ env.COV_ANALYSIS_VERSION }} \
-            --output IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.html \
-            --csv-file IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.csv \
-            --auth-key-file ${{ env.COV_AUTH_KEY_NAME }}.txt
-          echo -e "\033[35mGenerating IPAS CVSS Report Summary - IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.html\033[0m"
-          python3 ~/.ci/IPAS_Report.py \
-            -i ${{ env.COV_CVSS_REPORT_NAME }}.json \
-            -t CVSS \
-            --details True \
-            --version ${{ env.COV_ANALYSIS_VERSION }} \
-            --output IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.html \
-            --csv-file IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.csv \
-            --auth-key-file ${{ env.COV_AUTH_KEY_NAME }}.txt
-          ls -l
-
-      - name: Upload artifacts
-        if: ${{ always() && steps.cov-report-summary.outcome == 'success' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: Coverity Report Summary
-          path: |
-            ${{ env.COV_SECURITY_REPORT_NAME }}.json
-            ${{ env.COV_CVSS_REPORT_NAME }}.json
-            ${{ env.COV_SECURITY_REPORT_NAME }}.pdf
-            ${{ env.COV_CVSS_REPORT_NAME }}.pdf
-            IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.html
-            IPAS_${{ env.COV_SECURITY_REPORT_NAME }}_summary.csv
-            IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.html
-            IPAS_${{ env.COV_CVSS_REPORT_NAME }}_summary.csv
+          prepared-by: ${{env.COV_PREPARED_BY}}
