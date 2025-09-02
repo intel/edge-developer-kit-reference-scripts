@@ -27,7 +27,7 @@ docker build -t ov-vllm .
 ```
 
 ### 5. Run the OpenVINO VLLM container
-By default, on the container launch, it 
+  > By default, using -p xxxx:xxxx in docker run exposes the container ports externally on all network interfaces. To restrict access to localhost only, use -p 127.0.0.1:xxxx:xxxx instead.
 * **CPU**
 ```bash
 docker run -it --rm \

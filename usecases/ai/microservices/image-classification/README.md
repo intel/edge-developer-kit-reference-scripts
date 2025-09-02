@@ -81,6 +81,7 @@ opencv-python | 4.10.0.84
   ```
 
 ## Prepare and run docker images 
+  > By default, using -p xxxx:xxxx in docker run exposes the container ports externally on all network interfaces. To restrict access to localhost only, use -p 127.0.0.1:xxxx:xxxx instead.
 
 - Download docker image 
 

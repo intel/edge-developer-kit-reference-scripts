@@ -37,6 +37,7 @@ docker build -t text-to-speech .
 ```
 
 ### 5. Run the Text To Speech container
+  > By default, using -p xxxx:xxxx in docker run exposes the container ports externally on all network interfaces. To restrict access to localhost only, use -p 127.0.0.1:xxxx:xxxx instead.
 * **CPU**
 ```bash
 docker run -it --rm \
