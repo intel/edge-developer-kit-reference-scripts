@@ -31,25 +31,26 @@ docker build -t automatic-speech-recognition .
 ```
 
 ### 5. Run the Automatic Speech Recognition container
+  > By default, using -p xxxx:xxxx in docker run exposes the container ports externally on all network interfaces. To restrict access to localhost only, use -p 127.0.0.1:xxxx:xxxx instead.
 * **CPU**
-```bash
-docker run -it --rm \
-    -p 5996:5996 \
-    -e DEFAULT_MODEL_ID=openai/whisper-tiny \
-    -e STT_DEVICE=CPU \
-    -v app-data:/usr/src/app/data \
-    automatic-speech-recognition
-```
+    ```bash
+    docker run -it --rm \
+        -p 5996:5996 \
+        -e DEFAULT_MODEL_ID=openai/whisper-tiny \
+        -e STT_DEVICE=CPU \
+        -v app-data:/usr/src/app/data \
+        automatic-speech-recognition
+    ```
 
 * **GPU**
-```bash
-export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
-docker run -it --rm \
-    --group-add $RENDER_GROUP_ID \
-    --device /dev/dri:/dev/dri \
-    -p 5996:5996 \
-    -e DEFAULT_MODEL_ID=openai/whisper-tiny \
-    -e STT_DEVICE=GPU \
-    -v app-data:/usr/src/app/data \
-    automatic-speech-recognition
-```
+    ```bash
+    export RENDER_GROUP_ID=$(getent group render | cut -d: -f3)
+    docker run -it --rm \
+        --group-add $RENDER_GROUP_ID \
+        --device /dev/dri:/dev/dri \
+        -p 5996:5996 \
+        -e DEFAULT_MODEL_ID=openai/whisper-tiny \
+        -e STT_DEVICE=GPU \
+        -v app-data:/usr/src/app/data \
+        automatic-speech-recognition
+    ```

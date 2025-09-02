@@ -113,6 +113,7 @@ grpcio | 1.69.0
 
 -   From here, you can start the docker through various means depending on what accelerator(CPU, GPU or NPU) to run inference on.
 -   Below are example commands to run docker and inference. Replace any arguments where necessary.
+    > By default, using -p xxxx:xxxx in docker run exposes the container ports externally on all network interfaces. To restrict access to localhost only, use -p 127.0.0.1:xxxx:xxxx instead.
 
 ### Infer on CPU
 

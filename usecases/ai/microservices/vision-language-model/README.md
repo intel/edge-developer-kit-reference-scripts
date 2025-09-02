@@ -32,6 +32,7 @@ It provides endpoints for managing the pipeline, checking the pipeline status, r
   docker build --network=host -t vlm .
   ```
 - Export the required environment variables and run the container:
+  > By default, using -p xxxx:xxxx in docker run exposes the container ports externally on all network interfaces. To restrict access to localhost only, use -p 127.0.0.1:xxxx:xxxx instead.
   ```bash
   # Select your text-to-image model.
   # Eg. pixtral-12b.
