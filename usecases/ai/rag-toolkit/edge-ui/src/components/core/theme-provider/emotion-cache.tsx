@@ -58,31 +58,51 @@ export default function NextAppDirEmotionCacheProvider(props: NextAppDirEmotionC
 
     const globals: { name: string; style: string }[] = [];
 
-    inserted.forEach(({ name, isGlobal }) => {
-      const style = registry.cache.inserted[name];
 
-      if (style && typeof style !== 'boolean') {
+    // SECURITY: The use of dangerouslySetInnerHTML here is considered safe because:
+    // 1. Emotion generates CSS from static code, not user input.
+    // 2. We ensure only string CSS is injected, not objects or unexpected types.
+    // 3. For extra defense-in-depth, we sanitize the CSS to strip <script> tags.
+    // If you ever allow user input to affect styles, you must sanitize more strictly.
+    function sanitizeCSS(css: string): string {
+      // Remove <script>...</script> tags as a basic precaution
+      return css.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
+    }
+
+    inserted.forEach(({ name, isGlobal }: { name: string; isGlobal: boolean }) => {
+      const style = registry.cache.inserted[name];
+      if (typeof style === 'string') {
+        const safeStyle = sanitizeCSS(style);
         if (isGlobal) {
-          globals.push({ name, style });
+          globals.push({ name, style: safeStyle });
         } else {
-          styles += style;
+          styles += safeStyle;
           dataEmotionAttribute += ` ${name}`;
         }
       }
     });
 
+    // The use of dangerouslySetInnerHTML is required for Emotion SSR hydration.
+    // See: https://emotion.sh/docs/ssr and Next.js + Emotion integration docs.
     return (
       <React.Fragment>
         {globals.map(
           ({ name, style }): React.JSX.Element => (
             <style
+              // Emotion-generated CSS only; not user input.
               dangerouslySetInnerHTML={{ __html: style }}
               data-emotion={`${registry.cache.key}-global ${name}`}
               key={name}
             />
           )
         )}
-        {styles ? <style dangerouslySetInnerHTML={{ __html: styles }} data-emotion={dataEmotionAttribute} /> : null}
+        {styles ? (
+          <style
+            // Emotion-generated CSS only; not user input.
+            dangerouslySetInnerHTML={{ __html: styles }}
+            data-emotion={dataEmotionAttribute}
+          />
+        ) : null}
       </React.Fragment>
     );
   });

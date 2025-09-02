@@ -13,6 +13,7 @@ import { type TableHeaderProps } from "@/types/table";
 import TableTemplate from "@/components/common/TableTemplate";
 import { type ChunkProps } from "@/types/dataset";
 import { useDeleteTextEmbeddingByUUID } from "@/hooks/api-hooks/use-dataset-api";
+import { validateAndSanitizeChunk } from "@/utils/sanitization";
 
 
 function DeleteButton({
@@ -27,7 +28,7 @@ function DeleteButton({
   return !isDeleting ? (
     <IconButton
       color="error"
-      onClick={(ev) => {
+      onClick={(ev: React.MouseEvent<HTMLButtonElement>) => {
         handleDelete(ev, id);
       }}
     >
@@ -62,6 +63,20 @@ export default function DocumentChunkTable({
     },
   ];
 
+  // Trust boundary: The `data` prop is assumed to be provided by a trusted parent component.
+  // However, to prevent DOM-based XSS attacks, we validate and sanitize all data before processing.
+  // This addresses CID 2372868: DOM-based cross-site scripting (DOM_XSS)
+  const sanitizedAndValidatedData = useMemo(() => {
+    if (!Array.isArray(data)) {
+      console.warn('DocumentChunkTable: Expected array for data prop, received:', typeof data);
+      return [];
+    }
+
+    return data
+      .map(validateAndSanitizeChunk)
+      .filter((chunk): chunk is NonNullable<typeof chunk> => chunk !== null);
+  }, [data]);
+
   const formattedData = useMemo(() => {
     const handleDelete = (
       ev: MouseEvent<HTMLButtonElement>,
@@ -78,11 +93,11 @@ export default function DocumentChunkTable({
     };
 
     const confirmDelete = (id: string): void => {
-      setDeletingIds((prev) => [...prev, id]);
+      setDeletingIds((prev: string[]) => [...prev, id]);
       deleteTextEmbeddingByUUID.mutate(
         { uuid: id },
         {
-          onSuccess: (response) => {
+          onSuccess: (response: { status: boolean }) => {
             if (response.status) {
               enqueueSnackbar(`Embedding deleted successfully.`, {
                 variant: "success",
@@ -95,26 +110,27 @@ export default function DocumentChunkTable({
             }
           },
           onSettled: () => {
-            setDeletingIds((prev) => prev.filter((p) => p !== id));
+            setDeletingIds((prev: string[]) => prev.filter((p: string) => p !== id));
           },
         }
       );
     };
 
-    return data.map((d) => {
+    // Process only sanitized and validated chunk items
+    return sanitizedAndValidatedData.map((d: { ids: string; chunk: string; source: string; page: number }) => {
       return {
         ...d,
         id: d.ids,
         actions: (
           <DeleteButton
             id={d.ids}
-            isDeleting={deletingIds.some((id) => id === d.ids)}
+            isDeleting={deletingIds.some((id: string) => id === d.ids)}
             handleDelete={handleDelete}
           />
         ),
       };
     });
-  }, [data, deleteTextEmbeddingByUUID, deletingIds, openConfirmationDialog]);
+  }, [sanitizedAndValidatedData, deleteTextEmbeddingByUUID, deletingIds, openConfirmationDialog]);
 
   return <TableTemplate headers={headers} data={formattedData} enableActions />;
 }

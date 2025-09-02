@@ -13,6 +13,7 @@ import { ConfirmationContext } from "@/contexts/ConfirmationContext";
 import { type TableHeaderProps } from "@/types/table";
 import { useDeleteTextEmbeddingBySource } from "@/hooks/api-hooks/use-dataset-api";
 import TableTemplate from "../common/TableTemplate";
+import { sanitizeTextContent } from "@/utils/sanitization";
 
 function DeleteButton({
   id,
@@ -42,6 +43,20 @@ export default function DocumentSourceTable({
 }: {
   data: string[];
 }): React.JSX.Element {
+  // Trust boundary: data is expected to be an array of strings from a trusted source (API/parent). 
+  // Enhanced security: sanitize each source string to prevent XSS attacks.
+  // This addresses potential DOM-based XSS vulnerabilities.
+  const sanitizedData = useMemo(() => {
+    if (!Array.isArray(data)) {
+      console.warn('DocumentSourceTable: Expected array for data prop, received:', typeof data);
+      return [];
+    }
+    
+    return data
+      .filter((d): d is string => typeof d === "string")
+      .map(sanitizeTextContent)
+      .filter((d): d is string => d !== "");
+  }, [data]);
   const [deletingIds, setDeletingIds] = useState<string[]>([]);
   const { openConfirmationDialog } = useContext(ConfirmationContext);
   const deleteTextEmbeddingBySource = useDeleteTextEmbeddingBySource();
@@ -57,6 +72,7 @@ export default function DocumentSourceTable({
     },
   ];
 
+  // Memoize formattedData. Only uses sanitized, trusted data and local handlers.
   const formattedData = useMemo(() => {
     const handleDelete = (
       ev: MouseEvent<HTMLButtonElement>,
@@ -73,11 +89,11 @@ export default function DocumentSourceTable({
     };
 
     const confirmDelete = (id: string): void => {
-      setDeletingIds((prev) => [...prev, id]);
+      setDeletingIds((prev: string[]) => [...prev, id]);
       deleteTextEmbeddingBySource.mutate(
         { source: id },
         {
-          onSuccess: (response) => {
+          onSuccess: (response: { status?: boolean }) => {
             if (response.status) {
               enqueueSnackbar(`Source deleted successfully.`, {
                 variant: "success",
@@ -90,26 +106,26 @@ export default function DocumentSourceTable({
             }
           },
           onSettled: () => {
-            setDeletingIds((prev) => prev.filter((p) => p !== id));
+            setDeletingIds((prev: string[]) => prev.filter((p: string) => p !== id));
           },
         }
       );
     };
 
-    return data.map((d) => {
+    return sanitizedData.map((d: string) => {
       return {
         id: d,
         source: d,
         actions: (
           <DeleteButton
             id={d}
-            isDeleting={deletingIds.some((source) => source === d)}
+            isDeleting={deletingIds.some((source: string) => source === d)}
             handleDelete={handleDelete}
           />
         ),
       };
     });
-  }, [data, deleteTextEmbeddingBySource, deletingIds, openConfirmationDialog]);
+  }, [sanitizedData, deleteTextEmbeddingBySource, deletingIds, openConfirmationDialog]);
 
   const handleRowClick = (id: string | number): void => {
     router.push(`${pathname}/${id}`);
