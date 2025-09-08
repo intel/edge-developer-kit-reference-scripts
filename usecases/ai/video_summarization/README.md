@@ -16,7 +16,7 @@ This is a demo application that uses power of AI (Large Video Language model) fo
   - Intel&reg; Core&trade; Processors Platform (Alderlake, Raptor Lake, Arrow Lake, etc)
   - Intel&reg; Arc&trade; A-series or Intel&reg; Arc&trade; B-series graphics card (A770/B580)
   - Intel&reg; Core&trade; Ultra Series Processor Platform (Lunar Lake, Arrow Lake-H)
-- Additional installation guide, see [link](https://github.com/intel/edge-developer-kit-reference-scripts?tab=readme-ov-file#quick-start).
+- Additional installation guide, see [link](../../../README.md#quick-start).
 
 ## Environment Setup
 

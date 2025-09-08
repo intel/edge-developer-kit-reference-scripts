@@ -25,7 +25,7 @@ opencv-python | 4.10.0.84
 ## Prerequisites
 - [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
 
-- Optional: [GPU Driver](https://github.com/intel/edge-developer-kit-reference-scripts/blob/main/gpu/arc/dg2/usecases/openvino/install_gpu.sh)
+- Optional: [GPU Driver](../../../README.md#quick-start)
 
 ## Prepare model
 

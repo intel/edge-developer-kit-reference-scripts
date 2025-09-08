@@ -15,13 +15,13 @@ This repository provides detailed instructions and steps to successfully run Ope
 
 ## Prerequisite
 ### 1. Install operating system
-Install the latest [Ubuntu* 22.04 LTS Desktop](https://releases.ubuntu.com/jammy/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
+Install the latest [Ubuntu* 24.04 LTS Desktop](https://releases.ubuntu.com/noble/). Refer to [Ubuntu Desktop installation tutorial](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview) if needed.
 
 ### 2. Docker Setup
 Docker and docker compose should be setup before running the commands below. Refer to [here](https://docs.docker.com/engine/install/) to setup docker.
 
 ### 3. Install necessary GPU drivers.
-   - Refer to [here](../../../gpu/arc/dg2/README.md) to setup GPU drivers
+   - Refer to [here](../../../README.md#quick-start) to setup GPU drivers
 
 ## Application ports
 Please ensure that you have these ports available before running the applications.
