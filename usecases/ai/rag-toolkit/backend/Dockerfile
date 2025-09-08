@@ -66,10 +66,10 @@ RUN python3 -m pip install fastapi[all]==0.111.0 \
         openai==1.56.2 \
         pyyaml==6.0.1 \
         pypdf==6.0.0 \
-        langchain==0.3.8 \
-        langchain-chroma==0.1.4 \
-        langchain-community===0.3.8 \
-        chromadb==0.5.18 \
+        langchain==0.3.27 \
+        langchain-chroma==0.2.5 \
+        langchain-community===0.3.27 \
+        chromadb==1.0.20 \
         'huggingface_hub>=0.23.0' \
         botocore==1.34.88 \
         cached_path==1.6.3 \
