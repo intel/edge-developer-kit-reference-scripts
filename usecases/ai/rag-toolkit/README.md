@@ -25,14 +25,13 @@ Please ensure that you have these ports available before running the application
 | Speech to Text Service | 8014 |
 
 ## Quick Start
-<details open><summary>Ubuntu 22.04 LTS / Ubuntu 24.04 LTS</summary>
+<details open><summary>Ubuntu 24.04 LTS</summary>
 
 ### 1. Install prerequisite
 - [Docker](https://docs.docker.com/engine/install/)
 
 ### 2. Install GPU driver
-- [Intel® Arc™ A-Series Graphics](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/arc/dg2)
-- [Intel® Data Center GPU Flex Series](https://github.com/intel/edge-developer-kit-reference-scripts/tree/main/gpu/flex/ats)
+- [Intel® Arc™ A-Series Graphics](../../../README.md#quick-start)
 
 ### 3. Run Script to Setup and Install Docker
 ```

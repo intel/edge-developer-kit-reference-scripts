@@ -48,7 +48,7 @@ Please ensure that you have these ports available before running the application
 1. **OS**: Ubuntu (Validated on 24.04)
 1. **Docker and Docker Compose**: Ensure Docker and Docker Compose are installed. Refer to [Docker installation guide](https://docs.docker.com/engine/install/).
 1. **Intel GPU Drivers**:
-    1. Refer to [here](../../../README.md#gpu) to install Intel GPU Drivers
+    1. Refer to [here](../../../README.md#quick-start) to install Intel GPU Drivers
 1. **Download the Wav2Lip Models**:
     ```bash
     # Navigate to the weights directory
