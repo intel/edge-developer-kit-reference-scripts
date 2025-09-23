@@ -1,15 +1,61 @@
 #!/bin/bash
 
-# NPU (Neural Processing Unit) Installer
-# Standardized NPU installation for Core Ultra family
+# NPU (Neural Processing Unit) Installer for Core Ultra platforms
+# Installs Intel NPU drivers with Level Zero support
 # Copyright (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
+#
+# Features:
+# - Installs specific NPU driver versions (manually configured)
+# - Downloads packages from GitHub releases
+# - Supports Ubuntu 24.04 LTS only
+# - Requires Ubuntu 24.04 for dependency compatibility
+#
+# Version Management:
+# - Update the global version variables below when new releases are available
+# - Check for latest releases at: https://github.com/intel/linux-npu-driver/releases
+# - Level Zero compatibility matrix: https://github.com/intel/linux-npu-driver/releases/tag/v<version>
+#
+# Usage:
+#   sudo ./npu_installer.sh
 
-# Global version variables
-NPU_VERSION="1.19.0"
-NPU_BUILD_ID="20250707-16111289554"
+# Global version variables - Update these when new releases are available
+# Source: https://github.com/intel/linux-npu-driver/releases/latest
+NPU_VERSION="1.23.0"
+NPU_BUILD_ID="20250827-17270089246"
 LEVEL_ZERO_VERSION="v1.22.4"
-UBUNTU_VERSION="ubuntu24.04"
+
+# Auto-detect Ubuntu version
+UBUNTU_VERSION=""
+detect_ubuntu_version() {
+   local ubuntu_ver
+   ubuntu_ver=$(lsb_release -r | awk '{print $2}')
+   
+   case "$ubuntu_ver" in
+      "24.04")
+         UBUNTU_VERSION="ubuntu2404"
+         ;;
+      *)
+         print_warning "Unsupported Ubuntu version: $ubuntu_ver"
+         print_warning "This script only supports Ubuntu 24.04 LTS"
+         print_error "Please upgrade to Ubuntu 24.04 LTS for NPU driver support"
+         exit 1
+         ;;
+   esac
+   
+   print_info "Detected Ubuntu version: $ubuntu_ver -> $UBUNTU_VERSION"
+}
+
+# Simple version display function (replaces complex GitHub scraping)
+display_version_info() {
+   print_info "Using NPU Driver Version Information:"
+   print_info "NPU Version: ${NPU_VERSION} | Build: ${NPU_BUILD_ID}"
+   print_info "Level Zero Version: ${LEVEL_ZERO_VERSION}"
+   print_info "Ubuntu Package: ${UBUNTU_VERSION}"
+   print_info ""
+   print_info "Note: To update versions, edit the global variables at the top of this script"
+   print_info "Latest releases: https://github.com/intel/linux-npu-driver/releases"
+}
 
 # Status indicators - using ASCII for better compatibility (conditional definition)
 if [[ -z "$S_ERROR" ]]; then
@@ -93,25 +139,29 @@ download_npu_packages() {
    print_info "Downloading NPU driver packages ${NPU_VERSION}..."
    
    local base_url="https://github.com/intel/linux-npu-driver/releases/download/v${NPU_VERSION}"
-   local build_suffix="${NPU_VERSION}.${NPU_BUILD_ID}_${UBUNTU_VERSION}_amd64.deb"
    
-   # Download each package with error checking
-   local files=(
-      "intel-driver-compiler-npu_${build_suffix}"
-      "intel-fw-npu_${build_suffix}"
-      "intel-level-zero-npu_${build_suffix}"
-   )
+   # Download tar.gz archive format
+   print_info "Downloading NPU driver archive..."
+   local archive_name="linux-npu-driver-v${NPU_VERSION}.${NPU_BUILD_ID}-${UBUNTU_VERSION}.tar.gz"
+   local url="${base_url}/${archive_name}"
    
-   for file in "${files[@]}"; do
-      local url="${base_url}/${file}"
-      print_info "  Downloading ${file}..."
-      if wget -q --timeout=30 "${url}"; then
-         print_success "  Downloaded ${file}"
+   print_info "  Downloading ${archive_name}..."
+   if wget -q --timeout=30 "${url}"; then
+      print_success "  Downloaded ${archive_name}"
+      
+      # Extract the archive
+      print_info "  Extracting ${archive_name}..."
+      if tar -xzf "${archive_name}"; then
+         print_success "  Extracted NPU packages from archive"
+         rm -f "${archive_name}"  # Clean up archive after extraction
       else
-         print_error "  Failed to download ${file} from ${url}"
+         print_error "  Failed to extract ${archive_name}"
          return 1
       fi
-   done
+   else
+      print_error "  Failed to download ${archive_name} from ${url}"
+      return 1
+   fi
    
    print_success "All NPU packages downloaded successfully"
    return 0
@@ -132,7 +182,17 @@ check_level_zero() {
 # Download oneAPI Level Zero package
 download_level_zero_package() {
    print_info "Downloading oneAPI Level Zero ${LEVEL_ZERO_VERSION}..."
-   local lz_url="https://github.com/oneapi-src/level-zero/releases/download/${LEVEL_ZERO_VERSION}/level-zero_1.22.4+u24.04_amd64.deb"
+   print_info "DEBUG: Level Zero version variable: '${LEVEL_ZERO_VERSION}'"
+   
+   # Extract version number without 'v' prefix for filename
+   local lz_version_num
+   # shellcheck disable=SC2001
+   lz_version_num=$(echo "$LEVEL_ZERO_VERSION" | sed 's/^v//')
+   print_info "DEBUG: Extracted version number: '${lz_version_num}'"
+   
+   # Use Ubuntu 24.04 package
+   local lz_url="https://github.com/oneapi-src/level-zero/releases/download/${LEVEL_ZERO_VERSION}/level-zero_${lz_version_num}+u24.04_amd64.deb"
+   print_info "DEBUG: Download URL: ${lz_url}"
    
    if wget -q --timeout=30 "${lz_url}"; then
       print_success "Downloaded Level Zero package"
@@ -265,15 +325,12 @@ verify_installation() {
 # Main installation function
 install_npu() {
    print_info "Starting NPU installation for Core Ultra platform..."
-   print_info "NPU Version: ${NPU_VERSION} | Build: ${NPU_BUILD_ID}"
-   print_info "Level Zero Version: ${LEVEL_ZERO_VERSION}"
-   print_info ""
    
-   # Validate required variables
-   if [[ -z "$NPU_VERSION" || -z "$NPU_BUILD_ID" || -z "$LEVEL_ZERO_VERSION" ]]; then
-      print_error "Required version variables not set"
-      exit 1
-   fi
+   # Detect Ubuntu version
+   detect_ubuntu_version
+   
+   # Display version information
+   display_version_info
    
    # Check if running as root
    if [ "$EUID" -ne 0 ]; then
@@ -332,6 +389,8 @@ install_npu() {
    print_info "Also check dmesg for intel_vpu messages: dmesg | grep intel_vpu"
    print_info ""
 }
+
+
 
 # Run installation if script is executed directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
