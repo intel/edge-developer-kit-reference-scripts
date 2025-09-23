@@ -48,7 +48,6 @@ readonly DEPENDENCIES=(
 
 # Combined GPU packages for cleaner installation
 readonly COMMON_GPU_PACKAGES=(
-   "intel-level-zero-gpu"
    "${COMPUTE_PACKAGES[@]}"
 )
 
@@ -58,7 +57,7 @@ readonly MEDIA_GPU_PACKAGES=(
 
 readonly OPTIONAL_GPU_PACKAGES=(
    "intel-ocloc"
-   "level-zero-dev"
+   "libze-dev"
 )
 
 # GPU detection - simplified approach
@@ -282,7 +281,7 @@ install_gpu_drivers() {
    echo -e "\n# Post-installation configuration"
    
    # Verify critical packages
-   local critical_packages=("intel-level-zero-gpu" "intel-opencl-icd" "libze-intel-gpu1")
+   local critical_packages=("intel-opencl-icd" "libze-intel-gpu1")
    local missing_packages=()
    
    for pkg in "${critical_packages[@]}"; do

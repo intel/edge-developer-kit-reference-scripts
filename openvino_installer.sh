@@ -20,7 +20,6 @@ test_openvino_devices() {
     echo "======================================================================"
     echo "OpenVINO Device Detection"
     echo "======================================================================"
-    echo -e "${BLUE}OpenVINO device detection"
     echo ""
     
     # Create temporary directory for testing
@@ -133,13 +132,6 @@ EOF
         echo ""
         echo -e "${GREEN}$S_VALID OpenVINO device detection test completed successfully${NC}"
         echo ""
-        echo "Expected devices for Core Ultra platform:"
-        echo "  CPU: Intel(R) Core(TM) Ultra 9 285K"
-        echo "  GPU.0: Intel(R) Graphics (iGPU)"
-        echo "  GPU.1: Intel(R) Arc(TM) B580 Graphics (dGPU)"
-        echo "  NPU: Intel(R) AI Boost"
-        echo ""
-        echo -e "${GREEN}Test completed - no permanent system changes made${NC}"
         return 0
     else
         echo ""
@@ -168,16 +160,6 @@ main() {
         echo "Usage: sudo bash $0"
         exit 1
     fi
-    
-    echo "Simple OpenVINO Device Detection Test"
-    echo "======================================"
-    echo "This script will:"
-    echo "  1. Install python3-venv and python3-pip"
-    echo "  2. Create a temporary virtual environment"
-    echo "  3. Install OpenVINO in the virtual environment"
-    echo "  4. Test device detection (CPU, GPU.0, GPU.1, NPU)"
-    echo "  5. Clean up everything (no permanent changes)"
-    echo ""
     
     # Run the test
     test_openvino_devices

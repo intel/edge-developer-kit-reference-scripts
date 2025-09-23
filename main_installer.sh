@@ -95,7 +95,6 @@ download_scripts() {
         "gpu_installer.sh"
         "npu_installer.sh"
         "openvino_installer.sh"
-        "platform_detection.sh"
         "print_summary_table.sh"
     )
 
@@ -183,10 +182,26 @@ verify_ubuntu_24() {
 
 # Install NPU drivers (Core Ultra only)
 install_npu_drivers() {
-    echo "Installing NPU drivers for Core Ultra..."
+    # Explicit guard: Only install NPU drivers on Core Ultra platforms
+    if ! is_coreultra; then
+        echo "$S_ERROR NPU drivers are only supported on Core Ultra platforms"
+        echo "Current platform: $CPU_MODEL"
+        echo "Skipping NPU driver installation"
+        return 1
+    fi
+    
+    echo "Installing NPU drivers for Core Ultra platform..."
+    echo "$S_VALID NPU driver installation is supported on this Core Ultra platform"
+    
     # Execute the script instead of sourcing it to avoid context issues
     # shellcheck disable=SC1091
-    bash "$SCRIPT_DIR/npu_installer.sh"
+    if bash "$SCRIPT_DIR/npu_installer.sh"; then
+        echo "$S_VALID NPU drivers installed successfully"
+        return 0
+    else
+        echo "$S_ERROR NPU driver installation failed"
+        return 1
+    fi
 }
 
 # Check for GPU presence
@@ -217,17 +232,26 @@ check_intel_arc_gpu() {
 
 # Install GPU drivers - only if any GPU is present
 install_gpu_drivers() {
+    echo "# GPU Driver Installation Process"
+    
     if check_intel_arc_gpu; then
         echo "Installing Intel GPU drivers..."
         # Execute the script instead of sourcing it to avoid context issues
         # shellcheck disable=SC1091
-        bash "$SCRIPT_DIR/gpu_installer.sh"
-        echo "$S_VALID GPU drivers installed"
-        
-        # Verify OpenCL setup after installation
-        # verify_opencl_setup
+        if bash "$SCRIPT_DIR/gpu_installer.sh"; then
+            echo "$S_VALID GPU drivers installed successfully"
+            
+            # Verify OpenCL setup after installation
+            # verify_opencl_setup
+            return 0
+        else
+            echo "$S_ERROR GPU driver installation failed"
+            return 1
+        fi
     else
         echo "$S_WARNING Skipping GPU driver installation - no GPU devices detected"
+        echo "This is normal for systems without dedicated or integrated GPUs"
+        return 0  # Not an error condition
     fi
 }
 
@@ -333,6 +357,50 @@ verify_opencl_setup() {
     fi
 }
 
+# Platform detection variables
+PLATFORM_FAMILY=""
+CPU_MODEL=""
+IS_COREULTRA=false
+
+# Detect platform information
+detect_platform() {
+    echo "Detecting platform family..."
+
+    # Get CPU model
+    CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^[ \t]*//' || echo "unknown")
+    
+    # Detect platform family using a case statement for better readability
+    case "$CPU_MODEL" in
+        *Ultra*)
+            PLATFORM_FAMILY="coreultra"
+            IS_COREULTRA=true
+            ;;
+        *Xeon*)
+            PLATFORM_FAMILY="xeon"
+            ;;
+        *Atom*|*Core*N[0-9]*)
+            PLATFORM_FAMILY="atom"
+            ;;
+        *Core*)
+            PLATFORM_FAMILY="core"
+            ;;
+        *Processor*)
+            PLATFORM_FAMILY="processor"
+            ;;
+        *)
+            PLATFORM_FAMILY="unknown"
+            ;;
+    esac
+    
+    echo "  CPU Model: $CPU_MODEL"
+    echo "  Platform Family: $PLATFORM_FAMILY"
+}
+
+# Check if Core Ultra platform
+is_coreultra() {
+    [ "$IS_COREULTRA" = true ]
+}
+
 install_openvino(){
       echo ""
       echo "========================================================================"
@@ -419,14 +487,9 @@ main() {
     install_build_essentials
     echo ""
     
-    # 3. Load platform detection
-    # shellcheck disable=SC1091
-    source "$SCRIPT_DIR/platform_detection.sh"
-    
-    # 4. Detect platform and OS
-    echo "# Detecting platform and OS..."
+    # 3. Detect platform
+    echo "# Detecting platform..."
     detect_platform
-    detect_os
     echo ""
     
     # 5. Platform Installation Flow
@@ -434,33 +497,44 @@ main() {
     echo "$S_VALID Platform detected: $CPU_MODEL"
     
     # Determine platform family and execute appropriate flow
-    if is_xeon; then
-        echo "# Xeon platform detected"
-        echo "$S_ERROR Setup skipped for Xeon platforms"
-        echo "Please follow Ubuntu 24.04 Server installation guide:"
-        echo "https://ubuntu.com/download/server"
-        echo "For Xeon-specific optimizations, consult Intel documentation"
+    if is_coreultra; then
+        echo ""
+        echo "========================================================================"
+        echo "# CORE ULTRA PLATFORM INSTALLATION"
+        echo "========================================================================"
+        echo "Platform: Core Ultra CPU"
+        echo "Components: GPU Drivers + NPU Drivers + OpenVINO"
+        echo "NPU Support: Available and will be installed"
+        echo ""
         
-    elif is_coreultra; then
-        echo "# Core Ultra platform detected"
-        install_gpu_drivers  # Will check for Arc GPU presence first
-        install_npu_drivers
+        # Install GPU drivers (will check for GPU presence)
+        install_gpu_drivers || echo "$S_WARNING GPU driver installation had issues"
+        
+        # Install NPU drivers (Core Ultra only)
+        install_npu_drivers || echo "$S_WARNING NPU driver installation had issues"
         
         # Install OpenVINO with error handling
         if ! install_openvino; then
             echo "$S_ERROR Core Ultra platform setup incomplete due to OpenVINO installation failure"
-            echo "NPU and GPU drivers were installed successfully"
             echo "You may retry OpenVINO installation manually: bash $SCRIPT_DIR/openvino_installer.sh"
         fi
         
     else
-        echo "# Atom/Core platform detected"
-        install_gpu_drivers  # Will check for Arc GPU presence first
+        echo ""
+        echo "========================================================================"
+        echo "# STANDARD INTEL PLATFORM INSTALLATION"
+        echo "========================================================================"
+        echo "Platform: $CPU_MODEL (Xeon/Atom/Core)"
+        echo "Components: GPU Drivers (if GPU present) + OpenVINO"
+        echo "NPU Support: Not available (Core Ultra only)"
+        echo ""
+        
+        # Install GPU drivers (will check for GPU presence)
+        install_gpu_drivers || echo "$S_WARNING GPU driver installation had issues"
         
         # Install OpenVINO with error handling
         if ! install_openvino; then
-            echo "$S_ERROR Atom/Core platform setup incomplete due to OpenVINO installation failure"
-            echo "GPU drivers were installed successfully (if Arc GPU was present)"
+            echo "$S_ERROR Platform setup incomplete due to OpenVINO installation failure"
             echo "You may retry OpenVINO installation manually: bash $SCRIPT_DIR/openvino_installer.sh"
         fi
     fi
