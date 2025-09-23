@@ -234,14 +234,14 @@ def validate_args(args):
         "info", f"Running model inference using device: {args.device}")
 
 
-def init_all(args, over_write=False):
+def init_all(over_write=False):
     """
     Initialize global variables and
     update datasources and dashboards on grafana server
     """
     global NUM_CH, CONF_DATA
 
-    num_ch, conf_data, given_devices = read_config(f"{args.config_path}")
+    num_ch, conf_data, given_devices = read_config('./configs/camera_config.json')
     APP_LOGGER.log(
         'debug', f'Camera conf_data - `{conf_data}`')
     for cam_detail in conf_data['cameras']:
@@ -342,7 +342,7 @@ def main():
     args = get_args()
     APP_LOGGER.log('debug', f'Arguments: {args}')
     validate_args(args)
-    init_all(args.config_path, over_write=True)
+    init_all(over_write=True)
 
     camera_src_list = get_camera_input(CONF_DATA)
     APP_LOGGER.log(
